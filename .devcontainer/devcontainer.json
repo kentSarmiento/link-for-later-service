@@ -28,6 +28,7 @@
         "files.watcherExclude": {
           "**/target/**": true
         },
+        "editor.formatOnSave": true,
         "rust-analyzer.checkOnSave.command": "clippy"
       },
 
