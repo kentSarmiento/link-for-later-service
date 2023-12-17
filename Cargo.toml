@@ -1,6 +1,7 @@
 [package]
 name = "link-for-later"
 version = "0.1.0"
+edition = "2021"
 description = "Link for Later Lambda Service"
 repository = "https://github.com/kentSarmiento/link-for-later-service"
 readme = "README.md"
