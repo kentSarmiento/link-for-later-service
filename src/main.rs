@@ -1,25 +1,13 @@
-use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
+use axum::{extract::Path, response::Json, routing::get, Router};
+use lambda_http::{run, Error};
+use serde_json::{json, Value};
 
-/// This is the main body for the function.
-/// Write your code inside it.
-/// There are some code example in the following URLs:
-/// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples
-async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
-    // Extract some useful information from the request
-    let who = event
-        .query_string_parameters_ref()
-        .and_then(|params| params.first("name"))
-        .unwrap_or("world");
-    let message = format!("Hello {who}, this is an AWS Lambda HTTP request");
+async fn get_links() -> Json<Value> {
+    Json(json!({ "msg": format!("I am GET /link") }))
+}
 
-    // Return something that implements IntoResponse.
-    // It will be serialized to the right response event automatically by the runtime
-    let resp = Response::builder()
-        .status(200)
-        .header("content-type", "text/html")
-        .body(message.into())
-        .map_err(Box::new)?;
-    Ok(resp)
+async fn get_link(Path(id): Path<String>) -> Json<Value> {
+    Json(json!({ "msg": format!("I am GET /link/:id, id={id}") }))
 }
 
 #[tokio::main]
@@ -32,5 +20,9 @@ async fn main() -> Result<(), Error> {
         .without_time()
         .init();
 
-    run(service_fn(function_handler)).await
+    let app = Router::new()
+        .route("/link", get(get_links))
+        .route("/link/:id", get(get_link));
+
+    run(app).await
 }
