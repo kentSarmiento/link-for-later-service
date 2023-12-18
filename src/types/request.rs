@@ -22,9 +22,11 @@ impl PostLink {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn test_post_link_to_string() {
-        let link = super::PostLink::new("http://link");
+        let link = PostLink::new("http://link");
         assert_eq!(link.to_string(), String::from("http://link"));
     }
 }
