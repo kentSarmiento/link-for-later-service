@@ -15,9 +15,9 @@ impl Links for Service {
         links_repo.list().await
     }
 
-    async fn post<'a>(&self, app_state: &'a state::Router) -> Result<LinkItem> {
+    async fn post<'a>(&self, app_state: &'a state::Router, item: &LinkItem) -> Result<LinkItem> {
         let links_repo = app_state.get_links_repo();
-        links_repo.post().await
+        links_repo.post(item).await
     }
 
     async fn get<'a>(&self, id: &str, app_state: &'a state::Router) -> Result<LinkItem> {
@@ -69,12 +69,14 @@ mod tests {
     async fn test_get_links_non_empty() {
         let mock_links_service = MockService::new();
         let mut mock_links_repo = MockRepository::new();
+
+        let item: LinkItem = "http://link".into();
+        let expected_items = vec![item.clone()];
+
         mock_links_repo
             .expect_list()
             .times(1)
-            .returning(|| Ok(vec![LinkItem::new("http://link")]));
-
-        let expected_items = vec![LinkItem::new("http://link")];
+            .returning(move || Ok(vec![item.clone()]));
 
         let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 

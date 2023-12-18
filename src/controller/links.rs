@@ -1,12 +1,12 @@
 use axum::{
-    extract::{Path, State},
+    extract::{self, Path, State},
     http::StatusCode,
-    response::{IntoResponse, Json},
-    routing, Router,
+    response::IntoResponse,
+    routing, Json, Router,
 };
 use serde_json::json;
 
-use crate::types::state::Router as RouterState;
+use crate::types::{request::PostLink as PostLinkRequest, state::Router as RouterState};
 
 const LINKS_ROUTE: &str = "/v1/links";
 const LINKS_ID_ROUTE: &str = "/v1/links/:id";
@@ -35,10 +35,17 @@ async fn list(State(app_state): State<RouterState>) -> impl IntoResponse {
     }
 }
 
-async fn post(State(app_state): State<RouterState>) -> impl IntoResponse {
+async fn post(
+    State(app_state): State<RouterState>,
+    Json(payload): extract::Json<PostLinkRequest>,
+) -> impl IntoResponse {
     let links_service = app_state.get_links_service();
-    match links_service.post(&app_state).await {
-        Ok(link) => Json(link).into_response(),
+
+    match links_service
+        .post(&app_state, &payload.to_string().into())
+        .await
+    {
+        Ok(link) => (StatusCode::CREATED, Json(link)).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
             (
@@ -131,10 +138,12 @@ mod tests {
     async fn test_get_links_non_empty() {
         let mut mock_links_service = MockService::new();
         let mock_links_repo = MockRepository::new();
+        let item: LinkItem = "http://link".into();
+
         mock_links_service
             .expect_list()
             .times(1)
-            .returning(|_| Ok(vec![LinkItem::new("http://link")]));
+            .returning(move |_| Ok(vec![item.clone()]));
 
         let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 

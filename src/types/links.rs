@@ -1,6 +1,8 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct LinkItem {
     id: String,
     owner: String,
@@ -11,11 +13,12 @@ pub struct LinkItem {
     updated_at: String,
 }
 
-impl LinkItem {
-    #[allow(dead_code)]
-    pub fn new(url: &str) -> Self {
+impl<T: ToString> From<T> for LinkItem {
+    fn from(link_url: T) -> Self {
         Self {
-            url: url.to_string(),
+            url: link_url.to_string(),
+            id: Uuid::new_v4().to_string(),
+            created_at: Utc::now().to_rfc3339(),
             ..Default::default()
         }
     }

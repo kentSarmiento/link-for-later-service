@@ -13,8 +13,8 @@ impl Links for Repository {
         Ok(vec![])
     }
 
-    async fn post(&self) -> Result<LinkItem> {
-        Err("Not implemented".into())
+    async fn post(&self, item: &LinkItem) -> Result<LinkItem> {
+        Ok(item.clone())
     }
 
     async fn get(&self, _id: &str) -> Result<LinkItem> {
