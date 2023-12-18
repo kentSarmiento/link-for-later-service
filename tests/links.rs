@@ -41,6 +41,7 @@ async fn test_get_links() {
 #[tokio::test]
 async fn test_post_links() {
     let request = r#"{
+        "owner": "1",
         "url": "http://link"
     }"#;
 
@@ -64,7 +65,7 @@ async fn test_post_links() {
     let body: Value = serde_json::from_str(body).unwrap();
 
     assert!(body["id"] != "");
-    assert!(body["owner"] == "");
+    assert!(body["owner"] == "1");
     assert!(body["url"] == "http://link");
     assert!(body["title"] == "");
     assert!(body["description"] == "");
