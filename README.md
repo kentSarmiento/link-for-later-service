@@ -10,7 +10,7 @@ Required Downloads:
 
 - Docker
 - Visual Studio Code
-- [Devcontainer extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+- [Devcontainer extension for vscode](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
 Setup:
 
