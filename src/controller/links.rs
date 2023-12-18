@@ -6,12 +6,12 @@ use axum::{
 };
 use serde_json::json;
 
-use crate::repository::DynLinksRepo;
+use crate::types::state::Router as RouterState;
 
 const LINKS_ROUTE: &str = "/v1/links";
 const LINKS_ID_ROUTE: &str = "/v1/links/:id";
 
-pub fn router() -> Router<DynLinksRepo> {
+pub fn router() -> Router<RouterState> {
     Router::new()
         .route(LINKS_ROUTE, routing::get(list))
         .route(LINKS_ROUTE, routing::post(post))
@@ -20,8 +20,9 @@ pub fn router() -> Router<DynLinksRepo> {
         .route(LINKS_ID_ROUTE, routing::delete(delete))
 }
 
-async fn list(State(links_repo): State<DynLinksRepo>) -> impl IntoResponse {
-    match links_repo.list().await {
+async fn list(State(app_state): State<RouterState>) -> impl IntoResponse {
+    let links_service = app_state.get_links_service();
+    match links_service.list(&app_state).await {
         Ok(list) => Json(list).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
@@ -34,7 +35,8 @@ async fn list(State(links_repo): State<DynLinksRepo>) -> impl IntoResponse {
     }
 }
 
-async fn post(State(links_repo): State<DynLinksRepo>) -> impl IntoResponse {
+async fn post(State(app_state): State<RouterState>) -> impl IntoResponse {
+    let links_repo = app_state.get_links_repo();
     match links_repo.post().await {
         Ok(link) => Json(link).into_response(),
         Err(e) => {
@@ -48,7 +50,8 @@ async fn post(State(links_repo): State<DynLinksRepo>) -> impl IntoResponse {
     }
 }
 
-async fn get(Path(id): Path<String>, State(links_repo): State<DynLinksRepo>) -> impl IntoResponse {
+async fn get(Path(id): Path<String>, State(app_state): State<RouterState>) -> impl IntoResponse {
+    let links_repo = app_state.get_links_repo();
     match links_repo.get(&id).await {
         Ok(link) => Json(link).into_response(),
         Err(e) => {
@@ -62,7 +65,8 @@ async fn get(Path(id): Path<String>, State(links_repo): State<DynLinksRepo>) -> 
     }
 }
 
-async fn put(Path(id): Path<String>, State(links_repo): State<DynLinksRepo>) -> impl IntoResponse {
+async fn put(Path(id): Path<String>, State(app_state): State<RouterState>) -> impl IntoResponse {
+    let links_repo = app_state.get_links_repo();
     match links_repo.put(&id).await {
         Ok(link) => Json(link).into_response(),
         Err(e) => {
@@ -76,10 +80,8 @@ async fn put(Path(id): Path<String>, State(links_repo): State<DynLinksRepo>) -> 
     }
 }
 
-async fn delete(
-    Path(id): Path<String>,
-    State(links_repo): State<DynLinksRepo>,
-) -> impl IntoResponse {
+async fn delete(Path(id): Path<String>, State(app_state): State<RouterState>) -> impl IntoResponse {
+    let links_repo = app_state.get_links_repo();
     match links_repo.delete(&id).await {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => {
