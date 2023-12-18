@@ -31,14 +31,26 @@ Setup:
 
 Testing:
 
-1. [cargo lambda](https://www.cargo-lambda.info/) is used for development of this service and it is pre-installed as part of the devcontainer. Use [cargo lambda watch](https://www.cargo-lambda.info/commands/watch.html) to hotcompile your changes:
+1. [`cargo lambda`](https://www.cargo-lambda.info/) is used for development of this service and it is pre-installed as part of the devcontainer. Use [`cargo lambda watch`](https://www.cargo-lambda.info/commands/watch.html) to hotcompile your changes:
 
    ```sh
    cargo lambda watch
    ```
 
-1. [cargo clippy](https://github.com/rust-lang/rust-clippy) is used for linting to catch common errors. This is setup to run on saving changes in the devcontainer. You may also run it from bash using the following command:
+1. [`cargo clippy`](https://github.com/rust-lang/rust-clippy) is used for linting to catch common errors. This is setup to run on saving changes in the devcontainer. You may also run it from bash using the following command:
 
    ```sh
    cargo clippy --all-targets --all-features -- -D warnings
+   ```
+
+1. `cargo test` is used to run unit/integration tests
+
+   Unit Test:
+   ```sh
+   cargo test --lib
+   ```
+
+   Integration Test:
+   ```sh
+   cargo test --test '*'
    ```
