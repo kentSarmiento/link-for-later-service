@@ -14,7 +14,7 @@ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 pub trait Links {
     async fn list<'a>(&self, app_state: &'a state::Router) -> Result<Vec<LinkItem>>;
 
-    async fn post<'a>(&self, app_state: &'a state::Router) -> Result<LinkItem>;
+    async fn post<'a>(&self, app_state: &'a state::Router, item: &LinkItem) -> Result<LinkItem>;
 
     async fn get<'a>(&self, id: &str, app_state: &'a state::Router) -> Result<LinkItem>;
 
