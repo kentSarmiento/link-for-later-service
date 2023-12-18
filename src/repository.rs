@@ -3,16 +3,32 @@ use std::sync::Arc;
 use axum::async_trait;
 use serde::{Deserialize, Serialize};
 
+pub mod sample;
+
 pub type DynLinksRepo = Arc<dyn LinksRepo + Send + Sync>;
 type RepoResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[async_trait]
 pub trait LinksRepo {
-    async fn list(&self) -> RepoResult<Vec<ListItem>>;
-    async fn post(&self) -> RepoResult<ListItem>;
-    async fn get(&self, id: &str) -> RepoResult<ListItem>;
-    async fn put(&self, id: &str) -> RepoResult<ListItem>;
-    async fn delete(&self, id: &str) -> RepoResult<()>;
+    async fn list(&self) -> RepoResult<Vec<ListItem>> {
+        Err("Not implemented".into())
+    }
+
+    async fn post(&self) -> RepoResult<ListItem> {
+        Err("Not implemented".into())
+    }
+
+    async fn get(&self, _id: &str) -> RepoResult<ListItem> {
+        Err("Not implemented".into())
+    }
+
+    async fn put(&self, _id: &str) -> RepoResult<ListItem> {
+        Err("Not implemented".into())
+    }
+
+    async fn delete(&self, _id: &str) -> RepoResult<()> {
+        Err("Not implemented".into())
+    }
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -24,29 +40,4 @@ pub struct ListItem {
     description: String,
     created_at: String,
     updated_at: String,
-}
-
-pub struct SampleRepo {}
-
-#[async_trait]
-impl LinksRepo for SampleRepo {
-    async fn list(&self) -> RepoResult<Vec<ListItem>> {
-        Ok(vec![])
-    }
-
-    async fn post(&self) -> RepoResult<ListItem> {
-        Ok(ListItem::default())
-    }
-
-    async fn get(&self, _id: &str) -> RepoResult<ListItem> {
-        Ok(ListItem::default())
-    }
-
-    async fn put(&self, _id: &str) -> RepoResult<ListItem> {
-        Ok(ListItem::default())
-    }
-
-    async fn delete(&self, _id: &str) -> RepoResult<()> {
-        Ok(())
-    }
 }
