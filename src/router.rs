@@ -4,10 +4,7 @@ use axum::Router;
 
 use crate::{
     controller, repository, service,
-    types::{
-        repository::DynLinks as DynLinksRepo, service::DynLinks as DynLinksService,
-        state::Router as RouterState,
-    },
+    types::{DynLinksRepo, DynLinksService, RouterState},
 };
 
 pub fn new() -> Router {

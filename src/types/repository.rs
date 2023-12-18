@@ -4,10 +4,9 @@ use axum::async_trait;
 #[cfg(test)]
 use mockall::{automock, predicate::*};
 
-use super::links::LinkItem;
+use super::{links::LinkItem, Result};
 
 pub type DynLinks = Arc<dyn Links + Send + Sync>;
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[cfg_attr(test, automock)]
 #[async_trait]

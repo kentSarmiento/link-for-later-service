@@ -1,9 +1,6 @@
 use axum::async_trait;
 
-use crate::types::{
-    links::LinkItem,
-    repository::{Links, Result},
-};
+use crate::types::{links::LinkItem, repository::Links, Result, ServerError};
 
 pub struct Repository {}
 
@@ -18,14 +15,14 @@ impl Links for Repository {
     }
 
     async fn get(&self, _id: &str) -> Result<LinkItem> {
-        Err("Not implemented".into())
+        Err(ServerError::ItemNotFound)
     }
 
     async fn put(&self, _id: &str) -> Result<LinkItem> {
-        Err("Not implemented".into())
+        Err(ServerError::ItemNotFound)
     }
 
     async fn delete(&self, _id: &str) -> Result<()> {
-        Err("Not implemented".into())
+        Err(ServerError::ItemNotFound)
     }
 }
