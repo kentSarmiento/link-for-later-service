@@ -9,6 +9,7 @@ use tower::ServiceExt;
 // Verifies GET /v1/links request
 //
 // GIVEN    an empty set of link items in the Server
+// AND      a request to get a list of link items
 // WHEN     GET /v1/links request is sent to the Server
 // THEN     the response is 200 OK and empty set of link items are returned
 #[tokio::test]
@@ -34,7 +35,7 @@ async fn test_get_links() {
 // Verifies POST /v1/links request
 //
 // GIVEN    an empty set of link items in the Server
-// AND      a request to post a link
+// AND      a request to post a link item
 // WHEN     POST /v1/links request is sent to the Server
 // THEN     the response is 201 CREATED and created link item is returned
 #[tokio::test]
@@ -69,4 +70,27 @@ async fn test_post_links() {
     assert!(body["description"] == "");
     assert!(body["created_at"] != "");
     assert!(body["updated_at"] == "");
+}
+
+// Verifies GET /v1/links/:id request
+//
+// GIVEN    an empty set of link items in the Server
+// AND      a request to get a link item
+// WHEN     GET /v1/links/:id request is sent to the Server
+// THEN     the response is 404 NOT FOUND
+#[tokio::test]
+async fn test_get_link() {
+    let handler = link_for_later::router::new();
+    let response = handler
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/v1/links/1111")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }

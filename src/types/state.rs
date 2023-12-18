@@ -1,4 +1,4 @@
-use super::{repository::DynLinks as DynLinksRepo, service::DynLinks as DynLinksService};
+use super::{DynLinksRepo, DynLinksService};
 
 #[derive(Clone)]
 pub struct Router {

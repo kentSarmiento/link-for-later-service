@@ -4,9 +4,10 @@ use axum::{
     response::IntoResponse,
     routing, Json, Router,
 };
-use serde_json::json;
 
-use crate::types::{request::PostLink as PostLinkRequest, state::Router as RouterState};
+use crate::types::{
+    request::PostLink as PostLinkRequest, request::PutLink as PutLinkRequest, RouterState,
+};
 
 const LINKS_ROUTE: &str = "/v1/links";
 const LINKS_ID_ROUTE: &str = "/v1/links/:id";
@@ -21,16 +22,11 @@ pub fn router() -> Router<RouterState> {
 }
 
 async fn list(State(app_state): State<RouterState>) -> impl IntoResponse {
-    let links_service = app_state.get_links_service();
-    match links_service.list(&app_state).await {
+    match app_state.get_links_service().list(&app_state).await {
         Ok(list) => Json(list).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "msg": "An error occurred." })),
-            )
-                .into_response()
+            e.into_response()
         }
     }
 }
@@ -39,65 +35,53 @@ async fn post(
     State(app_state): State<RouterState>,
     Json(payload): extract::Json<PostLinkRequest>,
 ) -> impl IntoResponse {
-    let links_service = app_state.get_links_service();
-
-    match links_service
-        .post(&app_state, &payload.to_string().into())
+    match app_state
+        .get_links_service()
+        .post(&app_state, &payload.into())
         .await
     {
         Ok(link) => (StatusCode::CREATED, Json(link)).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "msg": "An error occurred." })),
-            )
-                .into_response()
+            e.into_response()
         }
     }
 }
 
-async fn get(Path(id): Path<String>, State(app_state): State<RouterState>) -> impl IntoResponse {
-    let links_service = app_state.get_links_service();
-    match links_service.get(&id, &app_state).await {
+async fn get(State(app_state): State<RouterState>, Path(id): Path<String>) -> impl IntoResponse {
+    match app_state.get_links_service().get(&app_state, &id).await {
         Ok(link) => Json(link).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "msg": "An error occurred." })),
-            )
-                .into_response()
+            e.into_response()
         }
     }
 }
 
-async fn put(Path(id): Path<String>, State(app_state): State<RouterState>) -> impl IntoResponse {
-    let links_service = app_state.get_links_service();
-    match links_service.put(&id, &app_state).await {
+async fn put(
+    State(app_state): State<RouterState>,
+    Path(id): Path<String>,
+    Json(payload): extract::Json<PutLinkRequest>,
+) -> impl IntoResponse {
+    match app_state
+        .get_links_service()
+        .put(&app_state, &id, &payload.into())
+        .await
+    {
         Ok(link) => Json(link).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "msg": "An error occurred." })),
-            )
-                .into_response()
+            e.into_response()
         }
     }
 }
 
-async fn delete(Path(id): Path<String>, State(app_state): State<RouterState>) -> impl IntoResponse {
-    let links_service = app_state.get_links_service();
-    match links_service.delete(&id, &app_state).await {
+async fn delete(State(app_state): State<RouterState>, Path(id): Path<String>) -> impl IntoResponse {
+    match app_state.get_links_service().delete(&app_state, &id).await {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "msg": "An error occurred." })),
-            )
-                .into_response()
+            e.into_response()
         }
     }
 }
@@ -110,7 +94,8 @@ mod tests {
     use serde_json::Value;
 
     use crate::types::{
-        links::LinkItem, repository::MockLinks as MockRepository, service::MockLinks as MockService,
+        links::LinkItem, repository::MockLinks as MockRepository,
+        service::MockLinks as MockService, ServerError,
     };
 
     use super::*;
@@ -139,7 +124,7 @@ mod tests {
     async fn test_get_links_non_empty() {
         let mut mock_links_service = MockService::new();
         let mock_links_repo = MockRepository::new();
-        let item: LinkItem = "http://link".into();
+        let item = LinkItem::new("1", "http://link");
 
         mock_links_service
             .expect_list()
@@ -165,7 +150,7 @@ mod tests {
         mock_links_service
             .expect_list()
             .times(1)
-            .returning(|_| Err("A service error occurred.".into()));
+            .returning(|_| Err(ServerError::InternalServerError));
 
         let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
@@ -176,15 +161,15 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("An error occurred."));
+        assert!(body.contains("internal server error"));
     }
 
     #[tokio::test]
     async fn test_post_links() {
         let mut mock_links_service = MockService::new();
         let mock_links_repo = MockRepository::new();
-        let item: LinkItem = "http://link".into();
-        let request = PostLinkRequest::new("http://link");
+        let request = PostLinkRequest::new("1", "http://link");
+        let item: LinkItem = request.clone().into();
 
         mock_links_service
             .expect_post()
@@ -203,7 +188,7 @@ mod tests {
         let body: Value = serde_json::from_str(body).unwrap();
 
         assert!(body["id"] != "");
-        assert!(body["owner"] == "");
+        assert!(body["owner"] == "1");
         assert!(body["url"] == "http://link");
         assert!(body["title"] == "");
         assert!(body["description"] == "");
@@ -215,12 +200,12 @@ mod tests {
     async fn test_post_links_service_error() {
         let mut mock_links_service = MockService::new();
         let mock_links_repo = MockRepository::new();
-        let request = PostLinkRequest::new("http://link");
+        let request = PostLinkRequest::new("1", "http://link");
 
         mock_links_service
             .expect_post()
             .times(1)
-            .returning(|_, _| Err("A service error occurred.".into()));
+            .returning(|_, _| Err(ServerError::InternalServerError));
 
         let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
@@ -231,6 +216,142 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("An error occurred."));
+        assert!(body.contains("internal server error"));
+    }
+
+    #[tokio::test]
+    async fn test_get_link_not_found() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        mock_links_service
+            .expect_get()
+            .times(1)
+            .returning(|_, _| Err(ServerError::ItemNotFound));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = get(State(app_state), Path("1111".to_string())).await;
+
+        let (parts, body) = response.into_response().into_parts();
+        assert_eq!(StatusCode::NOT_FOUND, parts.status);
+
+        let body = body.collect().await.unwrap().to_bytes();
+        let body = std::str::from_utf8(&body).unwrap();
+        assert!(body.contains("item not found"));
+    }
+
+    #[tokio::test]
+    async fn test_get_link_found() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        let item = LinkItem::new("1", "http://link");
+
+        mock_links_service
+            .expect_get()
+            .times(1)
+            .returning(move |_, _| Ok(item.clone()));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = get(State(app_state), Path("1111".to_string())).await;
+
+        let (parts, body) = response.into_response().into_parts();
+        assert_eq!(StatusCode::OK, parts.status);
+
+        let body = body.collect().await.unwrap().to_bytes();
+        let body = std::str::from_utf8(&body).unwrap();
+        assert!(body.contains("http://link"));
+    }
+
+    #[tokio::test]
+    async fn test_put_links() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        let request = PutLinkRequest::new("1", "http://link");
+        let item: LinkItem = request.clone().into();
+
+        mock_links_service
+            .expect_put()
+            .times(1)
+            .returning(move |_, _, _| Ok(item.clone()));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = put(State(app_state), Path("1111".to_string()), Json(request)).await;
+
+        let (parts, body) = response.into_response().into_parts();
+        assert_eq!(StatusCode::OK, parts.status);
+
+        let body = body.collect().await.unwrap().to_bytes();
+        let body = std::str::from_utf8(&body).unwrap();
+        let body: Value = serde_json::from_str(body).unwrap();
+
+        assert!(body["owner"] == "1");
+        assert!(body["url"] == "http://link");
+        assert!(body["title"] == "");
+        assert!(body["description"] == "");
+        assert!(body["created_at"] == "");
+        assert!(body["updated_at"] != "");
+    }
+
+    #[tokio::test]
+    async fn test_put_links_service_error() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        let request = PutLinkRequest::new("1", "http://link");
+
+        mock_links_service
+            .expect_put()
+            .times(1)
+            .returning(|_, _, _| Err(ServerError::InternalServerError));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = put(State(app_state), Path("1111".to_string()), Json(request)).await;
+
+        let (parts, body) = response.into_response().into_parts();
+        assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
+
+        let body = body.collect().await.unwrap().to_bytes();
+        let body = std::str::from_utf8(&body).unwrap();
+        assert!(body.contains("internal server error"));
+    }
+
+    #[tokio::test]
+    async fn test_delete_links_not_found() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        mock_links_service
+            .expect_delete()
+            .times(1)
+            .returning(|_, _| Err(ServerError::ItemNotFound));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = delete(State(app_state), Path("1111".to_string())).await;
+
+        let (parts, body) = response.into_response().into_parts();
+        assert_eq!(StatusCode::NOT_FOUND, parts.status);
+
+        let body = body.collect().await.unwrap().to_bytes();
+        let body = std::str::from_utf8(&body).unwrap();
+        assert!(body.contains("item not found"));
+    }
+
+    #[tokio::test]
+    async fn test_delete_links_found() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        mock_links_service
+            .expect_delete()
+            .times(1)
+            .returning(move |_, _| Ok(()));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = delete(State(app_state), Path("1111".to_string())).await;
+
+        let (parts, _) = response.into_response().into_parts();
+        assert_eq!(StatusCode::NO_CONTENT, parts.status);
     }
 }
