@@ -1,32 +1,36 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PostLink {
-    url: String,
+    pub owner: String,
+    pub url: String,
 }
 
-impl ToString for PostLink {
-    fn to_string(&self) -> String {
-        self.url.clone()
-    }
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PutLink {
+    pub owner: String,
+    pub url: String,
+    pub title: String,
+    pub description: String,
 }
 
 #[cfg(test)]
 impl PostLink {
-    pub fn new(url: &str) -> Self {
+    pub fn new(owner: &str, url: &str) -> Self {
         Self {
+            owner: owner.to_string(),
             url: url.to_string(),
         }
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_post_link_to_string() {
-        let link = PostLink::new("http://link");
-        assert_eq!(link.to_string(), String::from("http://link"));
+impl PutLink {
+    pub fn new(owner: &str, url: &str) -> Self {
+        Self {
+            owner: owner.to_string(),
+            url: url.to_string(),
+            ..Default::default()
+        }
     }
 }
