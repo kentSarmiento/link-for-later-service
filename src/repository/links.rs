@@ -12,4 +12,20 @@ impl Links for Repository {
     async fn list(&self) -> Result<Vec<LinkItem>> {
         Ok(vec![])
     }
+
+    async fn post(&self) -> Result<LinkItem> {
+        Err("Not implemented".into())
+    }
+
+    async fn get(&self, _id: &str) -> Result<LinkItem> {
+        Err("Not implemented".into())
+    }
+
+    async fn put(&self, _id: &str) -> Result<LinkItem> {
+        Err("Not implemented".into())
+    }
+
+    async fn delete(&self, _id: &str) -> Result<()> {
+        Err("Not implemented".into())
+    }
 }
