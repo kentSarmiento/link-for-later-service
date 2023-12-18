@@ -13,19 +13,19 @@ pub trait Links {
         Err("Not implemented".into())
     }
 
-    async fn post(&self) -> Result<LinkItem> {
+    async fn post<'a>(&self, _app_state: &'a state::Router) -> Result<LinkItem> {
         Err("Not implemented".into())
     }
 
-    async fn get(&self, _id: &str) -> Result<LinkItem> {
+    async fn get<'a>(&self, _id: &str, _app_state: &'a state::Router) -> Result<LinkItem> {
         Err("Not implemented".into())
     }
 
-    async fn put(&self, _id: &str) -> Result<LinkItem> {
+    async fn put<'a>(&self, _id: &str, _app_state: &'a state::Router) -> Result<LinkItem> {
         Err("Not implemented".into())
     }
 
-    async fn delete(&self, _id: &str) -> Result<()> {
+    async fn delete<'a>(&self, _id: &str, _app_state: &'a state::Router) -> Result<()> {
         Err("Not implemented".into())
     }
 }
