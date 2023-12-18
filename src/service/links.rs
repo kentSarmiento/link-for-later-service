@@ -108,4 +108,45 @@ mod tests {
 
         assert!(response.is_err());
     }
+
+    #[tokio::test]
+    async fn test_post_links() {
+        let mock_links_service = MockService::new();
+        let mut mock_links_repo = MockRepository::new();
+        let item: LinkItem = "http://link".into();
+        let request_item = item.clone();
+        let response_item = item.clone();
+
+        mock_links_repo
+            .expect_post()
+            .times(1)
+            .returning(move |_| Ok(item.clone()));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let links_service = Service {};
+        let response = links_service.post(&app_state, &request_item).await;
+
+        assert!(response.is_ok());
+        assert_eq!(response.unwrap(), response_item);
+    }
+
+    #[tokio::test]
+    async fn test_post_links_repo_error() {
+        let mock_links_service = MockService::new();
+        let mut mock_links_repo = MockRepository::new();
+        let request_item: LinkItem = "http://link".into();
+
+        mock_links_repo
+            .expect_post()
+            .times(1)
+            .returning(|_| Err("A service error occurred.".into()));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let links_service = Service {};
+        let response = links_service.post(&app_state, &request_item).await;
+
+        assert!(response.is_err());
+    }
 }

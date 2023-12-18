@@ -107,6 +107,7 @@ mod tests {
     use std::sync::Arc;
 
     use http_body_util::BodyExt;
+    use serde_json::Value;
 
     use crate::types::{
         links::LinkItem, repository::MockLinks as MockRepository, service::MockLinks as MockService,
@@ -169,6 +170,61 @@ mod tests {
         let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = list(State(app_state)).await;
+
+        let (parts, body) = response.into_response().into_parts();
+        assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
+
+        let body = body.collect().await.unwrap().to_bytes();
+        let body = std::str::from_utf8(&body).unwrap();
+        assert!(body.contains("An error occurred."));
+    }
+
+    #[tokio::test]
+    async fn test_post_links() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        let item: LinkItem = "http://link".into();
+        let request = PostLinkRequest::new("http://link");
+
+        mock_links_service
+            .expect_post()
+            .times(1)
+            .returning(move |_, _| Ok(item.clone()));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = post(State(app_state), Json(request)).await;
+
+        let (parts, body) = response.into_response().into_parts();
+        assert_eq!(StatusCode::CREATED, parts.status);
+
+        let body = body.collect().await.unwrap().to_bytes();
+        let body = std::str::from_utf8(&body).unwrap();
+        let body: Value = serde_json::from_str(body).unwrap();
+
+        assert!(body["id"] != "");
+        assert!(body["owner"] == "");
+        assert!(body["url"] == "http://link");
+        assert!(body["title"] == "");
+        assert!(body["description"] == "");
+        assert!(body["created_at"] != "");
+        assert!(body["updated_at"] == "");
+    }
+
+    #[tokio::test]
+    async fn test_post_links_service_error() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        let request = PostLinkRequest::new("http://link");
+
+        mock_links_service
+            .expect_post()
+            .times(1)
+            .returning(|_, _| Err("A service error occurred.".into()));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = post(State(app_state), Json(request)).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
