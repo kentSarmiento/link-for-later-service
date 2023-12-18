@@ -13,6 +13,7 @@ axum = "0.7.2"
 #lambda_http = "0.8.3"
 lambda_http = { git = "https://github.com/awslabs/aws-lambda-rust-runtime", branch = "hyper1_upgrade" }
 lambda_runtime = "0.8.3"
+serde = { version = "1.0.193", features = [ "derive" ] }
 serde_json = "1.0.108"
 tokio = { version = "1", features = ["macros"] }
 tracing = { version = "0.1", features = ["log"] }

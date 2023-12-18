@@ -1,12 +1,11 @@
-use axum::{routing::get, Router};
+use std::sync::Arc;
 
-use crate::controller::link;
+use axum::Router;
+
+use crate::controller::links;
+use crate::repository::{DynLinksRepo, SampleRepo};
 
 pub fn new() -> Router {
-    Router::new()
-        .route("/link", get(link::list).post(link::post))
-        .route(
-            "/link/:id",
-            get(link::get).put(link::put).delete(link::delete),
-        )
+    let list_repo = Arc::new(SampleRepo {}) as DynLinksRepo;
+    Router::new().merge(links::router()).with_state(list_repo)
 }
