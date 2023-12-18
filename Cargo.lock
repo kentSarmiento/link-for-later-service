@@ -59,7 +59,7 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 [[package]]
 name = "aws_lambda_events"
 version = "0.12.1"
-source = "git+https://github.com/awslabs/aws-lambda-rust-runtime?branch=hyper1_upgrade#0b803dbfbdbc751bf426b60f89739eec6eedd854"
+source = "git+https://github.com/awslabs/aws-lambda-rust-runtime?branch=hyper1_upgrade#92f1da4e31c82af4ade2c7150c329f1febb9347a"
 dependencies = [
  "base64 0.21.5",
  "bytes",
@@ -511,7 +511,7 @@ checksum = "b1a46d1a171d865aa5f83f92695765caa047a9b4cbae2cbf37dbd613a793fd4c"
 [[package]]
 name = "lambda_http"
 version = "0.8.3"
-source = "git+https://github.com/awslabs/aws-lambda-rust-runtime?branch=hyper1_upgrade#0b803dbfbdbc751bf426b60f89739eec6eedd854"
+source = "git+https://github.com/awslabs/aws-lambda-rust-runtime?branch=hyper1_upgrade#92f1da4e31c82af4ade2c7150c329f1febb9347a"
 dependencies = [
  "aws_lambda_events",
  "base64 0.21.5",
@@ -561,7 +561,7 @@ dependencies = [
 [[package]]
 name = "lambda_runtime"
 version = "0.8.3"
-source = "git+https://github.com/awslabs/aws-lambda-rust-runtime?branch=hyper1_upgrade#0b803dbfbdbc751bf426b60f89739eec6eedd854"
+source = "git+https://github.com/awslabs/aws-lambda-rust-runtime?branch=hyper1_upgrade#92f1da4e31c82af4ade2c7150c329f1febb9347a"
 dependencies = [
  "async-stream",
  "base64 0.21.5",
@@ -598,7 +598,7 @@ dependencies = [
 [[package]]
 name = "lambda_runtime_api_client"
 version = "0.8.0"
-source = "git+https://github.com/awslabs/aws-lambda-rust-runtime?branch=hyper1_upgrade#0b803dbfbdbc751bf426b60f89739eec6eedd854"
+source = "git+https://github.com/awslabs/aws-lambda-rust-runtime?branch=hyper1_upgrade#92f1da4e31c82af4ade2c7150c329f1febb9347a"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -632,6 +632,7 @@ dependencies = [
  "axum",
  "lambda_http",
  "lambda_runtime 0.8.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde",
  "serde_json",
  "tokio",
  "tracing",
