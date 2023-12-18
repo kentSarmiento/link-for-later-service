@@ -2,23 +2,23 @@ use super::{repository::DynLinks as DynLinksRepo, service::DynLinks as DynLinksS
 
 #[derive(Clone)]
 pub struct Router {
-    links_repo: DynLinksRepo,
     links_service: DynLinksService,
+    links_repo: DynLinksRepo,
 }
 
 impl Router {
-    pub fn new(links_repo: DynLinksRepo, links_service: DynLinksService) -> Self {
+    pub fn new(links_service: DynLinksService, links_repo: DynLinksRepo) -> Self {
         Self {
-            links_repo,
             links_service,
+            links_repo,
         }
-    }
-
-    pub fn get_links_repo(&self) -> &DynLinksRepo {
-        &self.links_repo
     }
 
     pub fn get_links_service(&self) -> &DynLinksService {
         &self.links_service
+    }
+
+    pub fn get_links_repo(&self) -> &DynLinksRepo {
+        &self.links_repo
     }
 }

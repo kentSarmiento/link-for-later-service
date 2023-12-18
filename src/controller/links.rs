@@ -28,7 +28,7 @@ async fn list(State(app_state): State<RouterState>) -> impl IntoResponse {
             tracing::error!("Error: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "msg": e.to_string() })),
+                Json(json!({ "msg": "An error occurred." })),
             )
                 .into_response()
         }
@@ -43,7 +43,7 @@ async fn post(State(app_state): State<RouterState>) -> impl IntoResponse {
             tracing::error!("Error: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "msg": e.to_string() })),
+                Json(json!({ "msg": "An error occurred." })),
             )
                 .into_response()
         }
@@ -58,7 +58,7 @@ async fn get(Path(id): Path<String>, State(app_state): State<RouterState>) -> im
             tracing::error!("Error: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "msg": e.to_string() })),
+                Json(json!({ "msg": "An error occurred." })),
             )
                 .into_response()
         }
@@ -73,7 +73,7 @@ async fn put(Path(id): Path<String>, State(app_state): State<RouterState>) -> im
             tracing::error!("Error: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "msg": e.to_string() })),
+                Json(json!({ "msg": "An error occurred." })),
             )
                 .into_response()
         }
@@ -88,9 +88,84 @@ async fn delete(Path(id): Path<String>, State(app_state): State<RouterState>) ->
             tracing::error!("Error: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "msg": e.to_string() })),
+                Json(json!({ "msg": "An error occurred." })),
             )
                 .into_response()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use http_body_util::BodyExt;
+
+    use crate::types::{
+        links::LinkItem, repository::MockLinks as MockRepository, service::MockLinks as MockService,
+    };
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_get_links_empty() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        mock_links_service
+            .expect_list()
+            .times(1)
+            .returning(|_| Ok(vec![]));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = list(State(app_state)).await;
+
+        let (parts, body) = response.into_response().into_parts();
+        assert_eq!(StatusCode::OK, parts.status);
+
+        let body = body.collect().await.unwrap().to_bytes();
+        assert_eq!(&body[..], b"[]");
+    }
+
+    #[tokio::test]
+    async fn test_get_links_non_empty() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        mock_links_service
+            .expect_list()
+            .times(1)
+            .returning(|_| Ok(vec![LinkItem::new("http://link")]));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = list(State(app_state)).await;
+
+        let (parts, body) = response.into_response().into_parts();
+        assert_eq!(StatusCode::OK, parts.status);
+
+        let body = body.collect().await.unwrap().to_bytes();
+        let body = std::str::from_utf8(&body).unwrap();
+        assert!(body.contains("http://link"));
+    }
+
+    #[tokio::test]
+    async fn test_get_links_service_error() {
+        let mut mock_links_service = MockService::new();
+        let mock_links_repo = MockRepository::new();
+        mock_links_service
+            .expect_list()
+            .times(1)
+            .returning(|_| Err("A service error occurred.".into()));
+
+        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+
+        let response = list(State(app_state)).await;
+
+        let (parts, body) = response.into_response().into_parts();
+        assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
+
+        let body = body.collect().await.unwrap().to_bytes();
+        let body = std::str::from_utf8(&body).unwrap();
+        assert!(body.contains("An error occurred."));
     }
 }
