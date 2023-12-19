@@ -3,6 +3,8 @@ use mongodb::{bson::doc, Collection, Database};
 
 use crate::types::{links::LinkItem, repository::Links, AppError, Result};
 
+const LINKS_COLLECTION_NAME: &str = "v1/links";
+
 #[derive(Default)]
 pub struct MongoDbRepository {
     collection: Option<Collection<LinkItem>>,
@@ -10,7 +12,7 @@ pub struct MongoDbRepository {
 
 impl MongoDbRepository {
     pub fn new(db: &Database) -> Self {
-        let collection = db.collection::<LinkItem>("links");
+        let collection = db.collection::<LinkItem>(LINKS_COLLECTION_NAME);
         Self {
             collection: Some(collection),
         }
