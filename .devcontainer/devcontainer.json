@@ -48,12 +48,20 @@
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [
     // cargo-lambda port
-    9000
+    9000,
+    // cargo-shuttle port
+    8000,
+    // standalone port
+    3000
   ],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "rustc --version",
+  "postCreateCommand": "sudo chown -R vscode /var/run/docker.sock && rustc --version",
 
   // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-  "remoteUser": "vscode"
+  "remoteUser": "vscode",
+
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ]
 }

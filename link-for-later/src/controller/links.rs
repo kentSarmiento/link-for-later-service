@@ -151,7 +151,7 @@ mod tests {
         mock_links_service
             .expect_list()
             .times(1)
-            .returning(|_| Err(AppError::InternalAppError));
+            .returning(|_| Err(AppError::TestError));
 
         let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
@@ -162,7 +162,7 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("internal server error"));
+        assert!(body.contains("test error"));
     }
 
     #[tokio::test]
@@ -206,7 +206,7 @@ mod tests {
         mock_links_service
             .expect_post()
             .times(1)
-            .returning(|_, _| Err(AppError::InternalAppError));
+            .returning(|_, _| Err(AppError::TestError));
 
         let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
@@ -217,7 +217,7 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("internal server error"));
+        assert!(body.contains("test error"));
     }
 
     #[tokio::test]
@@ -304,7 +304,7 @@ mod tests {
         mock_links_service
             .expect_put()
             .times(1)
-            .returning(|_, _, _| Err(AppError::InternalAppError));
+            .returning(|_, _, _| Err(AppError::TestError));
 
         let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
@@ -315,7 +315,7 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("internal server error"));
+        assert!(body.contains("test error"));
     }
 
     #[tokio::test]

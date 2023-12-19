@@ -9,7 +9,9 @@ publish = false
 [dependencies]
 axum = "0.7.2"
 link-for-later = { path = "../link-for-later" }
+mongodb = "2.8.0"
 shuttle-axum = { version = "0.35.0", default-features = false, features = ["axum-0-7"] }
 shuttle-runtime = "0.35.0"
+shuttle-shared-db = { version = "0.35.0", features = ["mongodb"] }
 tokio = { version = "1", features = ["macros"] }
 tracing = { version = "0.1", features = ["log"] }

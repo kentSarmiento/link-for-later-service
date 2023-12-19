@@ -1,28 +1,70 @@
 use axum::async_trait;
+use mongodb::{bson::doc, Collection, Database};
 
 use crate::types::{links::LinkItem, repository::Links, AppError, Result};
 
-pub struct Repository {}
+#[derive(Default)]
+pub struct MongoDbRepository {
+    collection: Option<Collection<LinkItem>>,
+}
+
+impl MongoDbRepository {
+    pub fn new(db: &Database) -> Self {
+        let collection = db.collection::<LinkItem>("links");
+        Self {
+            collection: Some(collection),
+        }
+    }
+}
 
 #[async_trait]
-impl Links for Repository {
+impl Links for MongoDbRepository {
     async fn list(&self) -> Result<Vec<LinkItem>> {
-        Ok(vec![])
+        Err(AppError::NotSupported)
     }
 
     async fn post(&self, item: &LinkItem) -> Result<LinkItem> {
-        Ok(item.clone())
+        let Some(collection) = &self.collection else {
+            return Err(AppError::NoDatabaseSetup);
+        };
+        match collection.insert_one(item, None).await {
+            Ok(_) => Ok(item.clone()),
+            Err(e) => {
+                println!("insert_one() error: {e:?}");
+                Err(AppError::DatabaseError)
+            }
+        }
     }
 
-    async fn get(&self, _id: &str) -> Result<LinkItem> {
-        Err(AppError::ItemNotFound)
+    async fn get(&self, id: &str) -> Result<LinkItem> {
+        let Some(collection) = &self.collection else {
+            return Err(AppError::NoDatabaseSetup);
+        };
+        let filter = doc! {"id": id};
+        match collection.find_one(filter, None).await {
+            Ok(item) => item.ok_or(AppError::ItemNotFound),
+            Err(e) => {
+                println!("find_one() error: {e:?}");
+                Err(AppError::DatabaseError)
+            }
+        }
     }
 
     async fn put(&self, _id: &str) -> Result<LinkItem> {
-        Err(AppError::ItemNotFound)
+        Err(AppError::NotSupported)
     }
 
-    async fn delete(&self, _id: &str) -> Result<()> {
-        Err(AppError::ItemNotFound)
+    async fn delete(&self, id: &str) -> Result<()> {
+        let Some(collection) = &self.collection else {
+            return Err(AppError::NoDatabaseSetup);
+        };
+        let query = doc! {"id": id};
+        match collection.delete_one(query, None).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                println!("delete_one() error: {e:?}");
+                Err(AppError::DatabaseError)
+            }
+        }
     }
 }
