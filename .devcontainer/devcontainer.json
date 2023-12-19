@@ -29,7 +29,9 @@
           "**/target/**": true
         },
         "editor.formatOnSave": true,
-        "rust-analyzer.checkOnSave.command": "clippy"
+        "rust-analyzer.checkOnSave.command": "clippy",
+        // https://github.com/rust-lang/rust-analyzer/pull/15846
+        "rust-analyzer.showRequestFailedErrorNotification": false
       },
 
       // Add the IDs of extensions you want installed when the container is created.

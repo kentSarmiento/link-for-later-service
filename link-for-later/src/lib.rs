@@ -1,6 +1,6 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 
-pub mod router;
+pub mod app;
 
 mod controller;
 mod repository;

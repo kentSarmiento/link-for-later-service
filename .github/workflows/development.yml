@@ -52,7 +52,6 @@ jobs:
               with:
                 toolchain: 1.74.0
                 profile: minimal
-                components: rustfmt, clippy
 
             - name: Unit Test
               run: cargo test --lib

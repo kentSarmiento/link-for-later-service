@@ -2,18 +2,18 @@ use std::{error, fmt};
 
 #[allow(dead_code)]
 #[derive(Debug)]
-pub enum Server {
+pub enum App {
     ItemNotFound,
-    InternalServerError,
+    InternalAppError,
 }
 
-impl fmt::Display for Server {
+impl fmt::Display for App {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::ItemNotFound => write!(f, "item not found"),
-            Self::InternalServerError => write!(f, "internal server error"),
+            Self::InternalAppError => write!(f, "internal server error"),
         }
     }
 }
 
-impl error::Error for Server {}
+impl error::Error for App {}

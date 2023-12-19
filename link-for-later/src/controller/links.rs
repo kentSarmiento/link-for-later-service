@@ -6,22 +6,23 @@ use axum::{
 };
 
 use crate::types::{
-    request::PostLink as PostLinkRequest, request::PutLink as PutLinkRequest, RouterState,
+    request::PostLink as PostLinkRequest, request::PutLink as PutLinkRequest, AppState,
 };
 
 const LINKS_ROUTE: &str = "/v1/links";
 const LINKS_ID_ROUTE: &str = "/v1/links/:id";
 
-pub fn router() -> Router<RouterState> {
+pub fn routes(state: AppState) -> Router<AppState> {
     Router::new()
         .route(LINKS_ROUTE, routing::get(list))
         .route(LINKS_ROUTE, routing::post(post))
         .route(LINKS_ID_ROUTE, routing::get(get))
         .route(LINKS_ID_ROUTE, routing::put(put))
         .route(LINKS_ID_ROUTE, routing::delete(delete))
+        .with_state(state)
 }
 
-async fn list(State(app_state): State<RouterState>) -> impl IntoResponse {
+async fn list(State(app_state): State<AppState>) -> impl IntoResponse {
     match app_state.get_links_service().list(&app_state).await {
         Ok(list) => Json(list).into_response(),
         Err(e) => {
@@ -32,7 +33,7 @@ async fn list(State(app_state): State<RouterState>) -> impl IntoResponse {
 }
 
 async fn post(
-    State(app_state): State<RouterState>,
+    State(app_state): State<AppState>,
     Json(payload): extract::Json<PostLinkRequest>,
 ) -> impl IntoResponse {
     match app_state
@@ -48,7 +49,7 @@ async fn post(
     }
 }
 
-async fn get(State(app_state): State<RouterState>, Path(id): Path<String>) -> impl IntoResponse {
+async fn get(State(app_state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
     match app_state.get_links_service().get(&app_state, &id).await {
         Ok(link) => Json(link).into_response(),
         Err(e) => {
@@ -59,7 +60,7 @@ async fn get(State(app_state): State<RouterState>, Path(id): Path<String>) -> im
 }
 
 async fn put(
-    State(app_state): State<RouterState>,
+    State(app_state): State<AppState>,
     Path(id): Path<String>,
     Json(payload): extract::Json<PutLinkRequest>,
 ) -> impl IntoResponse {
@@ -76,7 +77,7 @@ async fn put(
     }
 }
 
-async fn delete(State(app_state): State<RouterState>, Path(id): Path<String>) -> impl IntoResponse {
+async fn delete(State(app_state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
     match app_state.get_links_service().delete(&app_state, &id).await {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => {
@@ -95,7 +96,7 @@ mod tests {
 
     use crate::types::{
         links::LinkItem, repository::MockLinks as MockRepository,
-        service::MockLinks as MockService, ServerError,
+        service::MockLinks as MockService, AppError,
     };
 
     use super::*;
@@ -109,7 +110,7 @@ mod tests {
             .times(1)
             .returning(|_| Ok(vec![]));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = list(State(app_state)).await;
 
@@ -131,7 +132,7 @@ mod tests {
             .times(1)
             .returning(move |_| Ok(vec![item.clone()]));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = list(State(app_state)).await;
 
@@ -150,9 +151,9 @@ mod tests {
         mock_links_service
             .expect_list()
             .times(1)
-            .returning(|_| Err(ServerError::InternalServerError));
+            .returning(|_| Err(AppError::InternalAppError));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = list(State(app_state)).await;
 
@@ -176,7 +177,7 @@ mod tests {
             .times(1)
             .returning(move |_, _| Ok(item.clone()));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = post(State(app_state), Json(request)).await;
 
@@ -205,9 +206,9 @@ mod tests {
         mock_links_service
             .expect_post()
             .times(1)
-            .returning(|_, _| Err(ServerError::InternalServerError));
+            .returning(|_, _| Err(AppError::InternalAppError));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = post(State(app_state), Json(request)).await;
 
@@ -226,9 +227,9 @@ mod tests {
         mock_links_service
             .expect_get()
             .times(1)
-            .returning(|_, _| Err(ServerError::ItemNotFound));
+            .returning(|_, _| Err(AppError::ItemNotFound));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = get(State(app_state), Path("1111".to_string())).await;
 
@@ -251,7 +252,7 @@ mod tests {
             .times(1)
             .returning(move |_, _| Ok(item.clone()));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = get(State(app_state), Path("1111".to_string())).await;
 
@@ -275,7 +276,7 @@ mod tests {
             .times(1)
             .returning(move |_, _, _| Ok(item.clone()));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = put(State(app_state), Path("1111".to_string()), Json(request)).await;
 
@@ -303,9 +304,9 @@ mod tests {
         mock_links_service
             .expect_put()
             .times(1)
-            .returning(|_, _, _| Err(ServerError::InternalServerError));
+            .returning(|_, _, _| Err(AppError::InternalAppError));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = put(State(app_state), Path("1111".to_string()), Json(request)).await;
 
@@ -324,9 +325,9 @@ mod tests {
         mock_links_service
             .expect_delete()
             .times(1)
-            .returning(|_, _| Err(ServerError::ItemNotFound));
+            .returning(|_, _| Err(AppError::ItemNotFound));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = delete(State(app_state), Path("1111".to_string())).await;
 
@@ -347,7 +348,7 @@ mod tests {
             .times(1)
             .returning(move |_, _| Ok(()));
 
-        let app_state = RouterState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
         let response = delete(State(app_state), Path("1111".to_string())).await;
 
