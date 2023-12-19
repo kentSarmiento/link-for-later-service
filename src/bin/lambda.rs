@@ -10,6 +10,6 @@ async fn main() -> Result<(), Error> {
         .without_time()
         .init();
 
-    let handler = link_for_later::router::new();
-    run(handler).await
+    let app = link_for_later::app::new();
+    run(app).await
 }

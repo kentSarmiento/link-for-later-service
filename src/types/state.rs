@@ -1,12 +1,12 @@
 use super::{DynLinksRepo, DynLinksService};
 
 #[derive(Clone)]
-pub struct Router {
+pub struct App {
     links_service: DynLinksService,
     links_repo: DynLinksRepo,
 }
 
-impl Router {
+impl App {
     pub fn new(links_service: DynLinksService, links_repo: DynLinksRepo) -> Self {
         Self {
             links_service,
@@ -38,7 +38,7 @@ mod tests {
         let mock_links_service = Arc::new(MockService::new()) as DynLinksService;
         let mock_links_repo = Arc::new(MockRepository::new()) as DynLinksRepo;
 
-        let router_state = Router::new(mock_links_service.clone(), mock_links_repo.clone());
+        let router_state = App::new(mock_links_service.clone(), mock_links_repo.clone());
 
         assert!(Arc::ptr_eq(
             &mock_links_service,
