@@ -1,17 +1,24 @@
 use std::{error, fmt};
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub enum App {
     ItemNotFound,
-    InternalAppError,
+    NoDatabaseSetup,
+    DatabaseError,
+    NotSupported,
+    #[cfg(test)]
+    TestError,
 }
 
 impl fmt::Display for App {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::ItemNotFound => write!(f, "item not found"),
-            Self::InternalAppError => write!(f, "internal server error"),
+            Self::NoDatabaseSetup => write!(f, "no database setup"),
+            Self::DatabaseError => write!(f, "database error setup"),
+            Self::NotSupported => write!(f, "operation not supported"),
+            #[cfg(test)]
+            Self::TestError => write!(f, "test error"),
         }
     }
 }
