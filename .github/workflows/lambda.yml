@@ -22,9 +22,9 @@ jobs:
             - name: Build lambda
               run: cargo lambda build --release
 
-            #- name: Deploy lambda
-            #  run: cargo lambda deploy link-for-later-lambda
-            #  env:
-            #    AWS_DEFAULT_REGION: <YOUR-REGION>
-            #    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            #    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            - name: Deploy lambda
+              run: cargo lambda deploy link-for-later-lambda
+              env:
+                AWS_DEFAULT_REGION: ap-southeast-1
+                AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
