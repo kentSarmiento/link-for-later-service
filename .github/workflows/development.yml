@@ -18,11 +18,8 @@ jobs:
                 toolchain: 1.74.0
                 profile: minimal
 
-            - name: Install Cargo Lambda
-              run: pip install cargo-lambda==1.0.0
-
-            - name: Build lambda
-              run: cargo lambda build --release
+            - name: Release build
+              run: cargo build --release
 
     lint:
         runs-on: ubuntu-latest
