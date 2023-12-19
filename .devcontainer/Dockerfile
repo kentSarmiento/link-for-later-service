@@ -16,3 +16,5 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 # Install cargo-shuttle from script fails, install from source instead
 # RUN curl -sSfL https://www.shuttle.rs/install | bash
 RUN cargo install cargo-shuttle
+RUN sudo chown -R vscode /usr/local/cargo/
+
