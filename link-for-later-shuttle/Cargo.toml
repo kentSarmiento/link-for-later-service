@@ -1,0 +1,15 @@
+[package]
+name = "link-for-later-shuttle"
+version = "0.1.0"
+edition = "2021"
+description = "Link for Later Service in Shuttle"
+repository = "https://github.com/kentSarmiento/link-for-later-service"
+publish = false
+
+[dependencies]
+axum = "0.7.2"
+link-for-later = { path = "../link-for-later" }
+shuttle-axum = { version = "0.35.0", default-features = false, features = ["axum-0-7"] }
+shuttle-runtime = "0.35.0"
+tokio = { version = "1", features = ["macros"] }
+tracing = { version = "0.1", features = ["log"] }

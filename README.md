@@ -6,13 +6,13 @@ Link for Later Service using Rust
 
 ## Development
 
-### Required Downloads:
+### Required Downloads
 
 - Docker
 - Visual Studio Code
 - [Devcontainer extension for vscode](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
-### Setup:
+### Setup
 
 1. Clone repository
 
@@ -29,7 +29,7 @@ Link for Later Service using Rust
 
 1. Wait for notification in the bottom right corner asking to `"Reopen in container"`.
 
-### Running the Service:
+### Running the Service
 
 The project is structured into a separate [library](./link-for-later/) and multiple binaries depending on the option to run the service.
 
@@ -41,7 +41,15 @@ Running as [Lambda](./link-for-later-lambda/src/main.rs):
    cargo lambda watch
    ```
 
-Running as [Axum Server](./link-for-later-axum/src/main.rs)
+Running as [Shuttle](./link-for-later-shuttle/src/main.rs)
+
+1. [Shuttle](https://github.com/shuttle-hq/shuttle) can also be used for development of this service and it is pre-installed as part of the devcontainer. Use [`cargo shuttle run`](https://docs.shuttle.rs/getting-started/local-run) to run the app locally:
+
+   ```sh
+   cargo shuttle run
+   ```
+
+Running as standalone [Axum Server](./link-for-later-axum/src/main.rs)
 
 1. Use `cargo run`:
 
@@ -49,16 +57,18 @@ Running as [Axum Server](./link-for-later-axum/src/main.rs)
    cargo run --bin link-for-later-axum
    ```
 
-### Testing:
+### Testing
 
 1. `cargo test` is used to run unit/integration tests
 
    Unit Test:
+
    ```sh
    cargo test --lib
    ```
 
    Integration Test:
+
    ```sh
    cargo test --test '*'
    ```
