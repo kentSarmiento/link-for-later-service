@@ -2,7 +2,7 @@ name: lambda
 
 on:
   push:
-    branches: [ main ]
+    branches: [ '*' ]
 
 jobs:
     deploy:
