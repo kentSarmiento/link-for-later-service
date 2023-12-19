@@ -6,40 +6,29 @@ Link for Later Service using Rust
 
 ## Deployments
 
-### AWS Lambda
+#### AWS Lambda
 
 Soon!
 
-### Shuttle
+#### Shuttle
 
 🚀 https://link-for-later.shuttleapp.rs/v1/links
 
 ## Development
 
-### Required Downloads
+#### Required Downloads
 
 - Docker
 - Visual Studio Code
 - [Devcontainer extension for vscode](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
-### Setup
+#### Setup
 
 1. Clone repository
-
-   ```sh
-   git@github.com:kentSarmiento/link-for-later-service.git
-   ```
-
 1. Open Visual Studio Code within the repo
-
-   ```sh
-   cd link-for-later-service
-   code .
-   ```
-
 1. Wait for notification in the bottom right corner asking to `"Reopen in container"`.
 
-### Running the Service
+#### Running the Service
 
 The project is structured into a separate [library](./link-for-later/) and multiple binaries depending on the option to run the service.
 
@@ -73,7 +62,7 @@ Running as standalone [Axum Server](./link-for-later-axum/src/main.rs)
 
    You will be able to send requests to the server using port 3000.
 
-### Testing
+#### Testing
 
 Aside from sending HTTP requests to a running server, there are also several other tests that can be done locally:
 
