@@ -14,7 +14,7 @@ use tower::ServiceExt;
 // THEN     the response is 200 OK and empty set of link items are returned
 #[tokio::test]
 async fn test_get_links() {
-    let handler = link_for_later::router::new();
+    let handler = link_for_later::app::new();
     let response = handler
         .oneshot(
             Request::builder()
@@ -45,7 +45,7 @@ async fn test_post_links() {
         "url": "http://link"
     }"#;
 
-    let handler = link_for_later::router::new();
+    let handler = link_for_later::app::new();
     let response = handler
         .oneshot(
             Request::builder()
@@ -81,7 +81,7 @@ async fn test_post_links() {
 // THEN     the response is 404 NOT FOUND
 #[tokio::test]
 async fn test_get_link() {
-    let handler = link_for_later::router::new();
+    let handler = link_for_later::app::new();
     let response = handler
         .oneshot(
             Request::builder()

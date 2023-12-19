@@ -1,0 +1,7 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./link-for-later/Cargo.toml",
+        "./link-for-later-axum/Cargo.toml",
+        "./link-for-later-lambda/Cargo.toml",
+    ]
+}

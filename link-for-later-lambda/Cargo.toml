@@ -1,0 +1,17 @@
+[package]
+name = "link-for-later-lambda"
+version = "0.1.0"
+edition = "2021"
+description = "Link for Later Service in Lambda"
+repository = "https://github.com/kentSarmiento/link-for-later-service"
+publish = false
+
+[dependencies]
+#lambda_http = "0.8.3"
+lambda_http = { git = "https://github.com/awslabs/aws-lambda-rust-runtime", branch = "main" }
+lambda_runtime = "0.8.3"
+link-for-later = { path = "../link-for-later" }
+tokio = { version = "1", features = ["macros"] }
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
+
