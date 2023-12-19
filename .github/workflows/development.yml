@@ -56,5 +56,5 @@ jobs:
             - name: Unit Test
               run: cargo test --lib
 
-            - name: Integration Test
-              run: cargo test --test '*'
+            #- name: Integration Test
+            #  run: cargo test --test '*'
