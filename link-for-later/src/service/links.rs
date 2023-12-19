@@ -37,6 +37,8 @@ impl Links for Service {
 
     async fn delete<'a>(&self, app_state: &'a AppState, id: &str) -> Result<()> {
         let links_repo = app_state.get_links_repo();
+
+        links_repo.get(id).await?;
         links_repo.delete(id).await
     }
 }
@@ -104,7 +106,7 @@ mod tests {
         mock_links_repo
             .expect_list()
             .times(1)
-            .returning(|| Err(AppError::InternalAppError));
+            .returning(|| Err(AppError::TestError));
 
         let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
@@ -145,7 +147,7 @@ mod tests {
         mock_links_repo
             .expect_post()
             .times(1)
-            .returning(|_| Err(AppError::InternalAppError));
+            .returning(|_| Err(AppError::TestError));
 
         let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
@@ -256,7 +258,7 @@ mod tests {
         mock_links_repo
             .expect_post()
             .times(1)
-            .returning(|_| Err(AppError::InternalAppError));
+            .returning(|_| Err(AppError::TestError));
 
         let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
@@ -270,10 +272,12 @@ mod tests {
     async fn test_delete_links_not_found() {
         let mock_links_service = MockService::new();
         let mut mock_links_repo = MockRepository::new();
+
         mock_links_repo
-            .expect_delete()
+            .expect_get()
             .times(1)
             .returning(|_| Err(AppError::ItemNotFound));
+        mock_links_repo.expect_delete().times(0);
 
         let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
 
@@ -287,6 +291,12 @@ mod tests {
     async fn test_delete_links_found() {
         let mock_links_service = MockService::new();
         let mut mock_links_repo = MockRepository::new();
+        let item = LinkItem::new("1", "http://link");
+
+        mock_links_repo
+            .expect_get()
+            .times(1)
+            .returning(move |_| Ok(item.clone()));
         mock_links_repo
             .expect_delete()
             .times(1)
