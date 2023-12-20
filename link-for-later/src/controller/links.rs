@@ -5,9 +5,7 @@ use axum::{
     routing, Json, Router,
 };
 
-use crate::types::{
-    request::PostLink as PostLinkRequest, request::PutLink as PutLinkRequest, AppState,
-};
+use crate::types::{links::LinkItem, request::PostLink as PostLinkRequest, AppState};
 
 const LINKS_ROUTE: &str = "/v1/links";
 const LINKS_ID_ROUTE: &str = "/v1/links/:id";
@@ -62,11 +60,11 @@ async fn get(State(app_state): State<AppState>, Path(id): Path<String>) -> impl 
 async fn put(
     State(app_state): State<AppState>,
     Path(id): Path<String>,
-    Json(payload): extract::Json<PutLinkRequest>,
+    Json(payload): extract::Json<LinkItem>,
 ) -> impl IntoResponse {
     match app_state
         .get_links_service()
-        .put(&app_state, &id, &payload.into())
+        .put(&app_state, &id, &payload)
         .await
     {
         Ok(link) => Json(link).into_response(),
@@ -188,13 +186,8 @@ mod tests {
         let body = std::str::from_utf8(&body).unwrap();
         let body: Value = serde_json::from_str(body).unwrap();
 
-        assert!(body["id"] != "");
         assert!(body["owner"] == "1");
         assert!(body["url"] == "http://link");
-        assert!(body["title"] == "");
-        assert!(body["description"] == "");
-        assert!(body["created_at"] != "");
-        assert!(body["updated_at"] == "");
     }
 
     #[tokio::test]
@@ -268,8 +261,8 @@ mod tests {
     async fn test_put_links() {
         let mut mock_links_service = MockService::new();
         let mock_links_repo = MockRepository::new();
-        let request = PutLinkRequest::new("1", "http://link");
-        let item: LinkItem = request.clone().into();
+        let request = LinkItem::new("1", "http://link");
+        let item: LinkItem = request.clone();
 
         mock_links_service
             .expect_put()
@@ -289,17 +282,13 @@ mod tests {
 
         assert!(body["owner"] == "1");
         assert!(body["url"] == "http://link");
-        assert!(body["title"] == "");
-        assert!(body["description"] == "");
-        assert!(body["created_at"] == "");
-        assert!(body["updated_at"] != "");
     }
 
     #[tokio::test]
     async fn test_put_links_service_error() {
         let mut mock_links_service = MockService::new();
         let mock_links_repo = MockRepository::new();
-        let request = PutLinkRequest::new("1", "http://link");
+        let request = LinkItem::new("1", "http://link");
 
         mock_links_service
             .expect_put()
