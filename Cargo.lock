@@ -1298,6 +1298,7 @@ dependencies = [
  "axum 0.7.2",
  "bson",
  "chrono",
+ "futures",
  "http-body-util",
  "mockall",
  "mongodb",
@@ -1314,6 +1315,7 @@ version = "0.1.0"
 dependencies = [
  "axum 0.7.2",
  "link-for-later",
+ "mongodb",
  "tokio",
  "tower",
  "tracing",

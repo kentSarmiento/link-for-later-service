@@ -1,3 +1,5 @@
+use mongodb::{options::ClientOptions, Client};
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
@@ -8,9 +10,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .without_time()
         .init();
 
-    let app = link_for_later::app::new(link_for_later::RepositoryType::None);
+    let uri = std::env::var("MONGODB_URI")?;
+    let database_name = std::env::var("MONGODB_DATABASE_NAME")?;
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    let client_options = ClientOptions::parse(uri).await?;
+    let client = Client::with_options(client_options)?;
+    let db = client.database(&database_name);
+
+    let app = link_for_later::app::new(link_for_later::RepositoryType::MongoDb(db));
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
     axum::serve(listener, app).await.unwrap();
     Ok(())
 }
