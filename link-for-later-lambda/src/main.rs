@@ -10,6 +10,6 @@ async fn main() -> Result<(), Error> {
         .without_time()
         .init();
 
-    let app = link_for_later::app::new(link_for_later::RepositoryType::None);
+    let app = link_for_later::app::new(link_for_later::DatabaseType::None);
     run(app).await
 }

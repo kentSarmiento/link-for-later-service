@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::with_options(client_options)?;
     let db = client.database(&database_name);
 
-    let app = link_for_later::app::new(link_for_later::RepositoryType::MongoDb(db));
+    let app = link_for_later::app::new(link_for_later::DatabaseType::MongoDb(db));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
     axum::serve(listener, app).await.unwrap();
