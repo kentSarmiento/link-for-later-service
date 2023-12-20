@@ -2,11 +2,12 @@ use std::str::FromStr;
 
 use axum::async_trait;
 use bson::{doc, Bson};
+use futures::TryStreamExt;
 use mongodb::{options::ReplaceOptions, Collection, Database};
 
 use crate::types::{links::LinkItem, repository::Links, AppError, Result};
 
-const LINKS_COLLECTION_NAME: &str = "v0/links";
+const LINKS_COLLECTION_NAME: &str = "v1/links";
 
 pub struct MongoDbRepository {
     collection: Collection<LinkItem>,
@@ -21,6 +22,16 @@ impl MongoDbRepository {
 
 #[async_trait]
 impl Links for MongoDbRepository {
+    async fn list(&self) -> Result<Vec<LinkItem>> {
+        match self.collection.find(None, None).await {
+            Ok(result) => Ok(result.try_collect().await.unwrap_or_else(|_| vec![])),
+            Err(e) => {
+                tracing::error!("Error: find(): {e:?}");
+                Err(AppError::DatabaseError)
+            }
+        }
+    }
+
     async fn post(&self, item: &LinkItem) -> Result<LinkItem> {
         match self.collection.insert_one(item, None).await {
             Ok(result) => {
@@ -30,6 +41,12 @@ impl Links for MongoDbRepository {
                     tracing::error!("Error: unexpected inserted_id: {}", result.inserted_id);
                     return Err(AppError::DatabaseError);
                 };
+                let query = doc! {"_id": result.inserted_id};
+                let update = doc! {"$set": doc! { "id": &id } };
+                self.collection
+                    .update_one(query, update, None)
+                    .await
+                    .unwrap();
                 let returned_item = item.clone().id(&id);
                 Ok(returned_item)
             }
@@ -45,8 +62,8 @@ impl Links for MongoDbRepository {
             tracing::error!("Error: {id} cannot be converted to Bson ObjectId");
             return Err(AppError::ItemNotFound);
         };
-        let filter = doc! {"_id": oid};
-        match self.collection.find_one(filter, None).await {
+        let query = doc! {"_id": oid};
+        match self.collection.find_one(query, None).await {
             Ok(item) => item.map_or(Err(AppError::ItemNotFound), |item| {
                 let returned_item = item.id(id);
                 Ok(returned_item)
@@ -63,9 +80,9 @@ impl Links for MongoDbRepository {
             tracing::error!("Error: {id} cannot be converted to Bson ObjectId");
             return Err(AppError::ItemNotFound);
         };
-        let filter = doc! {"_id": id};
+        let query = doc! {"_id": id};
         let opts = ReplaceOptions::builder().upsert(true).build();
-        match self.collection.replace_one(filter, item, Some(opts)).await {
+        match self.collection.replace_one(query, item, Some(opts)).await {
             Ok(_) => Ok(item.clone()),
             Err(e) => {
                 tracing::error!("Error: replace_one(): {e:?}");
