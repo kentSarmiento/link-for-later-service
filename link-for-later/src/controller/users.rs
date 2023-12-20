@@ -21,7 +21,7 @@ async fn register(
 ) -> impl IntoResponse {
     match app_state
         .users_service()
-        .add(&app_state, &payload.into())
+        .add(Box::new(app_state.users_repo().clone()), &payload.into())
         .await
     {
         Ok(link) => (StatusCode::CREATED, Json(link)).into_response(),

@@ -24,7 +24,11 @@ pub fn routes(state: AppState) -> Router<AppState> {
 }
 
 async fn list(State(app_state): State<AppState>) -> impl IntoResponse {
-    match app_state.links_service().list(&app_state).await {
+    match app_state
+        .links_service()
+        .list(Box::new(app_state.links_repo().clone()))
+        .await
+    {
         Ok(list) => Json(list).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
@@ -39,7 +43,7 @@ async fn post(
 ) -> impl IntoResponse {
     match app_state
         .links_service()
-        .post(&app_state, &payload.into())
+        .post(Box::new(app_state.links_repo().clone()), &payload.into())
         .await
     {
         Ok(link) => (StatusCode::CREATED, Json(link)).into_response(),
@@ -51,7 +55,11 @@ async fn post(
 }
 
 async fn get(State(app_state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
-    match app_state.links_service().get(&app_state, &id).await {
+    match app_state
+        .links_service()
+        .get(Box::new(app_state.links_repo().clone()), &id)
+        .await
+    {
         Ok(link) => Json(link).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
@@ -67,7 +75,7 @@ async fn put(
 ) -> impl IntoResponse {
     match app_state
         .links_service()
-        .put(&app_state, &id, &payload)
+        .put(Box::new(app_state.links_repo().clone()), &id, &payload)
         .await
     {
         Ok(link) => Json(link).into_response(),
@@ -79,7 +87,11 @@ async fn put(
 }
 
 async fn delete(State(app_state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
-    match app_state.links_service().delete(&app_state, &id).await {
+    match app_state
+        .links_service()
+        .delete(Box::new(app_state.links_repo().clone()), &id)
+        .await
+    {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
