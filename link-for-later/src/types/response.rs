@@ -11,7 +11,6 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
             Self::ItemNotFound => (StatusCode::NOT_FOUND, self.to_string()),
-            Self::NoDatabaseSetup => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             Self::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             Self::NotSupported => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             #[cfg(test)]
