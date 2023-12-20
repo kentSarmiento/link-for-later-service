@@ -1,12 +1,11 @@
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use super::request::{PostLink, PutLink};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct LinkItem {
-    id: String,
+    pub id: Option<String>,
     owner: String,
     url: String,
     title: String,
@@ -20,7 +19,6 @@ impl From<PostLink> for LinkItem {
         Self {
             owner: post_link.owner,
             url: post_link.url,
-            id: Uuid::new_v4().to_string(),
             created_at: Utc::now().to_rfc3339(),
             ..Default::default()
         }
@@ -42,11 +40,11 @@ impl From<PutLink> for LinkItem {
 
 impl LinkItem {
     pub fn merge(&self, other: &Self) -> Self {
-        let id = if other.id.is_empty() {
-            self.id.clone()
-        } else {
-            other.id.clone()
-        };
+        let id = None; /*if other.id.is_empty() {
+                           self.id.clone()
+                       } else {
+                           other.id.clone()
+                       };*/
         let owner = if other.owner.is_empty() {
             self.owner.clone()
         } else {
@@ -107,7 +105,7 @@ mod tests {
     #[test]
     fn test_merge_link_item() {
         let link_item_1 = LinkItem {
-            id: "1111".to_string(),
+            //id: "1111".to_string(),
             owner: "1".to_string(),
             url: "http://url".to_string(),
             created_at: "1/Jan/2020:19:03:58 +0000".to_string(),
@@ -120,13 +118,14 @@ mod tests {
             ..Default::default()
         };
         let expected_link_item = LinkItem {
-            id: "1111".to_string(),
+            //id: "1111".to_string(),
             owner: "1".to_string(),
             url: "http://url".to_string(),
             title: "Sample".to_string(),
             description: "Sample url".to_string(),
             created_at: "1/Jan/2020:19:03:58 +0000".to_string(),
             updated_at: "1/Jan/2021:19:03:58 +0000".to_string(),
+            ..Default::default()
         };
 
         let merged_link_item_1 = link_item_1.merge(&link_item_2);
