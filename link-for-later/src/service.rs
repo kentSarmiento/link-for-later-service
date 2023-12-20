@@ -4,7 +4,10 @@ use axum::async_trait;
 #[cfg(test)]
 use mockall::{automock, predicate::*};
 
-use crate::types::{entity::LinkItem, AppState, Result};
+use crate::{
+    state::AppState,
+    types::{entity::LinkItem, Result},
+};
 
 pub type DynLinks = Arc<dyn Links + Send + Sync>;
 

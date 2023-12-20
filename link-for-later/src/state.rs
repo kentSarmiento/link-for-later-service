@@ -1,14 +1,17 @@
-use crate::repository::{DynLinks as DynLinksRepository, DynUsers as DynUsersRepository};
-use crate::service::DynLinks as DynLinksService;
+use crate::{
+    repository::{DynLinks as DynLinksRepository, DynUsers as DynUsersRepository},
+    service::DynLinks as DynLinksService,
+};
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Clone)]
-pub struct App {
+pub struct AppState {
     links_service: DynLinksService,
     links_repo: DynLinksRepository,
     users_repo: DynUsersRepository,
 }
 
-impl App {
+impl AppState {
     pub fn new(
         links_service: DynLinksService,
         links_repo: DynLinksRepository,

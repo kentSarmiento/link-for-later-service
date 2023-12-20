@@ -6,7 +6,8 @@ use crate::{
     controller, repository,
     repository::{DynLinks as DynLinksRepository, DynUsers as DynUsersRepository},
     service::{self, DynLinks as DynLinksService},
-    types::{AppState, Database},
+    state::AppState,
+    types::Database,
 };
 
 pub fn new(db: Database) -> Router {

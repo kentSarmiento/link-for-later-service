@@ -5,7 +5,10 @@ use axum::{
     routing, Json, Router,
 };
 
-use crate::types::{entity::LinkItem, AppState, PostLinkRequest};
+use crate::{
+    state::AppState,
+    types::{entity::LinkItem, PostLinkRequest},
+};
 
 const LINKS_ROUTE: &str = "/v1/links";
 const LINKS_ID_ROUTE: &str = "/v1/links/:id";
@@ -92,9 +95,11 @@ mod tests {
     use http_body_util::BodyExt;
     use serde_json::Value;
 
-    use crate::repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo};
-    use crate::service::MockLinks as MockLinksService;
-    use crate::types::{entity::LinkItem, AppError};
+    use crate::{
+        repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
+        service::MockLinks as MockLinksService,
+        types::{entity::LinkItem, AppError},
+    };
 
     use super::*;
 

@@ -1,6 +1,9 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Json, Router};
 
-use crate::types::{AppError, AppState, LoginRequest, RegisterRequest};
+use crate::{
+    state::AppState,
+    types::{AppError, LoginRequest, RegisterRequest},
+};
 
 const USERS_SIGNUP_ROUTE: &str = "/v1/users/register";
 const USERS_LOGIN_ROUTE: &str = "/v1/users/login";

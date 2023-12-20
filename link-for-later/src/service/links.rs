@@ -1,8 +1,11 @@
 use axum::async_trait;
 use chrono::Utc;
 
-use crate::service::Links as LinksService;
-use crate::types::{entity::LinkItem, AppState, Result};
+use crate::{
+    service::Links as LinksService,
+    state::AppState,
+    types::{entity::LinkItem, Result},
+};
 
 pub struct ServiceProvider {}
 
@@ -51,9 +54,12 @@ impl LinksService for ServiceProvider {
 mod tests {
     use std::sync::Arc;
 
-    use crate::repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo};
-    use crate::service::MockLinks as MockLinksService;
-    use crate::types::{entity::LinkItem, AppError, AppState};
+    use crate::{
+        repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
+        service::MockLinks as MockLinksService,
+        state::AppState,
+        types::{entity::LinkItem, AppError},
+    };
 
     use super::*;
 
