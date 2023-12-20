@@ -24,7 +24,7 @@ pub trait Links {
         Err(AppError::NotSupported)
     }
 
-    async fn put(&self, _id: &str) -> Result<LinkItem> {
+    async fn put(&self, _id: &str, _item: &LinkItem) -> Result<LinkItem> {
         Err(AppError::NotSupported)
     }
 
