@@ -3,21 +3,30 @@ use std::sync::Arc;
 use axum::Router;
 
 use crate::{
-    controller, repository, service,
-    types::{AppState, DynLinksRepo, DynLinksService, Repository},
+    controller, repository,
+    repository::{DynLinks as DynLinksRepository, DynUsers as DynUsersRepository},
+    service::{self, DynLinks as DynLinksService, DynUsers as DynUsersService},
+    state::AppState,
+    types::Database,
 };
 
-pub fn new(db: Repository) -> Router {
-    let links_service = Arc::new(service::links::Service {}) as DynLinksService;
-    let links_repo = match db {
-        Repository::MongoDb(db) => {
-            Arc::new(repository::mongodb::MongoDbRepository::new(&db)) as DynLinksRepo
-        }
-        Repository::None => Arc::new(repository::Base::default()) as DynLinksRepo,
+pub fn new(db: Database) -> Router {
+    let links_service = Arc::new(service::links::ServiceProvider {}) as DynLinksService;
+    let users_service = Arc::new(service::users::ServiceProvider {}) as DynUsersService;
+    let (links_repo, users_repo) = match db {
+        Database::MongoDb(db) => (
+            Arc::new(repository::mongodb::LinksDb::new(&db)) as DynLinksRepository,
+            Arc::new(repository::mongodb::UsersDb::new(&db)) as DynUsersRepository,
+        ),
+        Database::None => (
+            Arc::new(repository::BareDb::default()) as DynLinksRepository,
+            Arc::new(repository::BareDb::default()) as DynUsersRepository,
+        ),
     };
 
-    let state = AppState::new(links_service, links_repo);
+    let state = AppState::new(links_service, users_service, links_repo, users_repo);
     Router::new()
         .merge(controller::links::routes(state.clone()))
+        .merge(controller::users::routes(state.clone()))
         .with_state(state)
 }
