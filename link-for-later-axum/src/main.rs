@@ -8,7 +8,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .without_time()
         .init();
 
-    let app = link_for_later::app::new(None);
+    let app = link_for_later::app::new(link_for_later::RepositoryType::None);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app).await.unwrap();

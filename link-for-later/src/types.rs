@@ -11,3 +11,8 @@ pub mod service;
 pub mod state;
 
 pub type Result<T> = std::result::Result<T, AppError>;
+
+pub enum Repository {
+    MongoDb(mongodb::Database),
+    None,
+}
