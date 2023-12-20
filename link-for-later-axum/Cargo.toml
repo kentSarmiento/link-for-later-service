@@ -11,6 +11,7 @@ publish = false
 [dependencies]
 axum = "0.7.2"
 link-for-later = { path = "../link-for-later" }
+mongodb = "2.8.0"
 tokio = { version = "1", features = ["macros"] }
 tower = "0.4.13"
 tracing = { version = "0.1", features = ["log"] }

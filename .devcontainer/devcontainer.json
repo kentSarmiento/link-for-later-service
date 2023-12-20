@@ -52,7 +52,7 @@
     // cargo-shuttle port
     8000,
     // standalone port
-    3000
+    8080
   ],
 
   // Use 'postCreateCommand' to run commands after the container is created.
