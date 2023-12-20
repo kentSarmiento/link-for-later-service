@@ -53,9 +53,7 @@ mod tests {
     use std::sync::Arc;
 
     use crate::{
-        repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
-        service::{MockLinks as MockLinksService, MockUsers as MockUsersService},
-        state::AppState,
+        repository::MockLinks as MockLinksRepo,
         types::{entity::LinkItem, AppError},
     };
 
