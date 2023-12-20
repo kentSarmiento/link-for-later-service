@@ -5,7 +5,7 @@ use axum::{
     routing, Json, Router,
 };
 
-use crate::types::{links::LinkItem, request::PostLink as PostLinkRequest, AppState};
+use crate::types::{entity::LinkItem, AppState, PostLinkRequest};
 
 const LINKS_ROUTE: &str = "/v1/links";
 const LINKS_ID_ROUTE: &str = "/v1/links/:id";
@@ -21,7 +21,7 @@ pub fn routes(state: AppState) -> Router<AppState> {
 }
 
 async fn list(State(app_state): State<AppState>) -> impl IntoResponse {
-    match app_state.get_links_service().list(&app_state).await {
+    match app_state.links_service().list(&app_state).await {
         Ok(list) => Json(list).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
@@ -35,7 +35,7 @@ async fn post(
     Json(payload): extract::Json<PostLinkRequest>,
 ) -> impl IntoResponse {
     match app_state
-        .get_links_service()
+        .links_service()
         .post(&app_state, &payload.into())
         .await
     {
@@ -48,7 +48,7 @@ async fn post(
 }
 
 async fn get(State(app_state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
-    match app_state.get_links_service().get(&app_state, &id).await {
+    match app_state.links_service().get(&app_state, &id).await {
         Ok(link) => Json(link).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
@@ -63,7 +63,7 @@ async fn put(
     Json(payload): extract::Json<LinkItem>,
 ) -> impl IntoResponse {
     match app_state
-        .get_links_service()
+        .links_service()
         .put(&app_state, &id, &payload)
         .await
     {
@@ -76,7 +76,7 @@ async fn put(
 }
 
 async fn delete(State(app_state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
-    match app_state.get_links_service().delete(&app_state, &id).await {
+    match app_state.links_service().delete(&app_state, &id).await {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
@@ -92,23 +92,28 @@ mod tests {
     use http_body_util::BodyExt;
     use serde_json::Value;
 
-    use crate::types::{
-        links::LinkItem, repository::MockLinks as MockRepository,
-        service::MockLinks as MockService, AppError,
-    };
+    use crate::repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo};
+    use crate::service::MockLinks as MockLinksService;
+    use crate::types::{entity::LinkItem, AppError};
 
     use super::*;
 
     #[tokio::test]
     async fn test_get_links_empty() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
+
         mock_links_service
             .expect_list()
             .times(1)
             .returning(|_| Ok(vec![]));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = list(State(app_state)).await;
 
@@ -121,8 +126,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_links_non_empty() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
         let item = LinkItem::new("1", "http://link");
 
         mock_links_service
@@ -130,7 +136,11 @@ mod tests {
             .times(1)
             .returning(move |_| Ok(vec![item.clone()]));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = list(State(app_state)).await;
 
@@ -143,15 +153,21 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_links_service_error() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+    async fn test_links_service_error() {
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
+
         mock_links_service
             .expect_list()
             .times(1)
             .returning(|_| Err(AppError::TestError));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = list(State(app_state)).await;
 
@@ -165,8 +181,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_post_links() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
+
         let request = PostLinkRequest::new("1", "http://link");
         let item: LinkItem = request.clone().into();
 
@@ -175,7 +193,11 @@ mod tests {
             .times(1)
             .returning(move |_, _| Ok(item.clone()));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = post(State(app_state), Json(request)).await;
 
@@ -192,8 +214,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_post_links_service_error() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
         let request = PostLinkRequest::new("1", "http://link");
 
         mock_links_service
@@ -201,7 +224,11 @@ mod tests {
             .times(1)
             .returning(|_, _| Err(AppError::TestError));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = post(State(app_state), Json(request)).await;
 
@@ -215,14 +242,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_link_not_found() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
+
         mock_links_service
             .expect_get()
             .times(1)
             .returning(|_, _| Err(AppError::ItemNotFound));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = get(State(app_state), Path("1111".to_string())).await;
 
@@ -236,8 +269,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_link_found() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
         let item = LinkItem::new("1", "http://link");
 
         mock_links_service
@@ -245,7 +279,11 @@ mod tests {
             .times(1)
             .returning(move |_, _| Ok(item.clone()));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = get(State(app_state), Path("1111".to_string())).await;
 
@@ -259,8 +297,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_put_links() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
+
         let request = LinkItem::new("1", "http://link");
         let item: LinkItem = request.clone();
 
@@ -269,7 +309,11 @@ mod tests {
             .times(1)
             .returning(move |_, _, _| Ok(item.clone()));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = put(State(app_state), Path("1111".to_string()), Json(request)).await;
 
@@ -286,8 +330,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_put_links_service_error() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
         let request = LinkItem::new("1", "http://link");
 
         mock_links_service
@@ -295,7 +340,11 @@ mod tests {
             .times(1)
             .returning(|_, _, _| Err(AppError::TestError));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = put(State(app_state), Path("1111".to_string()), Json(request)).await;
 
@@ -309,14 +358,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_delete_links_not_found() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
+
         mock_links_service
             .expect_delete()
             .times(1)
             .returning(|_, _| Err(AppError::ItemNotFound));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = delete(State(app_state), Path("1111".to_string())).await;
 
@@ -330,14 +385,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_delete_links_found() {
-        let mut mock_links_service = MockService::new();
-        let mock_links_repo = MockRepository::new();
+        let mut mock_links_service = MockLinksService::new();
+        let mock_links_repo = MockLinksRepo::new();
+        let mock_users_repo = MockUsersRepo::new();
+
         mock_links_service
             .expect_delete()
             .times(1)
             .returning(move |_, _| Ok(()));
 
-        let app_state = AppState::new(Arc::new(mock_links_service), Arc::new(mock_links_repo));
+        let app_state = AppState::new(
+            Arc::new(mock_links_service),
+            Arc::new(mock_links_repo),
+            Arc::new(mock_users_repo),
+        );
 
         let response = delete(State(app_state), Path("1111".to_string())).await;
 

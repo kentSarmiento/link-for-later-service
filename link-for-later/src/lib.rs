@@ -1,6 +1,6 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 
-pub use crate::types::Repository as RepositoryType;
+pub use crate::types::Database as RepositoryType;
 pub mod app;
 
 mod controller;

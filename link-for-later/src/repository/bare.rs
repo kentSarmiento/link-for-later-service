@@ -1,17 +1,17 @@
-use std::sync::Arc;
-
 use axum::async_trait;
-#[cfg(test)]
-use mockall::{automock, predicate::*};
 
-use super::{links::LinkItem, AppError, Result};
+use crate::types::{
+    entity::{LinkItem, UserInfo},
+    AppError, Result,
+};
 
-pub type DynLinks = Arc<dyn Links + Send + Sync>;
+use super::{Links, Users};
 
-#[allow(clippy::used_underscore_binding)]
-#[cfg_attr(test, automock)]
+#[derive(Default)]
+pub struct Bare {}
+
 #[async_trait]
-pub trait Links {
+impl Links for Bare {
     async fn list(&self) -> Result<Vec<LinkItem>> {
         Err(AppError::NotSupported)
     }
@@ -29,6 +29,17 @@ pub trait Links {
     }
 
     async fn delete(&self, _id: &str) -> Result<()> {
+        Err(AppError::NotSupported)
+    }
+}
+
+#[async_trait]
+impl Users for Bare {
+    async fn add(&self, _info: &UserInfo) -> Result<UserInfo> {
+        Err(AppError::NotSupported)
+    }
+
+    async fn find(&self, _id: &str) -> Result<UserInfo> {
         Err(AppError::NotSupported)
     }
 }
