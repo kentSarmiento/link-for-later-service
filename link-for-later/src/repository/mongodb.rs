@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use axum::async_trait;
 use bson::{doc, Bson};
-use mongodb::{Collection, Database};
+use mongodb::{options::ReplaceOptions, Collection, Database};
 
 use crate::types::{links::LinkItem, repository::Links, AppError, Result};
 
@@ -53,6 +53,22 @@ impl Links for MongoDbRepository {
             }),
             Err(e) => {
                 tracing::error!("Error: find_one(): {e:?}");
+                Err(AppError::DatabaseError)
+            }
+        }
+    }
+
+    async fn put(&self, id: &str, item: &LinkItem) -> Result<LinkItem> {
+        let Ok(id) = bson::oid::ObjectId::from_str(id) else {
+            tracing::error!("Error: {id} cannot be converted to Bson ObjectId");
+            return Err(AppError::ItemNotFound);
+        };
+        let filter = doc! {"_id": id};
+        let opts = ReplaceOptions::builder().upsert(true).build();
+        match self.collection.replace_one(filter, item, Some(opts)).await {
+            Ok(_) => Ok(item.clone()),
+            Err(e) => {
+                tracing::error!("Error: replace_one(): {e:?}");
                 Err(AppError::DatabaseError)
             }
         }
