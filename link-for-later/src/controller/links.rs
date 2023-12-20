@@ -97,7 +97,7 @@ mod tests {
 
     use crate::{
         repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
-        service::MockLinks as MockLinksService,
+        service::{MockLinks as MockLinksService, MockUsers as MockUsersService},
         types::{entity::LinkItem, AppError},
     };
 
@@ -106,6 +106,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_links_empty() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
 
@@ -116,6 +117,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );
@@ -132,6 +134,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_links_non_empty() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
         let item = LinkItem::new("1", "http://link");
@@ -143,6 +146,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );
@@ -160,6 +164,7 @@ mod tests {
     #[tokio::test]
     async fn test_links_service_error() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
 
@@ -170,6 +175,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );
@@ -187,6 +193,7 @@ mod tests {
     #[tokio::test]
     async fn test_post_links() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
 
@@ -200,6 +207,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );
@@ -220,6 +228,7 @@ mod tests {
     #[tokio::test]
     async fn test_post_links_service_error() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
         let request = PostLinkRequest::new("1", "http://link");
@@ -231,6 +240,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );
@@ -248,6 +258,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_link_not_found() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
 
@@ -258,6 +269,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );
@@ -275,6 +287,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_link_found() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
         let item = LinkItem::new("1", "http://link");
@@ -286,6 +299,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );
@@ -303,6 +317,7 @@ mod tests {
     #[tokio::test]
     async fn test_put_links() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
 
@@ -316,6 +331,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );
@@ -336,6 +352,7 @@ mod tests {
     #[tokio::test]
     async fn test_put_links_service_error() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
         let request = LinkItem::new("1", "http://link");
@@ -347,6 +364,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );
@@ -364,6 +382,7 @@ mod tests {
     #[tokio::test]
     async fn test_delete_links_not_found() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
 
@@ -374,6 +393,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );
@@ -391,6 +411,7 @@ mod tests {
     #[tokio::test]
     async fn test_delete_links_found() {
         let mut mock_links_service = MockLinksService::new();
+        let mock_users_service = MockUsersService::new();
         let mock_links_repo = MockLinksRepo::new();
         let mock_users_repo = MockUsersRepo::new();
 
@@ -401,6 +422,7 @@ mod tests {
 
         let app_state = AppState::new(
             Arc::new(mock_links_service),
+            Arc::new(mock_users_service),
             Arc::new(mock_links_repo),
             Arc::new(mock_users_repo),
         );

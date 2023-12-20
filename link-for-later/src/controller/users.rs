@@ -19,7 +19,11 @@ async fn register(
     State(app_state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
 ) -> impl IntoResponse {
-    match app_state.users_repo().add(&payload.into()).await {
+    match app_state
+        .users_service()
+        .add(&app_state, &payload.into())
+        .await
+    {
         Ok(link) => (StatusCode::CREATED, Json(link)).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
