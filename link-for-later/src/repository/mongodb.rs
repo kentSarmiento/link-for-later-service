@@ -30,8 +30,7 @@ impl Links for MongoDbRepository {
                     tracing::error!("Error: unexpected inserted_id: {}", result.inserted_id);
                     return Err(AppError::DatabaseError);
                 };
-                let mut returned_item = item.clone();
-                returned_item.id = Some(id);
+                let returned_item = item.clone().id(&id);
                 Ok(returned_item)
             }
             Err(e) => {
@@ -48,9 +47,9 @@ impl Links for MongoDbRepository {
         };
         let filter = doc! {"_id": oid};
         match self.collection.find_one(filter, None).await {
-            Ok(item) => item.map_or(Err(AppError::ItemNotFound), |mut item| {
-                item.id = Some(id.to_string());
-                Ok(item)
+            Ok(item) => item.map_or(Err(AppError::ItemNotFound), |item| {
+                let returned_item = item.id(id);
+                Ok(returned_item)
             }),
             Err(e) => {
                 tracing::error!("Error: find_one(): {e:?}");
