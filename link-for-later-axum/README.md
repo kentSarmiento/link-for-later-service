@@ -1,8 +1,8 @@
-# Link for Later Service as a Standalone axum server
+# Link for Later Service as a Standalone server using axum
 
 ## Development
 
-The standalone server is using a MongoDb repository.
+For local development, a standalone axum server can be used with a MongoDb repository.
 
 Set the MongoDB server and database name. Then use `cargo run` to run the Server.
 

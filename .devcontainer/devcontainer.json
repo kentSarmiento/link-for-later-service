@@ -55,8 +55,8 @@
     8080
   ],
 
-  // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "sudo chown -R vscode /var/run/docker.sock && rustc --version",
+  "postCreateCommand": "rustc --version",
+  "postStartCommand": "sudo chown -R vscode /var/run/docker.sock",
 
   // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
   "remoteUser": "vscode",

@@ -4,7 +4,9 @@
 
 ## Development
 
-[Cargo Lambda](https://www.cargo-lambda.info/) is one of the options for development of this service and it is pre-installed as part of the devcontainer. Use [`cargo lambda watch`](https://www.cargo-lambda.info/commands/watch.html) to run the app as lambda:
+[Cargo Lambda](https://www.cargo-lambda.info/) is one of the options for development of this service and it is pre-installed as part of the devcontainer.
+
+Use [`cargo lambda watch`](https://www.cargo-lambda.info/commands/watch.html) to run the app as lambda locally:
 
 ```sh
 cargo lambda watch

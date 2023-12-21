@@ -16,9 +16,13 @@ pub type DynUsers = Arc<dyn Users + Send + Sync>;
 #[async_trait]
 pub trait Links {
     async fn list(&self) -> Result<Vec<LinkItem>>;
+
     async fn post(&self, item: &LinkItem) -> Result<LinkItem>;
+
     async fn get(&self, id: &str) -> Result<LinkItem>;
+
     async fn put(&self, id: &str, item: &LinkItem) -> Result<LinkItem>;
+
     async fn delete(&self, id: &str) -> Result<()>;
 }
 
@@ -26,7 +30,8 @@ pub trait Links {
 #[async_trait]
 pub trait Users {
     async fn add(&self, info: &UserInfo) -> Result<UserInfo>;
-    async fn find(&self, id: &str) -> Result<UserInfo>;
+
+    async fn find_by_user(&self, user: &str) -> Result<UserInfo>;
 }
 
 pub mod bare;

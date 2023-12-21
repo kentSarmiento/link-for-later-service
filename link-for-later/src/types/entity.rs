@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{PostLinkRequest, RegisterRequest};
+use super::{LoginRequest, PostLinkRequest, RegisterRequest};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct LinkItem {
@@ -16,9 +16,9 @@ pub struct LinkItem {
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct UserInfo {
     pub id: Option<String>,
-    pub username: String,
     pub email: String,
     pub password: String,
+    pub verified: bool,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -36,8 +36,18 @@ impl From<PostLinkRequest> for LinkItem {
 impl From<RegisterRequest> for UserInfo {
     fn from(registration: RegisterRequest) -> Self {
         Self {
-            username: registration.username,
+            email: registration.email,
             password: registration.password,
+            ..Default::default()
+        }
+    }
+}
+
+impl From<LoginRequest> for UserInfo {
+    fn from(login: LoginRequest) -> Self {
+        Self {
+            email: login.email,
+            password: login.password,
             ..Default::default()
         }
     }
@@ -70,6 +80,27 @@ impl UserInfo {
     pub fn id(&self, id: &str) -> Self {
         Self {
             id: Some(id.to_string()),
+            ..self.clone()
+        }
+    }
+
+    pub fn verified(&self, verified: bool) -> Self {
+        Self {
+            verified,
+            ..self.clone()
+        }
+    }
+
+    pub fn created_at(&self, created_at: &str) -> Self {
+        Self {
+            created_at: created_at.to_string(),
+            ..self.clone()
+        }
+    }
+
+    pub fn updated_at(&self, updated_at: &str) -> Self {
+        Self {
+            updated_at: updated_at.to_string(),
             ..self.clone()
         }
     }

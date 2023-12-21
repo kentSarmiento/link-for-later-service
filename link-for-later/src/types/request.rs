@@ -18,13 +18,12 @@ impl PostLink {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Register {
-    pub username: String,
+    pub email: String,
     pub password: String,
-    pub invite_code: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Login {
-    pub username: String,
+    pub email: String,
     pub password: String,
 }
