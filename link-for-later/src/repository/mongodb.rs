@@ -9,8 +9,8 @@ use crate::types::{entity::LinkItem, entity::UserInfo, AppError, Result};
 
 use super::{Links as LinksRepository, Users as UsersRepository};
 
-const LINKS_COLLECTION_NAME: &str = "v0/links";
-const USERS_COLLECTION_NAME: &str = "v0/users";
+const LINKS_COLLECTION_NAME: &str = "v0.1.0/links";
+const USERS_COLLECTION_NAME: &str = "v0.1.0/users";
 
 pub struct LinksDb {
     links_collection: Collection<LinkItem>,

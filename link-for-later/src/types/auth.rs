@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Claims {
-    email: String,
+    sub: String, // email
+    exp: usize,  // expiration time
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -11,9 +12,10 @@ pub struct Token {
 }
 
 impl Claims {
-    pub fn new(email: &str) -> Self {
+    pub fn new(sub: &str, exp: usize) -> Self {
         Self {
-            email: email.to_string(),
+            sub: sub.to_string(),
+            exp,
         }
     }
 }
