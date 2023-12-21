@@ -7,6 +7,7 @@ use mockall::{automock, predicate::*};
 use crate::{
     repository,
     types::{
+        auth::Token,
         entity::{LinkItem, UserInfo},
         Result,
     },
@@ -50,8 +51,9 @@ pub trait Users {
     async fn login(
         &self,
         users_repo: Box<repository::DynUsers>,
+        secret_key: &str,
         user_info: &UserInfo,
-    ) -> Result<UserInfo>;
+    ) -> Result<Token>;
 }
 
 pub mod links;

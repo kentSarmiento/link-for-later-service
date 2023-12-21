@@ -10,6 +10,7 @@ pub struct AppState {
     users_service: DynUsersService,
     links_repo: DynLinksRepository,
     users_repo: DynUsersRepository,
+    secret_key: String,
 }
 
 impl AppState {
@@ -19,11 +20,13 @@ impl AppState {
         links_repo: DynLinksRepository,
         users_repo: DynUsersRepository,
     ) -> Self {
+        let secret_key = std::env::var("JWT_SECRET").map_or_else(|_| String::new(), |key| key);
         Self {
             links_service,
             users_service,
             links_repo,
             users_repo,
+            secret_key,
         }
     }
 
@@ -41,5 +44,9 @@ impl AppState {
 
     pub fn users_repo(&self) -> &DynUsersRepository {
         &self.users_repo
+    }
+
+    pub fn secret_key(&self) -> &str {
+        &self.secret_key
     }
 }
