@@ -9,8 +9,8 @@ use crate::types::{entity::LinkItem, entity::UserInfo, AppError, Result};
 
 use super::{Links as LinksRepository, Users as UsersRepository};
 
-const LINKS_COLLECTION_NAME: &str = "v1/links";
-const USERS_COLLECTION_NAME: &str = "v1/users";
+const LINKS_COLLECTION_NAME: &str = "v0/links";
+const USERS_COLLECTION_NAME: &str = "v0/users";
 
 pub struct LinksDb {
     links_collection: Collection<LinkItem>,
@@ -152,7 +152,14 @@ impl UsersRepository for UsersDb {
         }
     }
 
-    async fn find(&self, _id: &str) -> Result<UserInfo> {
-        Err(AppError::NotSupported)
+    async fn find_by_user(&self, user: &str) -> Result<UserInfo> {
+        let query = doc! {"email": user};
+        match self.users_collection.find_one(query, None).await {
+            Ok(item) => item.ok_or(AppError::UserNotFound),
+            Err(e) => {
+                tracing::error!("Error: find_one(): {e:?}");
+                Err(AppError::DatabaseError)
+            }
+        }
     }
 }

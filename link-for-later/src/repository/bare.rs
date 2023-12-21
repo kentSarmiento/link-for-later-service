@@ -39,7 +39,7 @@ impl Users for Bare {
         Err(AppError::NotSupported)
     }
 
-    async fn find(&self, _id: &str) -> Result<UserInfo> {
+    async fn find_by_user(&self, _user: &str) -> Result<UserInfo> {
         Err(AppError::NotSupported)
     }
 }
