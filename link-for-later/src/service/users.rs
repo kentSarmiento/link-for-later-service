@@ -16,9 +16,11 @@ impl UsersService for ServiceProvider {
         users_repo: Box<repository::DynUsers>,
         user_info: &UserInfo,
     ) -> Result<UserInfo> {
-        if users_repo.find_by_user(&user_info.email).await.is_ok() {
-            return Err(AppError::UserAlreadyExists);
-        }
+        let user_info = match users_repo.find_by_user(&user_info.email).await {
+            Ok(_) => return Err(AppError::UserAlreadyExists),
+            Err(AppError::UserNotFound) => user_info.clone(),
+            Err(e) => return Err(e),
+        };
 
         let now = Utc::now().to_rfc3339();
         let registered_user_info = user_info.created_at(&now).updated_at(&now);
@@ -35,9 +37,7 @@ impl UsersService for ServiceProvider {
         users_repo: Box<repository::DynUsers>,
         user_info: &UserInfo,
     ) -> Result<UserInfo> {
-        if users_repo.find_by_user(&user_info.email).await.is_err() {
-            return Err(AppError::UserNotFound);
-        }
+        users_repo.find_by_user(&user_info.email).await?;
 
         // TODO: login process, return token
         Ok(user_info.clone())

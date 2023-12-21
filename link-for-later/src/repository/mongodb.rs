@@ -155,7 +155,7 @@ impl UsersRepository for UsersDb {
     async fn find_by_user(&self, user: &str) -> Result<UserInfo> {
         let query = doc! {"email": user};
         match self.users_collection.find_one(query, None).await {
-            Ok(item) => item.ok_or(AppError::ItemNotFound),
+            Ok(item) => item.ok_or(AppError::UserNotFound),
             Err(e) => {
                 tracing::error!("Error: find_one(): {e:?}");
                 Err(AppError::DatabaseError)
