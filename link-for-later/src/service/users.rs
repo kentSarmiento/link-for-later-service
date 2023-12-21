@@ -1,10 +1,15 @@
 use axum::async_trait;
 use chrono::Utc;
+use jsonwebtoken::{encode, EncodingKey, Header};
 
 use crate::{
     repository,
     service::Users as UsersService,
-    types::{entity::UserInfo, AppError, Result},
+    types::{
+        auth::{Claims, Token},
+        entity::UserInfo,
+        AppError, Result,
+    },
 };
 
 pub struct ServiceProvider {}
@@ -35,11 +40,26 @@ impl UsersService for ServiceProvider {
     async fn login(
         &self,
         users_repo: Box<repository::DynUsers>,
+        secret_key: &str,
         user_info: &UserInfo,
-    ) -> Result<UserInfo> {
-        users_repo.find_by_user(&user_info.email).await?;
+    ) -> Result<Token> {
+        let retrieved_user_info = users_repo.find_by_user(&user_info.email).await?;
 
-        // TODO: login process, return token
-        Ok(user_info.clone())
+        if retrieved_user_info.password != user_info.password {
+            tracing::error!("Error: invalid password for user {}", &user_info.email);
+            return Err(AppError::InvalidPassword);
+        }
+
+        let claims = Claims::new(&retrieved_user_info.email);
+        let Ok(token) = encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(secret_key.as_ref()),
+        ) else {
+            tracing::error!("Error: cannot generate token");
+            return Err(AppError::ServerError);
+        };
+
+        Ok(Token::new(&token))
     }
 }

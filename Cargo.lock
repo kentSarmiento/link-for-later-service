@@ -1300,6 +1300,7 @@ dependencies = [
  "chrono",
  "futures",
  "http-body-util",
+ "jsonwebtoken",
  "mockall",
  "mongodb",
  "serde",

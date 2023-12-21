@@ -6,7 +6,7 @@ Link for Later Service provides an API to save links in your personal library fo
 
 ## Features
 
-- User registration/login for personal library
+- User registration/login for a personal library
 - Saving of links to library
 - Analysis of saved links in library (to add information such as label, category, description, estimated time)
 

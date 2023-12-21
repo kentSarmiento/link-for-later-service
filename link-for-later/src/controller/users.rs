@@ -2,7 +2,7 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Js
 
 use crate::{
     state::AppState,
-    types::{entity::UserInfo, LoginRequest, RegisterRequest},
+    types::{entity::UserInfo, LoginRequest, LoginResponse, RegisterRequest},
 };
 
 const USERS_SIGNUP_ROUTE: &str = "/v1/users/register";
@@ -39,13 +39,19 @@ async fn login(
     Json(payload): Json<LoginRequest>,
 ) -> impl IntoResponse {
     let users_repo = app_state.users_repo().clone();
+    let secret_key = app_state.secret_key();
     let user_info: UserInfo = payload.into();
     match app_state
         .users_service()
-        .login(Box::new(users_repo), &user_info)
+        .login(Box::new(users_repo), secret_key, &user_info)
         .await
     {
-        Ok(_) => StatusCode::OK.into_response(),
+        Ok(token) => {
+            let response = LoginResponse {
+                token: token.jwt().to_string(),
+            };
+            (StatusCode::OK, Json(response)).into_response()
+        }
         Err(e) => {
             tracing::error!("Error: {}", e);
             e.into_response()
