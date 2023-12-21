@@ -16,7 +16,7 @@ The project is structured into the [Service Library](./link-for-later/) and mult
 
 - [Shuttle](./link-for-later-shuttle/)
 - [AWS Lambda Function](./link-for-later-lambda/)
-- [Standalone axum server](./link-for-later-axum/) (for local development)
+- [Standalone server using axum](./link-for-later-axum/) (for local development)
 
 ## Getting Started
 

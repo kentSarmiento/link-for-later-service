@@ -1,4 +1,4 @@
-# Link for Later Service as a Standalone axum server
+# Link for Later Service as a Standalone server using axum
 
 ## Development
 
