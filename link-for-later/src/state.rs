@@ -20,7 +20,7 @@ impl AppState {
         links_repo: DynLinksRepository,
         users_repo: DynUsersRepository,
     ) -> Self {
-        let secret_key = std::env::var("MONGODB_URI").map_or_else(|_| String::new(), |key| key);
+        let secret_key = std::env::var("JWT_SECRET").map_or_else(|_| String::new(), |key| key);
         Self {
             links_service,
             users_service,
