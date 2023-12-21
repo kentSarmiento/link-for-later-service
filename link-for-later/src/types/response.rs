@@ -10,9 +10,11 @@ use super::AppError;
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
-            Self::ItemNotFound => (StatusCode::NOT_FOUND, self.to_string()),
-            Self::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             Self::NotSupported => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
+            Self::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
+            Self::ItemNotFound => (StatusCode::NOT_FOUND, self.to_string()),
+            Self::UserAlreadyExists => (StatusCode::BAD_REQUEST, self.to_string()),
+            Self::UserNotFound => (StatusCode::BAD_REQUEST, self.to_string()),
             #[cfg(test)]
             Self::TestError => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
         };

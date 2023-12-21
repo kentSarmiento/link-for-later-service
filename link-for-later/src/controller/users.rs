@@ -2,7 +2,7 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Js
 
 use crate::{
     state::AppState,
-    types::{AppError, LoginRequest, RegisterRequest},
+    types::{entity::UserInfo, LoginRequest, RegisterRequest},
 };
 
 const USERS_SIGNUP_ROUTE: &str = "/v1/users/register";
@@ -19,12 +19,14 @@ async fn register(
     State(app_state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
 ) -> impl IntoResponse {
+    let users_repo = app_state.users_repo().clone();
+    let user_info: UserInfo = payload.into();
     match app_state
         .users_service()
-        .add(Box::new(app_state.users_repo().clone()), &payload.into())
+        .register(Box::new(users_repo), &user_info)
         .await
     {
-        Ok(link) => (StatusCode::CREATED, Json(link)).into_response(),
+        Ok(info) => (StatusCode::CREATED, Json(info)).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
             e.into_response()
@@ -33,8 +35,20 @@ async fn register(
 }
 
 async fn login(
-    State(_app_state): State<AppState>,
-    Json(_payload): Json<LoginRequest>,
+    State(app_state): State<AppState>,
+    Json(payload): Json<LoginRequest>,
 ) -> impl IntoResponse {
-    AppError::NotSupported.into_response()
+    let users_repo = app_state.users_repo().clone();
+    let user_info: UserInfo = payload.into();
+    match app_state
+        .users_service()
+        .login(Box::new(users_repo), &user_info)
+        .await
+    {
+        Ok(_) => StatusCode::OK.into_response(),
+        Err(e) => {
+            tracing::error!("Error: {}", e);
+            e.into_response()
+        }
+    }
 }
