@@ -21,6 +21,7 @@ impl IntoResponse for super::AppError {
             Self::UserAlreadyExists => (StatusCode::BAD_REQUEST, self.to_string()),
             Self::UserNotFound => (StatusCode::BAD_REQUEST, self.to_string()),
             Self::InvalidPassword => (StatusCode::UNAUTHORIZED, self.to_string()),
+            Self::AuthorizationError => (StatusCode::UNAUTHORIZED, self.to_string()),
             #[cfg(test)]
             Self::TestError => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
         };
