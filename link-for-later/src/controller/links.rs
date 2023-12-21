@@ -7,7 +7,7 @@ use axum::{
 
 use crate::{
     state::AppState,
-    types::{entity::LinkItem, PostLinkRequest},
+    types::{auth::Claims, entity::LinkItem, PostLinkRequest},
 };
 
 const LINKS_ROUTE: &str = "/v1/links";
@@ -23,7 +23,7 @@ pub fn routes(state: AppState) -> Router<AppState> {
         .with_state(state)
 }
 
-async fn list(State(app_state): State<AppState>) -> impl IntoResponse {
+async fn list(State(app_state): State<AppState>, _user: Claims) -> impl IntoResponse {
     match app_state
         .links_service()
         .list(Box::new(app_state.links_repo().clone()))
@@ -39,6 +39,7 @@ async fn list(State(app_state): State<AppState>) -> impl IntoResponse {
 
 async fn post(
     State(app_state): State<AppState>,
+    _user: Claims,
     Json(payload): extract::Json<PostLinkRequest>,
 ) -> impl IntoResponse {
     match app_state
@@ -54,7 +55,11 @@ async fn post(
     }
 }
 
-async fn get(State(app_state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
+async fn get(
+    State(app_state): State<AppState>,
+    _user: Claims,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
     match app_state
         .links_service()
         .get(Box::new(app_state.links_repo().clone()), &id)
@@ -70,6 +75,7 @@ async fn get(State(app_state): State<AppState>, Path(id): Path<String>) -> impl 
 
 async fn put(
     State(app_state): State<AppState>,
+    _user: Claims,
     Path(id): Path<String>,
     Json(payload): extract::Json<LinkItem>,
 ) -> impl IntoResponse {
@@ -86,7 +92,11 @@ async fn put(
     }
 }
 
-async fn delete(State(app_state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
+async fn delete(
+    State(app_state): State<AppState>,
+    _user: Claims,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
     match app_state
         .links_service()
         .delete(Box::new(app_state.links_repo().clone()), &id)
@@ -134,7 +144,7 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = list(State(app_state)).await;
+        let response = list(State(app_state), Claims::default()).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::OK, parts.status);
@@ -163,7 +173,7 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = list(State(app_state)).await;
+        let response = list(State(app_state), Claims::default()).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::OK, parts.status);
@@ -192,7 +202,7 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = list(State(app_state)).await;
+        let response = list(State(app_state), Claims::default()).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
@@ -224,7 +234,7 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = post(State(app_state), Json(request)).await;
+        let response = post(State(app_state), Claims::default(), Json(request)).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::CREATED, parts.status);
@@ -257,7 +267,7 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = post(State(app_state), Json(request)).await;
+        let response = post(State(app_state), Claims::default(), Json(request)).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
@@ -286,7 +296,12 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = get(State(app_state), Path("1111".to_string())).await;
+        let response = get(
+            State(app_state),
+            Claims::default(),
+            Path("1111".to_string()),
+        )
+        .await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::NOT_FOUND, parts.status);
@@ -316,7 +331,12 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = get(State(app_state), Path("1111".to_string())).await;
+        let response = get(
+            State(app_state),
+            Claims::default(),
+            Path("1111".to_string()),
+        )
+        .await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::OK, parts.status);
@@ -348,7 +368,13 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = put(State(app_state), Path("1111".to_string()), Json(request)).await;
+        let response = put(
+            State(app_state),
+            Claims::default(),
+            Path("1111".to_string()),
+            Json(request),
+        )
+        .await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::OK, parts.status);
@@ -381,7 +407,13 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = put(State(app_state), Path("1111".to_string()), Json(request)).await;
+        let response = put(
+            State(app_state),
+            Claims::default(),
+            Path("1111".to_string()),
+            Json(request),
+        )
+        .await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
@@ -410,7 +442,12 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = delete(State(app_state), Path("1111".to_string())).await;
+        let response = delete(
+            State(app_state),
+            Claims::default(),
+            Path("1111".to_string()),
+        )
+        .await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::NOT_FOUND, parts.status);
@@ -439,7 +476,12 @@ mod tests {
             Arc::new(mock_users_repo),
         );
 
-        let response = delete(State(app_state), Path("1111".to_string())).await;
+        let response = delete(
+            State(app_state),
+            Claims::default(),
+            Path("1111".to_string()),
+        )
+        .await;
 
         let (parts, _) = response.into_response().into_parts();
         assert_eq!(StatusCode::NO_CONTENT, parts.status);

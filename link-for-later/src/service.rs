@@ -51,7 +51,6 @@ pub trait Users {
     async fn login(
         &self,
         users_repo: Box<repository::DynUsers>,
-        secret_key: &str,
         user_info: &UserInfo,
     ) -> Result<Token>;
 }

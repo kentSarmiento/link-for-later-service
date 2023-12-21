@@ -1,6 +1,7 @@
 use axum::async_trait;
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
+use std::convert::TryInto;
 
 use crate::{
     repository,
@@ -40,24 +41,34 @@ impl UsersService for ServiceProvider {
     async fn login(
         &self,
         users_repo: Box<repository::DynUsers>,
-        secret_key: &str,
         user_info: &UserInfo,
     ) -> Result<Token> {
         let retrieved_user_info = users_repo.find_by_user(&user_info.email).await?;
 
         if retrieved_user_info.password != user_info.password {
-            tracing::error!("Error: invalid password for user {}", &user_info.email);
+            tracing::info!("invalid password for user {}", &user_info.email);
             return Err(AppError::InvalidPassword);
         }
 
-        let claims = Claims::new(&retrieved_user_info.email);
-        let Ok(token) = encode(
+        let expiration = Utc::now() + Duration::minutes(60);
+        let expiration: usize = expiration
+            .timestamp()
+            .try_into()
+            .map_err(|_| AppError::ServerError)?;
+
+        let claims = Claims::new(&retrieved_user_info.email, expiration);
+
+        let secret = std::env::var("JWT_SECRET").map_or_else(|_| String::new(), |secret| secret);
+        let token = match encode(
             &Header::default(),
             &claims,
-            &EncodingKey::from_secret(secret_key.as_ref()),
-        ) else {
-            tracing::error!("Error: cannot generate token");
-            return Err(AppError::ServerError);
+            &EncodingKey::from_secret(secret.as_bytes()),
+        ) {
+            Ok(token) => token,
+            Err(e) => {
+                tracing::error!("Error: {}", e.to_string());
+                return Err(AppError::ServerError);
+            }
         };
 
         Ok(Token::new(&token))
