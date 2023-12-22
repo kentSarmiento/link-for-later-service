@@ -35,7 +35,7 @@ impl UsersService for ServiceProvider {
         let registered_user_info = UserInfoBuilder::from(user_info.clone())
             .created_at(&now)
             .updated_at(&now)
-            .verified(true) // TODO: verification process (e.g. valid email)
+            .verified(true)
             .build();
 
         users_repo.create(&registered_user_info).await
@@ -51,7 +51,7 @@ impl UsersService for ServiceProvider {
 
         if retrieved_user_info.password() != user_info.password() {
             tracing::info!("invalid password for user {}", &user_info.email());
-            return Err(AppError::InvalidPassword);
+            return Err(AppError::IncorrectPassword);
         }
 
         let timestamp = |timestamp: DateTime<Utc>| -> Result<usize> {

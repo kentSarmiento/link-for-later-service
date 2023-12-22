@@ -14,10 +14,11 @@ impl IntoResponse for AppError {
                 (StatusCode::INTERNAL_SERVER_ERROR, self.to_string())
             }
             Self::ItemNotFound => (StatusCode::NOT_FOUND, self.to_string()),
-            Self::UserAlreadyExists | Self::UserNotFound => {
-                (StatusCode::BAD_REQUEST, self.to_string())
-            }
-            Self::AuthorizationError | Self::InvalidPassword => {
+            Self::UserAlreadyExists
+            | Self::UserNotFound
+            | Self::InvalidEmail
+            | Self::InvalidUrl => (StatusCode::BAD_REQUEST, self.to_string()),
+            Self::AuthorizationError | Self::IncorrectPassword => {
                 (StatusCode::UNAUTHORIZED, self.to_string())
             }
         };

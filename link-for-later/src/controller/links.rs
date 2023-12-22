@@ -4,6 +4,7 @@ use axum::{
     response::IntoResponse,
     routing, Json, Router,
 };
+use validator::Validate;
 
 use crate::{
     state::AppState,
@@ -11,6 +12,7 @@ use crate::{
         auth::Claims,
         dto::{LinkItemRequest, LinkQueryBuilder},
         entity::LinkItemBuilder,
+        AppError,
     },
 };
 
@@ -47,6 +49,14 @@ async fn post(
     user: Claims,
     Json(payload): extract::Json<LinkItemRequest>,
 ) -> impl IntoResponse {
+    match payload.validate() {
+        Ok(()) => {}
+        Err(e) => {
+            tracing::error!("Error: {}", e);
+            return AppError::InvalidUrl.into_response();
+        }
+    }
+
     let link_item = LinkItemBuilder::default()
         .owner(user.id())
         .url(payload.url())

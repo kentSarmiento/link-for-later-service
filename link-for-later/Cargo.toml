@@ -20,6 +20,7 @@ serde_json = "1.0.108"
 tokio = { version = "1", features = ["macros"] }
 tower = "0.4.13"
 tracing = { version = "0.1", features = ["log"] }
+validator = { version = "0.16.1", features = ["derive"] }
 
 [dev-dependencies]
 mockall = "0.12.0"

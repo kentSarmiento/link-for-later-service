@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Validate)]
 pub struct LinkItemRequest {
-    #[serde(default = "String::new")]
+    #[validate(url)]
     url: String,
     #[serde(default = "String::new")]
     title: String,
@@ -66,8 +67,9 @@ impl LinkQueryBuilder {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Validate)]
 pub struct UserInfoRequest {
+    #[validate(email)]
     email: String,
     password: String,
 }
@@ -109,7 +111,7 @@ impl UserQueryBuilder {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct AuthResponse {
     token: String,
 }

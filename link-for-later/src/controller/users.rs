@@ -1,10 +1,12 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Json, Router};
+use validator::Validate;
 
 use crate::{
     state::AppState,
     types::{
         dto::{AuthResponse, UserInfoRequest},
         entity::UserInfoBuilder,
+        AppError,
     },
 };
 
@@ -22,6 +24,14 @@ async fn register(
     State(app_state): State<AppState>,
     Json(payload): Json<UserInfoRequest>,
 ) -> impl IntoResponse {
+    match payload.validate() {
+        Ok(()) => {}
+        Err(e) => {
+            tracing::error!("Error: {}", e);
+            return AppError::InvalidEmail.into_response();
+        }
+    }
+
     let users_repo = app_state.users_repo().clone();
     let user_info = UserInfoBuilder::new(payload.email(), payload.password()).build();
     match app_state
