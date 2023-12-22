@@ -1,5 +1,5 @@
 use axum::async_trait;
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use std::convert::TryInto;
 
@@ -8,7 +8,8 @@ use crate::{
     service::Users as UsersService,
     types::{
         auth::{Claims, Token},
-        entity::UserInfo,
+        dto::UserQueryBuilder,
+        entity::{UserInfo, UserInfoBuilder},
         AppError, Result,
     },
 };
@@ -22,20 +23,22 @@ impl UsersService for ServiceProvider {
         users_repo: Box<repository::DynUsers>,
         user_info: &UserInfo,
     ) -> Result<UserInfo> {
-        let user_info = match users_repo.find_by_user(&user_info.email).await {
+        let user_query = UserQueryBuilder::new(user_info.email()).build();
+        let user_info = match users_repo.search(&user_query).await {
             Ok(_) => return Err(AppError::UserAlreadyExists),
             Err(AppError::UserNotFound) => user_info.clone(),
             Err(e) => return Err(e),
         };
 
         let now = Utc::now().to_rfc3339();
-        let registered_user_info = user_info.created_at(&now).updated_at(&now);
-
-        // TODO: verification process (e.g. valid email)
-        let verified_user_info = registered_user_info.verified(true);
-
         // TODO: secure password
-        users_repo.add(&verified_user_info).await
+        let registered_user_info = UserInfoBuilder::from(user_info.clone())
+            .created_at(&now)
+            .updated_at(&now)
+            .verified(true) // TODO: verification process (e.g. valid email)
+            .build();
+
+        users_repo.create(&registered_user_info).await
     }
 
     async fn login(
@@ -43,20 +46,28 @@ impl UsersService for ServiceProvider {
         users_repo: Box<repository::DynUsers>,
         user_info: &UserInfo,
     ) -> Result<Token> {
-        let retrieved_user_info = users_repo.find_by_user(&user_info.email).await?;
+        let user_query = UserQueryBuilder::new(user_info.email()).build();
+        let retrieved_user_info = users_repo.search(&user_query).await?;
 
-        if retrieved_user_info.password != user_info.password {
-            tracing::info!("invalid password for user {}", &user_info.email);
+        if retrieved_user_info.password() != user_info.password() {
+            tracing::info!("invalid password for user {}", &user_info.email());
             return Err(AppError::InvalidPassword);
         }
 
-        let expiration = Utc::now() + Duration::minutes(60);
-        let expiration: usize = expiration
-            .timestamp()
-            .try_into()
-            .map_err(|_| AppError::ServerError)?;
+        let timestamp = |timestamp: DateTime<Utc>| -> Result<usize> {
+            let timestamp: usize = timestamp
+                .timestamp()
+                .try_into()
+                .map_err(|_| AppError::ServerError)?;
+            Ok(timestamp)
+        };
 
-        let claims = Claims::new(&retrieved_user_info.email, expiration);
+        let now = Utc::now();
+        let claims = Claims::new(
+            retrieved_user_info.email(),
+            timestamp(now)?,
+            timestamp(now + Duration::minutes(60))?,
+        );
 
         let secret = std::env::var("JWT_SECRET").map_or_else(|_| String::new(), |secret| secret);
         let token = match encode(

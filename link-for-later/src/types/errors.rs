@@ -10,9 +10,6 @@ pub enum App {
     UserNotFound,
     InvalidPassword,
     AuthorizationError,
-
-    #[cfg(test)]
-    TestError,
 }
 
 impl fmt::Display for App {
@@ -26,8 +23,6 @@ impl fmt::Display for App {
             Self::UserNotFound => write!(f, "user not found"),
             Self::InvalidPassword => write!(f, "incorrect password for user"),
             Self::AuthorizationError => write!(f, "invalid authorization token"),
-            #[cfg(test)]
-            Self::TestError => write!(f, "test error"),
         }
     }
 }

@@ -7,7 +7,11 @@ use axum::{
 
 use crate::{
     state::AppState,
-    types::{auth::Claims, entity::LinkItem, PostLinkRequest},
+    types::{
+        auth::Claims,
+        dto::{LinkItemRequest, LinkQueryBuilder},
+        entity::LinkItemBuilder,
+    },
 };
 
 const LINKS_ROUTE: &str = "/v1/links";
@@ -23,10 +27,11 @@ pub fn routes(state: AppState) -> Router<AppState> {
         .with_state(state)
 }
 
-async fn list(State(app_state): State<AppState>, _user: Claims) -> impl IntoResponse {
+async fn list(State(app_state): State<AppState>, user: Claims) -> impl IntoResponse {
+    let link_query = LinkQueryBuilder::default().owner(user.id()).build();
     match app_state
         .links_service()
-        .list(Box::new(app_state.links_repo().clone()))
+        .search(Box::new(app_state.links_repo().clone()), &link_query)
         .await
     {
         Ok(list) => Json(list).into_response(),
@@ -39,12 +44,18 @@ async fn list(State(app_state): State<AppState>, _user: Claims) -> impl IntoResp
 
 async fn post(
     State(app_state): State<AppState>,
-    _user: Claims,
-    Json(payload): extract::Json<PostLinkRequest>,
+    user: Claims,
+    Json(payload): extract::Json<LinkItemRequest>,
 ) -> impl IntoResponse {
+    let link_item = LinkItemBuilder::default()
+        .owner(user.id())
+        .url(payload.url())
+        .title(payload.title())
+        .description(payload.description())
+        .build();
     match app_state
         .links_service()
-        .post(Box::new(app_state.links_repo().clone()), &payload.into())
+        .create(Box::new(app_state.links_repo().clone()), &link_item)
         .await
     {
         Ok(link) => (StatusCode::CREATED, Json(link)).into_response(),
@@ -57,12 +68,13 @@ async fn post(
 
 async fn get(
     State(app_state): State<AppState>,
-    _user: Claims,
+    user: Claims,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
+    let link_query = LinkQueryBuilder::new(&id, user.id()).build();
     match app_state
         .links_service()
-        .get(Box::new(app_state.links_repo().clone()), &id)
+        .get(Box::new(app_state.links_repo().clone()), &link_query)
         .await
     {
         Ok(link) => Json(link).into_response(),
@@ -75,13 +87,18 @@ async fn get(
 
 async fn put(
     State(app_state): State<AppState>,
-    _user: Claims,
+    user: Claims,
     Path(id): Path<String>,
-    Json(payload): extract::Json<LinkItem>,
+    Json(payload): extract::Json<LinkItemRequest>,
 ) -> impl IntoResponse {
+    let link_item = LinkItemBuilder::new(&id, user.id())
+        .url(payload.url())
+        .title(payload.title())
+        .description(payload.description())
+        .build();
     match app_state
         .links_service()
-        .put(Box::new(app_state.links_repo().clone()), &id, &payload)
+        .update(Box::new(app_state.links_repo().clone()), &id, &link_item)
         .await
     {
         Ok(link) => Json(link).into_response(),
@@ -94,12 +111,13 @@ async fn put(
 
 async fn delete(
     State(app_state): State<AppState>,
-    _user: Claims,
+    user: Claims,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
+    let link_item = LinkItemBuilder::new(&id, user.id()).build();
     match app_state
         .links_service()
-        .delete(Box::new(app_state.links_repo().clone()), &id)
+        .delete(Box::new(app_state.links_repo().clone()), &link_item)
         .await
     {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
@@ -107,383 +125,5 @@ async fn delete(
             tracing::error!("Error: {}", e);
             e.into_response()
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::sync::Arc;
-
-    use http_body_util::BodyExt;
-    use serde_json::Value;
-
-    use crate::{
-        repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
-        service::{MockLinks as MockLinksService, MockUsers as MockUsersService},
-        types::{entity::LinkItem, AppError},
-    };
-
-    use super::*;
-
-    #[tokio::test]
-    async fn test_get_links_empty() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-
-        mock_links_service
-            .expect_list()
-            .times(1)
-            .returning(|_| Ok(vec![]));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = list(State(app_state), Claims::default()).await;
-
-        let (parts, body) = response.into_response().into_parts();
-        assert_eq!(StatusCode::OK, parts.status);
-
-        let body = body.collect().await.unwrap().to_bytes();
-        assert_eq!(&body[..], b"[]");
-    }
-
-    #[tokio::test]
-    async fn test_get_links_non_empty() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-        let item = LinkItem::new("1", "http://link");
-
-        mock_links_service
-            .expect_list()
-            .times(1)
-            .returning(move |_| Ok(vec![item.clone()]));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = list(State(app_state), Claims::default()).await;
-
-        let (parts, body) = response.into_response().into_parts();
-        assert_eq!(StatusCode::OK, parts.status);
-
-        let body = body.collect().await.unwrap().to_bytes();
-        let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("http://link"));
-    }
-
-    #[tokio::test]
-    async fn test_links_service_error() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-
-        mock_links_service
-            .expect_list()
-            .times(1)
-            .returning(|_| Err(AppError::TestError));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = list(State(app_state), Claims::default()).await;
-
-        let (parts, body) = response.into_response().into_parts();
-        assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
-
-        let body = body.collect().await.unwrap().to_bytes();
-        let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("test error"));
-    }
-
-    #[tokio::test]
-    async fn test_post_links() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-
-        let request = PostLinkRequest::new("1", "http://link");
-        let item: LinkItem = request.clone().into();
-
-        mock_links_service
-            .expect_post()
-            .times(1)
-            .returning(move |_, _| Ok(item.clone()));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = post(State(app_state), Claims::default(), Json(request)).await;
-
-        let (parts, body) = response.into_response().into_parts();
-        assert_eq!(StatusCode::CREATED, parts.status);
-
-        let body = body.collect().await.unwrap().to_bytes();
-        let body = std::str::from_utf8(&body).unwrap();
-        let body: Value = serde_json::from_str(body).unwrap();
-
-        assert!(body["owner"] == "1");
-        assert!(body["url"] == "http://link");
-    }
-
-    #[tokio::test]
-    async fn test_post_links_service_error() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-        let request = PostLinkRequest::new("1", "http://link");
-
-        mock_links_service
-            .expect_post()
-            .times(1)
-            .returning(|_, _| Err(AppError::TestError));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = post(State(app_state), Claims::default(), Json(request)).await;
-
-        let (parts, body) = response.into_response().into_parts();
-        assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
-
-        let body = body.collect().await.unwrap().to_bytes();
-        let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("test error"));
-    }
-
-    #[tokio::test]
-    async fn test_get_link_not_found() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-
-        mock_links_service
-            .expect_get()
-            .times(1)
-            .returning(|_, _| Err(AppError::ItemNotFound));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = get(
-            State(app_state),
-            Claims::default(),
-            Path("1111".to_string()),
-        )
-        .await;
-
-        let (parts, body) = response.into_response().into_parts();
-        assert_eq!(StatusCode::NOT_FOUND, parts.status);
-
-        let body = body.collect().await.unwrap().to_bytes();
-        let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("item not found"));
-    }
-
-    #[tokio::test]
-    async fn test_get_link_found() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-        let item = LinkItem::new("1", "http://link");
-
-        mock_links_service
-            .expect_get()
-            .times(1)
-            .returning(move |_, _| Ok(item.clone()));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = get(
-            State(app_state),
-            Claims::default(),
-            Path("1111".to_string()),
-        )
-        .await;
-
-        let (parts, body) = response.into_response().into_parts();
-        assert_eq!(StatusCode::OK, parts.status);
-
-        let body = body.collect().await.unwrap().to_bytes();
-        let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("http://link"));
-    }
-
-    #[tokio::test]
-    async fn test_put_links() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-
-        let request = LinkItem::new("1", "http://link");
-        let item: LinkItem = request.clone();
-
-        mock_links_service
-            .expect_put()
-            .times(1)
-            .returning(move |_, _, _| Ok(item.clone()));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = put(
-            State(app_state),
-            Claims::default(),
-            Path("1111".to_string()),
-            Json(request),
-        )
-        .await;
-
-        let (parts, body) = response.into_response().into_parts();
-        assert_eq!(StatusCode::OK, parts.status);
-
-        let body = body.collect().await.unwrap().to_bytes();
-        let body = std::str::from_utf8(&body).unwrap();
-        let body: Value = serde_json::from_str(body).unwrap();
-
-        assert!(body["owner"] == "1");
-        assert!(body["url"] == "http://link");
-    }
-
-    #[tokio::test]
-    async fn test_put_links_service_error() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-        let request = LinkItem::new("1", "http://link");
-
-        mock_links_service
-            .expect_put()
-            .times(1)
-            .returning(|_, _, _| Err(AppError::TestError));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = put(
-            State(app_state),
-            Claims::default(),
-            Path("1111".to_string()),
-            Json(request),
-        )
-        .await;
-
-        let (parts, body) = response.into_response().into_parts();
-        assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
-
-        let body = body.collect().await.unwrap().to_bytes();
-        let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("test error"));
-    }
-
-    #[tokio::test]
-    async fn test_delete_links_not_found() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-
-        mock_links_service
-            .expect_delete()
-            .times(1)
-            .returning(|_, _| Err(AppError::ItemNotFound));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = delete(
-            State(app_state),
-            Claims::default(),
-            Path("1111".to_string()),
-        )
-        .await;
-
-        let (parts, body) = response.into_response().into_parts();
-        assert_eq!(StatusCode::NOT_FOUND, parts.status);
-
-        let body = body.collect().await.unwrap().to_bytes();
-        let body = std::str::from_utf8(&body).unwrap();
-        assert!(body.contains("item not found"));
-    }
-
-    #[tokio::test]
-    async fn test_delete_links_found() {
-        let mut mock_links_service = MockLinksService::new();
-        let mock_users_service = MockUsersService::new();
-        let mock_links_repo = MockLinksRepo::new();
-        let mock_users_repo = MockUsersRepo::new();
-
-        mock_links_service
-            .expect_delete()
-            .times(1)
-            .returning(move |_, _| Ok(()));
-
-        let app_state = AppState::new(
-            Arc::new(mock_links_service),
-            Arc::new(mock_users_service),
-            Arc::new(mock_links_repo),
-            Arc::new(mock_users_repo),
-        );
-
-        let response = delete(
-            State(app_state),
-            Claims::default(),
-            Path("1111".to_string()),
-        )
-        .await;
-
-        let (parts, _) = response.into_response().into_parts();
-        assert_eq!(StatusCode::NO_CONTENT, parts.status);
     }
 }

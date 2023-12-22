@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Claims {
     sub: String, // email
+    iat: usize,  // creation time
     exp: usize,  // expiration time
 }
 
@@ -12,11 +13,16 @@ pub struct Token {
 }
 
 impl Claims {
-    pub fn new(sub: &str, exp: usize) -> Self {
+    pub fn new(sub: &str, iat: usize, exp: usize) -> Self {
         Self {
             sub: sub.to_string(),
+            iat,
             exp,
         }
+    }
+
+    pub fn id(&self) -> &str {
+        &self.sub
     }
 }
 

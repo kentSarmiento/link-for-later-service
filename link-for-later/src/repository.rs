@@ -5,6 +5,7 @@ use axum::async_trait;
 use mockall::{automock, predicate::*};
 
 use crate::types::{
+    dto::{LinkQuery, UserQuery},
     entity::{LinkItem, UserInfo},
     Result,
 };
@@ -15,23 +16,18 @@ pub type DynUsers = Arc<dyn Users + Send + Sync>;
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Links {
-    async fn list(&self) -> Result<Vec<LinkItem>>;
-
-    async fn post(&self, item: &LinkItem) -> Result<LinkItem>;
-
-    async fn get(&self, id: &str) -> Result<LinkItem>;
-
-    async fn put(&self, id: &str, item: &LinkItem) -> Result<LinkItem>;
-
-    async fn delete(&self, id: &str) -> Result<()>;
+    async fn search(&self, query: &LinkQuery) -> Result<Vec<LinkItem>>;
+    async fn get(&self, query: &LinkQuery) -> Result<LinkItem>;
+    async fn create(&self, item: &LinkItem) -> Result<LinkItem>;
+    async fn update(&self, id: &str, item: &LinkItem) -> Result<LinkItem>;
+    async fn delete(&self, item: &LinkItem) -> Result<()>;
 }
 
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Users {
-    async fn add(&self, info: &UserInfo) -> Result<UserInfo>;
-
-    async fn find_by_user(&self, user: &str) -> Result<UserInfo>;
+    async fn search(&self, query: &UserQuery) -> Result<UserInfo>;
+    async fn create(&self, info: &UserInfo) -> Result<UserInfo>;
 }
 
 pub mod bare;

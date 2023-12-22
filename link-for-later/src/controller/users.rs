@@ -2,7 +2,10 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Js
 
 use crate::{
     state::AppState,
-    types::{entity::UserInfo, LoginRequest, LoginResponse, RegisterRequest},
+    types::{
+        dto::{AuthResponse, UserInfoRequest},
+        entity::UserInfoBuilder,
+    },
 };
 
 const USERS_SIGNUP_ROUTE: &str = "/v1/users/register";
@@ -17,10 +20,10 @@ pub fn routes(state: AppState) -> Router<AppState> {
 
 async fn register(
     State(app_state): State<AppState>,
-    Json(payload): Json<RegisterRequest>,
+    Json(payload): Json<UserInfoRequest>,
 ) -> impl IntoResponse {
     let users_repo = app_state.users_repo().clone();
-    let user_info: UserInfo = payload.into();
+    let user_info = UserInfoBuilder::new(payload.email(), payload.password()).build();
     match app_state
         .users_service()
         .register(Box::new(users_repo), &user_info)
@@ -36,19 +39,17 @@ async fn register(
 
 async fn login(
     State(app_state): State<AppState>,
-    Json(payload): Json<LoginRequest>,
+    Json(payload): Json<UserInfoRequest>,
 ) -> impl IntoResponse {
     let users_repo = app_state.users_repo().clone();
-    let user_info: UserInfo = payload.into();
+    let user_info = UserInfoBuilder::new(payload.email(), payload.password()).build();
     match app_state
         .users_service()
         .login(Box::new(users_repo), &user_info)
         .await
     {
         Ok(token) => {
-            let response = LoginResponse {
-                token: token.jwt().to_string(),
-            };
+            let response = AuthResponse::new(token.jwt());
             (StatusCode::OK, Json(response)).into_response()
         }
         Err(e) => {
