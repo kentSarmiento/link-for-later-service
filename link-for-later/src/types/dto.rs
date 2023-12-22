@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-#[derive(Serialize, Deserialize, Validate)]
+#[derive(Default, Serialize, Deserialize, Validate)]
 pub struct LinkItemRequest {
     #[validate(url)]
     url: String,
@@ -23,8 +23,17 @@ impl LinkItemRequest {
     pub fn description(&self) -> &str {
         &self.description
     }
+
+    #[cfg(test)]
+    pub fn new(url: &str) -> Self {
+        Self {
+            url: url.to_string(),
+            ..Default::default()
+        }
+    }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct LinkQuery {
     id: String,
     owner: String,
@@ -123,3 +132,44 @@ impl AuthResponse {
         }
     }
 }
+
+/*
+#[cfg(test)]
+pub mod tests {
+    use super::LinkItemRequest;
+
+    #[derive(Default)]
+    pub struct LinkItemRequestBuilder {
+        url: String,
+        title: String,
+        description: String,
+    }
+
+    impl LinkItemRequestBuilder {
+        pub fn new(url: &str) -> Self {
+            Self {
+                url: url.to_string(),
+                ..Default::default()
+            }
+        }
+
+        pub fn title(mut self, title: &str) -> Self {
+            self.title = title.to_string();
+            self
+        }
+
+        pub fn description(mut self, description: &str) -> Self {
+            self.description = description.to_string();
+            self
+        }
+
+        pub fn build(self) -> LinkItemRequest {
+            LinkItemRequest {
+                url: self.url,
+                title: self.title,
+                description: self.description,
+            }
+        }
+    }
+}
+*/

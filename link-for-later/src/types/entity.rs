@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct LinkItem {
     id: String,
     owner: String,
@@ -37,10 +37,9 @@ pub struct LinkItemBuilder {
 }
 
 impl LinkItemBuilder {
-    pub fn new(id: &str, owner: &str) -> Self {
+    pub fn new(url: &str) -> Self {
         Self {
-            id: id.to_string(),
-            owner: owner.to_string(),
+            url: url.to_string(),
             ..Default::default()
         }
     }

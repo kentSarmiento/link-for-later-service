@@ -25,8 +25,8 @@ impl fmt::Display for App {
             Self::UserNotFound => write!(f, "user not found"),
             Self::IncorrectPassword => write!(f, "incorrect password for user"),
             Self::AuthorizationError => write!(f, "invalid authorization token"),
-            Self::InvalidEmail => write!(f, "invalid email provided"),
-            Self::InvalidUrl => write!(f, "invalid url provided"),
+            Self::InvalidEmail => write!(f, "invalid email"),
+            Self::InvalidUrl => write!(f, "invalid url"),
         }
     }
 }
