@@ -39,7 +39,7 @@ async fn register(
         .register(Box::new(users_repo), &user_info)
         .await
     {
-        Ok(info) => (StatusCode::CREATED, Json(info)).into_response(),
+        Ok(_) => StatusCode::CREATED.into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
             e.into_response()
