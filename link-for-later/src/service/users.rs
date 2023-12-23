@@ -24,7 +24,7 @@ impl UsersService for ServiceProvider {
         user_info: &UserInfo,
     ) -> Result<UserInfo> {
         let user_query = UserQueryBuilder::new(user_info.email()).build();
-        let user_info = match users_repo.search(&user_query).await {
+        let user_info = match users_repo.get(&user_query).await {
             Ok(_) => return Err(AppError::UserAlreadyExists),
             Err(AppError::UserNotFound) => user_info.clone(),
             Err(e) => return Err(e),
@@ -47,7 +47,7 @@ impl UsersService for ServiceProvider {
         user_info: &UserInfo,
     ) -> Result<Token> {
         let user_query = UserQueryBuilder::new(user_info.email()).build();
-        let retrieved_user_info = users_repo.search(&user_query).await?;
+        let retrieved_user_info = users_repo.get(&user_query).await?;
 
         if retrieved_user_info.password() != user_info.password() {
             tracing::info!("invalid password for user {}", &user_info.email());
@@ -105,7 +105,7 @@ mod tests {
 
         let mut mock_users_repo = MockUsersRepo::new();
         mock_users_repo
-            .expect_search()
+            .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
             .returning(|_| Err(AppError::UserNotFound));
@@ -133,7 +133,7 @@ mod tests {
 
         let mut mock_users_repo = MockUsersRepo::new();
         mock_users_repo
-            .expect_search()
+            .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
             .returning(move |_| Ok(registered_user.clone()));
@@ -155,7 +155,7 @@ mod tests {
 
         let mut mock_users_repo = MockUsersRepo::new();
         mock_users_repo
-            .expect_search()
+            .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
             .returning(|_| Err(AppError::UserNotFound));
@@ -182,7 +182,7 @@ mod tests {
 
         let mut mock_users_repo = MockUsersRepo::new();
         mock_users_repo
-            .expect_search()
+            .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
             .returning(move |_| Ok(registered_user.clone()));
@@ -203,7 +203,7 @@ mod tests {
 
         let mut mock_users_repo = MockUsersRepo::new();
         mock_users_repo
-            .expect_search()
+            .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
             .returning(move |_| Err(AppError::UserNotFound));
@@ -225,7 +225,7 @@ mod tests {
 
         let mut mock_users_repo = MockUsersRepo::new();
         mock_users_repo
-            .expect_search()
+            .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
             .returning(move |_| Ok(registered_user.clone()));

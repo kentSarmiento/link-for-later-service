@@ -41,12 +41,12 @@ impl UsersDb {
 
 #[async_trait]
 impl LinksRepository for LinksDb {
-    async fn search(&self, query: &LinkQuery) -> Result<Vec<LinkItem>> {
+    async fn find(&self, query: &LinkQuery) -> Result<Vec<LinkItem>> {
         let mut db_query = doc! {};
         if !query.id().is_empty() {
             let Ok(id) = bson::oid::ObjectId::from_str(query.id()) else {
                 tracing::error!("Error: {} cannot be converted to Bson ObjectId", query.id());
-                return Err(AppError::ItemNotFound);
+                return Err(AppError::LinkNotFound);
             };
             db_query.insert("_id", id);
         }
@@ -67,7 +67,7 @@ impl LinksRepository for LinksDb {
         if !query.id().is_empty() {
             let Ok(id) = bson::oid::ObjectId::from_str(query.id()) else {
                 tracing::error!("Error: {} cannot be converted to Bson ObjectId", query.id());
-                return Err(AppError::ItemNotFound);
+                return Err(AppError::LinkNotFound);
             };
             db_query.insert("_id", id);
         }
@@ -75,7 +75,7 @@ impl LinksRepository for LinksDb {
             db_query.insert("owner", query.owner());
         }
         match self.links_collection.find_one(db_query, None).await {
-            Ok(item) => item.map_or(Err(AppError::ItemNotFound), |item| {
+            Ok(item) => item.map_or(Err(AppError::LinkNotFound), |item| {
                 let returned_item = LinkItemBuilder::from(item).id(query.id()).build();
                 Ok(returned_item)
             }),
@@ -115,7 +115,7 @@ impl LinksRepository for LinksDb {
     async fn update(&self, id: &str, item: &LinkItem) -> Result<LinkItem> {
         let Ok(id) = bson::oid::ObjectId::from_str(id) else {
             tracing::error!("Error: {id} cannot be converted to Bson ObjectId");
-            return Err(AppError::ItemNotFound);
+            return Err(AppError::LinkNotFound);
         };
         let query = doc! {"_id": id, "owner": item.owner()};
         let opts = ReplaceOptions::builder().upsert(true).build();
@@ -135,7 +135,7 @@ impl LinksRepository for LinksDb {
     async fn delete(&self, item: &LinkItem) -> Result<()> {
         let Ok(id) = bson::oid::ObjectId::from_str(item.id()) else {
             tracing::error!("Error: {} cannot be converted to Bson ObjectId", item.id());
-            return Err(AppError::ItemNotFound);
+            return Err(AppError::LinkNotFound);
         };
         let query = doc! {"_id": id, "owner": item.owner()};
         match self.links_collection.delete_one(query, None).await {
@@ -150,7 +150,7 @@ impl LinksRepository for LinksDb {
 
 #[async_trait]
 impl UsersRepository for UsersDb {
-    async fn search(&self, query: &UserQuery) -> Result<UserInfo> {
+    async fn get(&self, query: &UserQuery) -> Result<UserInfo> {
         let query = doc! {"email": query.email()};
         match self.users_collection.find_one(query, None).await {
             Ok(item) => item.ok_or(AppError::UserNotFound),

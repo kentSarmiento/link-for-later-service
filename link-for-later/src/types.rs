@@ -4,7 +4,7 @@ pub type Result<T> = std::result::Result<T, AppError>;
 
 pub enum Database {
     MongoDb(mongodb::Database),
-    None,
+    InMemory,
 }
 
 pub mod auth;

@@ -20,7 +20,7 @@ impl LinksService for ServiceProvider {
         links_repo: Box<repository::DynLinks>,
         link_query: &LinkQuery,
     ) -> Result<Vec<LinkItem>> {
-        links_repo.search(link_query).await
+        links_repo.find(link_query).await
     }
 
     async fn get(
@@ -91,7 +91,7 @@ mod tests {
 
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
-            .expect_search()
+            .expect_find()
             .withf(move |query| query == &expected_query)
             .times(1)
             .returning(|_| Ok(vec![]));
@@ -118,7 +118,7 @@ mod tests {
 
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
-            .expect_search()
+            .expect_find()
             .withf(move |query| query == &expected_query)
             .times(1)
             .returning(move |_| Ok(vec![item.clone()]));
@@ -144,7 +144,7 @@ mod tests {
 
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
-            .expect_search()
+            .expect_find()
             .withf(move |query| query == &expected_query)
             .times(1)
             .returning(|_| Err(AppError::ServerError));
@@ -193,14 +193,14 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(|_| Err(AppError::ItemNotFound));
+            .returning(|_| Err(AppError::LinkNotFound));
 
         let links_service = ServiceProvider {};
         let response = links_service
             .get(Box::new(Arc::new(mock_links_repo)), &request_query)
             .await;
 
-        assert_eq!(response, Err(AppError::ItemNotFound));
+        assert_eq!(response, Err(AppError::LinkNotFound));
     }
 
     #[tokio::test]
@@ -307,7 +307,7 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(|_| Err(AppError::ItemNotFound));
+            .returning(|_| Err(AppError::LinkNotFound));
         mock_links_repo
             .expect_update()
             //.withf(move |item| item == &item_to_update)
@@ -318,7 +318,7 @@ mod tests {
             .update(Box::new(Arc::new(mock_links_repo)), "1", &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::ItemNotFound));
+        assert_eq!(response, Err(AppError::LinkNotFound));
     }
 
     #[tokio::test]
@@ -409,7 +409,7 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(|_| Err(AppError::ItemNotFound));
+            .returning(|_| Err(AppError::LinkNotFound));
         mock_links_repo
             .expect_delete()
             //.withf(move |item| item == &item_to_delete)
@@ -420,7 +420,7 @@ mod tests {
             .delete(Box::new(Arc::new(mock_links_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::ItemNotFound));
+        assert_eq!(response, Err(AppError::LinkNotFound));
     }
 
     #[tokio::test]
