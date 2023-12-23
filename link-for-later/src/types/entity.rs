@@ -106,7 +106,7 @@ impl From<LinkItem> for LinkItemBuilder {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct UserInfo {
     id: String,
     email: String,

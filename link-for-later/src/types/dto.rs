@@ -91,8 +91,17 @@ impl UserInfoRequest {
     pub fn password(&self) -> &str {
         &self.password
     }
+
+    #[cfg(test)]
+    pub fn new(email: &str, password: &str) -> Self {
+        Self {
+            email: email.to_string(),
+            password: password.to_string(),
+        }
+    }
 }
 
+#[derive(Clone, PartialEq, Eq)]
 pub struct UserQuery {
     email: String,
 }

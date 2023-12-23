@@ -14,8 +14,8 @@ use crate::types::{
 
 use super::{Links as LinksRepository, Users as UsersRepository};
 
-const LINKS_COLLECTION_NAME: &str = "v0.1.1/links";
-const USERS_COLLECTION_NAME: &str = "v0.1.1/users";
+const LINKS_COLLECTION_NAME: &str = "v0.1.2/links";
+const USERS_COLLECTION_NAME: &str = "v0.1.2/users";
 
 pub struct LinksDb {
     links_collection: Collection<LinkItem>,

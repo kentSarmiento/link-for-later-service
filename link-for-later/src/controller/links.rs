@@ -16,16 +16,17 @@ use crate::{
     },
 };
 
-const LINKS_ROUTE: &str = "/v1/links";
-const LINKS_ID_ROUTE: &str = "/v1/links/:id";
-
 pub fn routes(state: AppState) -> Router<AppState> {
     Router::new()
-        .route(LINKS_ROUTE, routing::get(list))
-        .route(LINKS_ROUTE, routing::post(post))
-        .route(LINKS_ID_ROUTE, routing::get(get))
-        .route(LINKS_ID_ROUTE, routing::put(put))
-        .route(LINKS_ID_ROUTE, routing::delete(delete))
+        .nest(
+            "/v1",
+            Router::new()
+                .route("/links", routing::get(list))
+                .route("/links", routing::post(post))
+                .route("/links/:id", routing::get(get))
+                .route("/links/:id", routing::put(put))
+                .route("/links/:id", routing::delete(delete)),
+        )
         .with_state(state)
 }
 

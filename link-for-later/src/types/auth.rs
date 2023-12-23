@@ -7,7 +7,7 @@ pub struct Claims {
     exp: usize,  // expiration time
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Token {
     jwt: String,
 }

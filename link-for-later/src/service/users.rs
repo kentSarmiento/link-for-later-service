@@ -85,3 +85,156 @@ impl UsersService for ServiceProvider {
         Ok(Token::new(&token))
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use std::sync::Arc;
+
+    use crate::{repository::MockUsers as MockUsersRepo, types::AppError};
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_register_user() {
+        let repo_query = UserQueryBuilder::new("user@test.com").build();
+        let user_to_register = UserInfoBuilder::new("user@test.com", "test").build();
+        let registered_user = UserInfoBuilder::new("user@test.com", "test").build();
+        let request_item = user_to_register.clone();
+        let response_item = registered_user.clone();
+
+        let mut mock_users_repo = MockUsersRepo::new();
+        mock_users_repo
+            .expect_search()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .returning(|_| Err(AppError::UserNotFound));
+        mock_users_repo
+            .expect_create()
+            //.withf(move |user| user == &user_to_register)
+            .times(1)
+            .returning(move |_| Ok(registered_user.clone()));
+
+        let users_service = ServiceProvider {};
+        let response = users_service
+            .register(Box::new(Arc::new(mock_users_repo)), &request_item)
+            .await;
+
+        assert!(response.is_ok());
+        assert_eq!(response.unwrap(), response_item);
+    }
+
+    #[tokio::test]
+    async fn test_register_user_already_registered() {
+        let repo_query = UserQueryBuilder::new("user@test.com").build();
+        let user_to_register = UserInfoBuilder::new("user@test.com", "test").build();
+        let registered_user = UserInfoBuilder::new("user@test.com", "test").build();
+        let request_item = user_to_register.clone();
+
+        let mut mock_users_repo = MockUsersRepo::new();
+        mock_users_repo
+            .expect_search()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .returning(move |_| Ok(registered_user.clone()));
+        mock_users_repo.expect_create().times(0);
+
+        let users_service = ServiceProvider {};
+        let response = users_service
+            .register(Box::new(Arc::new(mock_users_repo)), &request_item)
+            .await;
+
+        assert_eq!(response, Err(AppError::UserAlreadyExists));
+    }
+
+    #[tokio::test]
+    async fn test_register_user_repo_error() {
+        let repo_query = UserQueryBuilder::new("user@test.com").build();
+        let user_to_register = UserInfoBuilder::new("user@test.com", "test").build();
+        let request_item = user_to_register.clone();
+
+        let mut mock_users_repo = MockUsersRepo::new();
+        mock_users_repo
+            .expect_search()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .returning(|_| Err(AppError::UserNotFound));
+        mock_users_repo
+            .expect_create()
+            //.withf(move |user| user == &user_to_register)
+            .times(1)
+            .returning(move |_| Err(AppError::ServerError));
+
+        let users_service = ServiceProvider {};
+        let response = users_service
+            .register(Box::new(Arc::new(mock_users_repo)), &request_item)
+            .await;
+
+        assert_eq!(response, Err(AppError::ServerError));
+    }
+
+    #[tokio::test]
+    async fn test_login_user() {
+        let repo_query = UserQueryBuilder::new("user@test.com").build();
+        let user_to_login = UserInfoBuilder::new("user@test.com", "test").build();
+        let registered_user = UserInfoBuilder::new("user@test.com", "test").build();
+        let request_item = user_to_login.clone();
+
+        let mut mock_users_repo = MockUsersRepo::new();
+        mock_users_repo
+            .expect_search()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .returning(move |_| Ok(registered_user.clone()));
+
+        let users_service = ServiceProvider {};
+        let response = users_service
+            .login(Box::new(Arc::new(mock_users_repo)), &request_item)
+            .await;
+
+        assert!(response.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_login_user_not_registered() {
+        let repo_query = UserQueryBuilder::new("user@test.com").build();
+        let user_to_login = UserInfoBuilder::new("user@test.com", "test").build();
+        let request_item = user_to_login.clone();
+
+        let mut mock_users_repo = MockUsersRepo::new();
+        mock_users_repo
+            .expect_search()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .returning(move |_| Err(AppError::UserNotFound));
+
+        let users_service = ServiceProvider {};
+        let response = users_service
+            .login(Box::new(Arc::new(mock_users_repo)), &request_item)
+            .await;
+
+        assert_eq!(response, Err(AppError::UserNotFound));
+    }
+
+    #[tokio::test]
+    async fn test_login_user_incorrect_password() {
+        let repo_query = UserQueryBuilder::new("user@test.com").build();
+        let user_to_login = UserInfoBuilder::new("user@test.com", "incorrect").build();
+        let registered_user = UserInfoBuilder::new("user@test.com", "test").build();
+        let request_item = user_to_login.clone();
+
+        let mut mock_users_repo = MockUsersRepo::new();
+        mock_users_repo
+            .expect_search()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .returning(move |_| Ok(registered_user.clone()));
+
+        let users_service = ServiceProvider {};
+        let response = users_service
+            .login(Box::new(Arc::new(mock_users_repo)), &request_item)
+            .await;
+
+        assert_eq!(response, Err(AppError::IncorrectPassword));
+    }
+}
