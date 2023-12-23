@@ -1,6 +1,6 @@
 use std::{error, fmt};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum App {
     NotSupported,
     ServerError,

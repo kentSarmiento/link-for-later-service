@@ -33,7 +33,7 @@ impl LinkItemRequest {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct LinkQuery {
     id: String,
     owner: String,
