@@ -8,6 +8,7 @@ use crate::{
     repository,
     types::{
         auth::Token,
+        dto::LinkQuery,
         entity::{LinkItem, UserInfo},
         Result,
     },
@@ -19,24 +20,36 @@ pub type DynUsers = Arc<dyn Users + Send + Sync>;
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Links {
-    async fn list(&self, links_repo: Box<repository::DynLinks>) -> Result<Vec<LinkItem>>;
+    async fn search(
+        &self,
+        links_repo: Box<repository::DynLinks>,
+        link_query: &LinkQuery,
+    ) -> Result<Vec<LinkItem>>;
 
-    async fn post(
+    async fn get(
+        &self,
+        links_repo: Box<repository::DynLinks>,
+        link_query: &LinkQuery,
+    ) -> Result<LinkItem>;
+
+    async fn create(
         &self,
         links_repo: Box<repository::DynLinks>,
         link_item: &LinkItem,
     ) -> Result<LinkItem>;
 
-    async fn get(&self, links_repo: Box<repository::DynLinks>, id: &str) -> Result<LinkItem>;
-
-    async fn put(
+    async fn update(
         &self,
         links_repo: Box<repository::DynLinks>,
         id: &str,
         link_item: &LinkItem,
     ) -> Result<LinkItem>;
 
-    async fn delete(&self, links_repo: Box<repository::DynLinks>, id: &str) -> Result<()>;
+    async fn delete(
+        &self,
+        links_repo: Box<repository::DynLinks>,
+        link_item: &LinkItem,
+    ) -> Result<()>;
 }
 
 #[cfg_attr(test, automock)]

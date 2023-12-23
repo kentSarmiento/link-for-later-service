@@ -1,6 +1,7 @@
 use axum::async_trait;
 
 use crate::types::{
+    dto::{LinkQuery, UserQuery},
     entity::{LinkItem, UserInfo},
     AppError, Result,
 };
@@ -12,34 +13,34 @@ pub struct Bare {}
 
 #[async_trait]
 impl Links for Bare {
-    async fn list(&self) -> Result<Vec<LinkItem>> {
+    async fn search(&self, _query: &LinkQuery) -> Result<Vec<LinkItem>> {
         Err(AppError::NotSupported)
     }
 
-    async fn post(&self, _item: &LinkItem) -> Result<LinkItem> {
+    async fn get(&self, _query: &LinkQuery) -> Result<LinkItem> {
         Err(AppError::NotSupported)
     }
 
-    async fn get(&self, _id: &str) -> Result<LinkItem> {
+    async fn create(&self, _item: &LinkItem) -> Result<LinkItem> {
         Err(AppError::NotSupported)
     }
 
-    async fn put(&self, _id: &str, _item: &LinkItem) -> Result<LinkItem> {
+    async fn update(&self, _id: &str, _item: &LinkItem) -> Result<LinkItem> {
         Err(AppError::NotSupported)
     }
 
-    async fn delete(&self, _id: &str) -> Result<()> {
+    async fn delete(&self, _item: &LinkItem) -> Result<()> {
         Err(AppError::NotSupported)
     }
 }
 
 #[async_trait]
 impl Users for Bare {
-    async fn add(&self, _info: &UserInfo) -> Result<UserInfo> {
+    async fn search(&self, _query: &UserQuery) -> Result<UserInfo> {
         Err(AppError::NotSupported)
     }
 
-    async fn find_by_user(&self, _user: &str) -> Result<UserInfo> {
+    async fn create(&self, _info: &UserInfo) -> Result<UserInfo> {
         Err(AppError::NotSupported)
     }
 }
