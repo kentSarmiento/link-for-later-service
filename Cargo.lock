@@ -1366,6 +1366,7 @@ dependencies = [
  "jsonwebtoken",
  "mockall",
  "mongodb",
+ "once_cell",
  "serde",
  "serde_json",
  "tokio",

@@ -10,10 +10,10 @@ use crate::types::AppError;
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
-            Self::ServerError | Self::NotSupported | Self::DatabaseError => {
+            Self::ServerError | Self::DatabaseError => {
                 (StatusCode::INTERNAL_SERVER_ERROR, self.to_string())
             }
-            Self::ItemNotFound => (StatusCode::NOT_FOUND, self.to_string()),
+            Self::LinkNotFound => (StatusCode::NOT_FOUND, self.to_string()),
             Self::UserAlreadyExists
             | Self::UserNotFound
             | Self::InvalidEmail
