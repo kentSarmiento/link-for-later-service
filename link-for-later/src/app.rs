@@ -18,9 +18,9 @@ pub fn new(db: Database) -> Router {
             Arc::new(repository::mongodb::LinksDb::new(&db)) as DynLinksRepository,
             Arc::new(repository::mongodb::UsersDb::new(&db)) as DynUsersRepository,
         ),
-        Database::None => (
-            Arc::new(repository::BareDb::default()) as DynLinksRepository,
-            Arc::new(repository::BareDb::default()) as DynUsersRepository,
+        Database::InMemory => (
+            Arc::new(repository::inmemory::LinksDb::default()) as DynLinksRepository,
+            Arc::new(repository::inmemory::UsersDb::default()) as DynUsersRepository,
         ),
     };
 

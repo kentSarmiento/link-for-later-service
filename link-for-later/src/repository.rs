@@ -16,7 +16,7 @@ pub type DynUsers = Arc<dyn Users + Send + Sync>;
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Links {
-    async fn search(&self, query: &LinkQuery) -> Result<Vec<LinkItem>>;
+    async fn find(&self, query: &LinkQuery) -> Result<Vec<LinkItem>>;
     async fn get(&self, query: &LinkQuery) -> Result<LinkItem>;
     async fn create(&self, item: &LinkItem) -> Result<LinkItem>;
     async fn update(&self, id: &str, item: &LinkItem) -> Result<LinkItem>;
@@ -26,11 +26,9 @@ pub trait Links {
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Users {
-    async fn search(&self, query: &UserQuery) -> Result<UserInfo>;
+    async fn get(&self, query: &UserQuery) -> Result<UserInfo>;
     async fn create(&self, info: &UserInfo) -> Result<UserInfo>;
 }
 
-pub mod bare;
-pub use bare::Bare as BareDb;
-
+pub mod inmemory;
 pub mod mongodb;
