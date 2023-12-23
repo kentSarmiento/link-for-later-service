@@ -4,47 +4,73 @@ use chrono::Utc;
 use crate::{
     repository,
     service::Links as LinksService,
-    types::{entity::LinkItem, Result},
+    types::{
+        dto::{LinkQuery, LinkQueryBuilder},
+        entity::{LinkItem, LinkItemBuilder},
+        Result,
+    },
 };
 
 pub struct ServiceProvider {}
 
 #[async_trait]
 impl LinksService for ServiceProvider {
-    async fn list(&self, links_repo: Box<repository::DynLinks>) -> Result<Vec<LinkItem>> {
-        links_repo.list().await
+    async fn search(
+        &self,
+        links_repo: Box<repository::DynLinks>,
+        link_query: &LinkQuery,
+    ) -> Result<Vec<LinkItem>> {
+        links_repo.search(link_query).await
     }
 
-    async fn post(
+    async fn get(
+        &self,
+        links_repo: Box<repository::DynLinks>,
+        link_query: &LinkQuery,
+    ) -> Result<LinkItem> {
+        links_repo.get(link_query).await
+    }
+
+    async fn create(
         &self,
         links_repo: Box<repository::DynLinks>,
         link_item: &LinkItem,
     ) -> Result<LinkItem> {
         let now = Utc::now().to_rfc3339();
-        let created_link_item = link_item.created_at(&now).updated_at(&now);
+        let created_link_item = LinkItemBuilder::from(link_item.clone())
+            .created_at(&now)
+            .updated_at(&now)
+            .build();
 
-        links_repo.post(&created_link_item).await
+        links_repo.create(&created_link_item).await
     }
 
-    async fn get(&self, links_repo: Box<repository::DynLinks>, id: &str) -> Result<LinkItem> {
-        links_repo.get(id).await
-    }
-
-    async fn put(
+    async fn update(
         &self,
         links_repo: Box<repository::DynLinks>,
         id: &str,
         link_item: &LinkItem,
     ) -> Result<LinkItem> {
-        let now = Utc::now().to_rfc3339();
-        let updated_link_item = link_item.updated_at(&now);
+        let link_query = LinkQueryBuilder::new(id, link_item.owner()).build();
+        let retrieved_link_item = links_repo.get(&link_query).await?;
 
-        links_repo.put(id, &updated_link_item).await
+        let now = Utc::now().to_rfc3339();
+        let updated_link_item = LinkItemBuilder::from(link_item.clone())
+            .created_at(retrieved_link_item.created_at())
+            .updated_at(&now)
+            .build();
+
+        links_repo.update(id, &updated_link_item).await
     }
 
-    async fn delete(&self, links_repo: Box<repository::DynLinks>, id: &str) -> Result<()> {
-        links_repo.get(id).await?;
-        links_repo.delete(id).await
+    async fn delete(
+        &self,
+        links_repo: Box<repository::DynLinks>,
+        link_item: &LinkItem,
+    ) -> Result<()> {
+        let link_query = LinkQueryBuilder::new(link_item.id(), link_item.owner()).build();
+        links_repo.get(&link_query).await?;
+        links_repo.delete(link_item).await
     }
 }
 
@@ -52,24 +78,27 @@ impl LinksService for ServiceProvider {
 mod tests {
     use std::sync::Arc;
 
-    use crate::{
-        repository::MockLinks as MockLinksRepo,
-        types::{entity::LinkItem, AppError},
-    };
+    use mockall::Sequence;
+
+    use crate::{repository::MockLinks as MockLinksRepo, types::AppError};
 
     use super::*;
 
     #[tokio::test]
-    async fn test_get_links_empty() {
+    async fn test_search_links_empty() {
+        let repo_query = LinkQueryBuilder::default().owner("user-id").build();
+        let expected_query = LinkQueryBuilder::default().owner("user-id").build();
+
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
-            .expect_list()
+            .expect_search()
+            .withf(move |query| query == &expected_query)
             .times(1)
-            .returning(|| Ok(vec![]));
+            .returning(|_| Ok(vec![]));
 
         let links_service = ServiceProvider {};
         let response = links_service
-            .list(Box::new(Arc::new(mock_links_repo)))
+            .search(Box::new(Arc::new(mock_links_repo)), &repo_query)
             .await;
 
         assert!(response.is_ok());
@@ -77,19 +106,26 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_links_non_empty() {
-        let item = LinkItem::new("1", "http://link");
+    async fn test_search_links_non_empty() {
+        let repo_query = LinkQueryBuilder::default().owner("user-id").build();
+        let expected_query = LinkQueryBuilder::default().owner("user-id").build();
+
+        let item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
         let expected_items = vec![item.clone()];
 
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
-            .expect_list()
+            .expect_search()
+            .withf(move |query| query == &expected_query)
             .times(1)
-            .returning(move || Ok(vec![item.clone()]));
+            .returning(move |_| Ok(vec![item.clone()]));
 
         let links_service = ServiceProvider {};
         let response = links_service
-            .list(Box::new(Arc::new(mock_links_repo)))
+            .search(Box::new(Arc::new(mock_links_repo)), &repo_query)
             .await;
 
         assert!(response.is_ok());
@@ -102,90 +138,91 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_links_repo_error() {
+    async fn test_search_links_repo_error() {
+        let repo_query = LinkQueryBuilder::default().owner("user-id").build();
+        let expected_query = LinkQueryBuilder::default().owner("user-id").build();
+
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
-            .expect_list()
+            .expect_search()
+            .withf(move |query| query == &expected_query)
             .times(1)
-            .returning(|| Err(AppError::TestError));
+            .returning(|_| Err(AppError::ServerError));
 
         let links_service = ServiceProvider {};
         let response = links_service
-            .list(Box::new(Arc::new(mock_links_repo)))
+            .search(Box::new(Arc::new(mock_links_repo)), &repo_query)
             .await;
 
-        assert!(response.is_err());
+        assert_eq!(response, Err(AppError::ServerError));
     }
 
     #[tokio::test]
-    async fn test_post_links() {
-        let item = LinkItem::new("1", "http://link");
-        let request_item = item.clone();
-        let response_item = item.clone();
+    async fn test_get_link() {
+        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let retrieved_item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let request_query = repo_query.clone();
+        let response_item = retrieved_item.clone();
 
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
-            .expect_post()
+            .expect_get()
+            .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(move |_| Ok(item.clone()));
+            .returning(move |_| Ok(retrieved_item.clone()));
 
         let links_service = ServiceProvider {};
         let response = links_service
-            .post(Box::new(Arc::new(mock_links_repo)), &request_item)
+            .get(Box::new(Arc::new(mock_links_repo)), &request_query)
             .await;
 
         assert!(response.is_ok());
         assert_eq!(response.unwrap(), response_item);
-    }
-
-    #[tokio::test]
-    async fn test_post_links_repo_error() {
-        let request_item = LinkItem::new("1", "http://link");
-
-        let mut mock_links_repo = MockLinksRepo::new();
-        mock_links_repo
-            .expect_post()
-            .times(1)
-            .returning(|_| Err(AppError::TestError));
-
-        let links_service = ServiceProvider {};
-        let response = links_service
-            .post(Box::new(Arc::new(mock_links_repo)), &request_item)
-            .await;
-
-        assert!(response.is_err());
     }
 
     #[tokio::test]
     async fn test_get_link_not_found() {
+        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let request_query = repo_query.clone();
+
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
             .expect_get()
+            .withf(move |query| query == &repo_query)
             .times(1)
             .returning(|_| Err(AppError::ItemNotFound));
 
         let links_service = ServiceProvider {};
         let response = links_service
-            .get(Box::new(Arc::new(mock_links_repo)), "1111")
+            .get(Box::new(Arc::new(mock_links_repo)), &request_query)
             .await;
 
-        assert!(response.is_err());
+        assert_eq!(response, Err(AppError::ItemNotFound));
     }
 
     #[tokio::test]
-    async fn test_get_link_found() {
-        let item = LinkItem::new("1", "http://link");
-        let response_item = item.clone();
+    async fn test_create_link() {
+        let item_to_create = LinkItemBuilder::new("http://link").owner("user-id").build();
+        let created_item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let request_item = item_to_create.clone();
+        let response_item = created_item.clone();
 
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
-            .expect_get()
+            .expect_create()
+            //.withf(move |item| item == &item_to_create)
             .times(1)
-            .returning(move |_| Ok(item.clone()));
+            .returning(move |_| Ok(created_item.clone()));
 
         let links_service = ServiceProvider {};
         let response = links_service
-            .get(Box::new(Arc::new(mock_links_repo)), "1111")
+            .create(Box::new(Arc::new(mock_links_repo)), &request_item)
             .await;
 
         assert!(response.is_ok());
@@ -193,20 +230,63 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_put_links() {
-        let put_item = LinkItem::new("1", "http://link");
-        let request_item = put_item.clone();
-        let response_item = put_item.clone();
+    async fn test_create_link_repo_error() {
+        let item_to_create = LinkItemBuilder::new("http://link").owner("user-id").build();
+        let request_item = item_to_create.clone();
 
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
-            .expect_put()
+            .expect_create()
+            //.withf(move |item| item == &item_to_create)
             .times(1)
-            .returning(move |_, _| Ok(put_item.clone()));
+            .returning(|_| Err(AppError::ServerError));
 
         let links_service = ServiceProvider {};
         let response = links_service
-            .put(Box::new(Arc::new(mock_links_repo)), "1111", &request_item)
+            .create(Box::new(Arc::new(mock_links_repo)), &request_item)
+            .await;
+
+        assert_eq!(response, Err(AppError::ServerError));
+    }
+
+    #[tokio::test]
+    async fn test_update_link() {
+        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let item_to_update = LinkItemBuilder::new("http://link")
+            .owner("user-id")
+            .description("sample link")
+            .build();
+        let retrieved_item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let updated_item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .description("sample link")
+            .build();
+        let request_item = item_to_update.clone();
+        let response_item = updated_item.clone();
+
+        let mut seq = Sequence::new();
+
+        let mut mock_links_repo = MockLinksRepo::new();
+        mock_links_repo
+            .expect_get()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(move |_| Ok(retrieved_item.clone()));
+        mock_links_repo
+            .expect_update()
+            //.withf(move |item| item == &item_to_update)
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(move |_, _| Ok(updated_item.clone()));
+
+        let links_service = ServiceProvider {};
+        let response = links_service
+            .update(Box::new(Arc::new(mock_links_repo)), "1", &request_item)
             .await;
 
         assert!(response.is_ok());
@@ -214,59 +294,169 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_put_links_repo_error() {
-        let request_item = LinkItem::new("1", "http://link");
+    async fn test_update_link_not_found() {
+        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let item_to_update = LinkItemBuilder::new("http://link")
+            .owner("user-id")
+            .description("sample link")
+            .build();
+        let request_item = item_to_update.clone();
 
-        let mut mock_links_repo = MockLinksRepo::new();
-        mock_links_repo
-            .expect_put()
-            .times(1)
-            .returning(|_, _| Err(AppError::TestError));
-
-        let links_service = ServiceProvider {};
-        let response = links_service
-            .put(Box::new(Arc::new(mock_links_repo)), "1111", &request_item)
-            .await;
-
-        assert!(response.is_err());
-    }
-
-    #[tokio::test]
-    async fn test_delete_links_not_found() {
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
             .expect_get()
+            .withf(move |query| query == &repo_query)
             .times(1)
             .returning(|_| Err(AppError::ItemNotFound));
-        mock_links_repo.expect_delete().times(0);
+        mock_links_repo
+            .expect_update()
+            //.withf(move |item| item == &item_to_update)
+            .times(0);
 
         let links_service = ServiceProvider {};
         let response = links_service
-            .delete(Box::new(Arc::new(mock_links_repo)), "1111")
+            .update(Box::new(Arc::new(mock_links_repo)), "1", &request_item)
             .await;
 
-        assert!(response.is_err());
+        assert_eq!(response, Err(AppError::ItemNotFound));
     }
 
     #[tokio::test]
-    async fn test_delete_links_found() {
-        let item = LinkItem::new("1", "http://link");
+    async fn test_update_link_repo_error() {
+        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let item_to_update = LinkItemBuilder::new("http://link")
+            .owner("user-id")
+            .description("sample link")
+            .build();
+        let retrieved_item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let request_item = item_to_update.clone();
+
+        let mut seq = Sequence::new();
 
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
             .expect_get()
+            .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(move |_| Ok(item.clone()));
+            .in_sequence(&mut seq)
+            .returning(move |_| Ok(retrieved_item.clone()));
+        mock_links_repo
+            .expect_update()
+            //.withf(move |item| item == &item_to_update)
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _| Err(AppError::ServerError));
+
+        let links_service = ServiceProvider {};
+        let response = links_service
+            .update(Box::new(Arc::new(mock_links_repo)), "1", &request_item)
+            .await;
+
+        assert_eq!(response, Err(AppError::ServerError));
+    }
+
+    #[tokio::test]
+    async fn test_delete_link() {
+        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let item_to_delete = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let retrieved_item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let request_item = item_to_delete.clone();
+
+        let mut seq = Sequence::new();
+
+        let mut mock_links_repo = MockLinksRepo::new();
+        mock_links_repo
+            .expect_get()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(move |_| Ok(retrieved_item.clone()));
         mock_links_repo
             .expect_delete()
+            //.withf(move |item| item == &item_to_delete)
             .times(1)
-            .returning(|_| Ok(()));
+            .in_sequence(&mut seq)
+            .returning(move |_| Ok(()));
 
         let links_service = ServiceProvider {};
         let response = links_service
-            .delete(Box::new(Arc::new(mock_links_repo)), "1111")
+            .delete(Box::new(Arc::new(mock_links_repo)), &request_item)
             .await;
 
         assert!(response.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_delete_link_not_found() {
+        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let item_to_delete = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let request_item = item_to_delete.clone();
+
+        let mut mock_links_repo = MockLinksRepo::new();
+        mock_links_repo
+            .expect_get()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .returning(|_| Err(AppError::ItemNotFound));
+        mock_links_repo
+            .expect_delete()
+            //.withf(move |item| item == &item_to_delete)
+            .times(0);
+
+        let links_service = ServiceProvider {};
+        let response = links_service
+            .delete(Box::new(Arc::new(mock_links_repo)), &request_item)
+            .await;
+
+        assert_eq!(response, Err(AppError::ItemNotFound));
+    }
+
+    #[tokio::test]
+    async fn test_delete_link_repo_error() {
+        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let item_to_delete = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let retrieved_item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let request_item = item_to_delete.clone();
+
+        let mut seq = Sequence::new();
+
+        let mut mock_links_repo = MockLinksRepo::new();
+        mock_links_repo
+            .expect_get()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(move |_| Ok(retrieved_item.clone()));
+        mock_links_repo
+            .expect_delete()
+            //.withf(move |item| item == &item_to_delete)
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_| Err(AppError::ServerError));
+
+        let links_service = ServiceProvider {};
+        let response = links_service
+            .delete(Box::new(Arc::new(mock_links_repo)), &request_item)
+            .await;
+
+        assert_eq!(response, Err(AppError::ServerError));
     }
 }

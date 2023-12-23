@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{LoginRequest, PostLinkRequest, RegisterRequest};
-
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct LinkItem {
-    id: Option<String>,
+    id: String,
     owner: String,
     url: String,
     title: String,
@@ -13,106 +11,182 @@ pub struct LinkItem {
     updated_at: String,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UserInfo {
-    pub id: Option<String>,
-    pub email: String,
-    pub password: String,
-    pub verified: bool,
-    pub created_at: String,
-    pub updated_at: String,
-}
-
-impl From<PostLinkRequest> for LinkItem {
-    fn from(post_link: PostLinkRequest) -> Self {
-        Self {
-            owner: post_link.owner,
-            url: post_link.url,
-            ..Default::default()
-        }
-    }
-}
-
-impl From<RegisterRequest> for UserInfo {
-    fn from(registration: RegisterRequest) -> Self {
-        Self {
-            email: registration.email,
-            password: registration.password,
-            ..Default::default()
-        }
-    }
-}
-
-impl From<LoginRequest> for UserInfo {
-    fn from(login: LoginRequest) -> Self {
-        Self {
-            email: login.email,
-            password: login.password,
-            ..Default::default()
-        }
-    }
-}
-
 impl LinkItem {
-    pub fn id(&self, id: &str) -> Self {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn owner(&self) -> &str {
+        &self.owner
+    }
+
+    pub fn created_at(&self) -> &str {
+        &self.created_at
+    }
+}
+
+#[derive(Default)]
+pub struct LinkItemBuilder {
+    id: String,
+    owner: String,
+    url: String,
+    title: String,
+    description: String,
+    created_at: String,
+    updated_at: String,
+}
+
+impl LinkItemBuilder {
+    pub fn new(url: &str) -> Self {
         Self {
-            id: Some(id.to_string()),
-            ..self.clone()
+            url: url.to_string(),
+            ..Default::default()
         }
     }
 
-    pub fn created_at(&self, created_at: &str) -> Self {
-        Self {
-            created_at: created_at.to_string(),
-            ..self.clone()
-        }
+    pub fn id(mut self, id: &str) -> Self {
+        self.id = id.to_string();
+        self
     }
 
-    pub fn updated_at(&self, updated_at: &str) -> Self {
-        Self {
-            updated_at: updated_at.to_string(),
-            ..self.clone()
+    pub fn owner(mut self, owner: &str) -> Self {
+        self.owner = owner.to_string();
+        self
+    }
+
+    pub fn url(mut self, url: &str) -> Self {
+        self.url = url.to_string();
+        self
+    }
+
+    pub fn title(mut self, title: &str) -> Self {
+        self.title = title.to_string();
+        self
+    }
+
+    pub fn description(mut self, description: &str) -> Self {
+        self.description = description.to_string();
+        self
+    }
+
+    pub fn created_at(mut self, created_at: &str) -> Self {
+        self.created_at = created_at.to_string();
+        self
+    }
+
+    pub fn updated_at(mut self, updated_at: &str) -> Self {
+        self.updated_at = updated_at.to_string();
+        self
+    }
+
+    pub fn build(self) -> LinkItem {
+        LinkItem {
+            id: self.id,
+            owner: self.owner,
+            url: self.url,
+            title: self.title,
+            description: self.description,
+            created_at: self.created_at,
+            updated_at: self.updated_at,
         }
     }
+}
+
+impl From<LinkItem> for LinkItemBuilder {
+    fn from(item: LinkItem) -> Self {
+        Self {
+            id: item.id,
+            owner: item.owner,
+            url: item.url,
+            title: item.title,
+            description: item.description,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct UserInfo {
+    id: String,
+    email: String,
+    password: String,
+    verified: bool,
+    created_at: String,
+    updated_at: String,
 }
 
 impl UserInfo {
-    pub fn id(&self, id: &str) -> Self {
+    pub fn email(&self) -> &str {
+        &self.email
+    }
+
+    pub fn password(&self) -> &str {
+        &self.password
+    }
+}
+
+#[derive(Default)]
+pub struct UserInfoBuilder {
+    id: String,
+    email: String,
+    password: String,
+    verified: bool,
+    created_at: String,
+    updated_at: String,
+}
+
+impl UserInfoBuilder {
+    pub fn new(email: &str, password: &str) -> Self {
         Self {
-            id: Some(id.to_string()),
-            ..self.clone()
+            email: email.to_string(),
+            password: password.to_string(),
+            ..Default::default()
         }
     }
 
-    pub fn verified(&self, verified: bool) -> Self {
-        Self {
-            verified,
-            ..self.clone()
-        }
+    pub fn id(mut self, id: &str) -> Self {
+        self.id = id.to_string();
+        self
     }
 
-    pub fn created_at(&self, created_at: &str) -> Self {
-        Self {
-            created_at: created_at.to_string(),
-            ..self.clone()
-        }
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn verified(mut self, verified: bool) -> Self {
+        self.verified = verified;
+        self
     }
 
-    pub fn updated_at(&self, updated_at: &str) -> Self {
-        Self {
-            updated_at: updated_at.to_string(),
-            ..self.clone()
+    pub fn created_at(mut self, created_at: &str) -> Self {
+        self.created_at = created_at.to_string();
+        self
+    }
+
+    pub fn updated_at(mut self, updated_at: &str) -> Self {
+        self.updated_at = updated_at.to_string();
+        self
+    }
+
+    pub fn build(self) -> UserInfo {
+        UserInfo {
+            id: self.id,
+            email: self.email,
+            password: self.password,
+            verified: self.verified,
+            created_at: self.created_at,
+            updated_at: self.updated_at,
         }
     }
 }
 
-#[cfg(test)]
-impl LinkItem {
-    pub fn new(owner: &str, url: &str) -> Self {
+impl From<UserInfo> for UserInfoBuilder {
+    fn from(info: UserInfo) -> Self {
         Self {
-            owner: owner.to_string(),
-            url: url.to_string(),
-            ..Default::default()
+            id: info.id,
+            email: info.email,
+            password: info.password,
+            verified: info.verified,
+            created_at: info.created_at,
+            updated_at: info.updated_at,
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::{error, fmt};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum App {
     NotSupported,
     ServerError,
@@ -8,11 +8,10 @@ pub enum App {
     ItemNotFound,
     UserAlreadyExists,
     UserNotFound,
-    InvalidPassword,
+    IncorrectPassword,
     AuthorizationError,
-
-    #[cfg(test)]
-    TestError,
+    InvalidEmail,
+    InvalidUrl,
 }
 
 impl fmt::Display for App {
@@ -24,10 +23,10 @@ impl fmt::Display for App {
             Self::ItemNotFound => write!(f, "item not found"),
             Self::UserAlreadyExists => write!(f, "user already exist"),
             Self::UserNotFound => write!(f, "user not found"),
-            Self::InvalidPassword => write!(f, "incorrect password for user"),
+            Self::IncorrectPassword => write!(f, "incorrect password for user"),
             Self::AuthorizationError => write!(f, "invalid authorization token"),
-            #[cfg(test)]
-            Self::TestError => write!(f, "test error"),
+            Self::InvalidEmail => write!(f, "invalid email"),
+            Self::InvalidUrl => write!(f, "invalid url"),
         }
     }
 }
