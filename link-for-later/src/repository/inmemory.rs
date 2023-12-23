@@ -50,11 +50,7 @@ impl LinksRepository for LinksDb {
     }
 
     async fn create(&self, item: &LinkItem) -> Result<LinkItem> {
-        let id = if INMEMORY_LINKS_DATA_COUNTER.lock().unwrap().len() == 0 {
-            1
-        } else {
-            INMEMORY_LINKS_DATA_COUNTER.lock().unwrap().last().unwrap() + 1
-        };
+        let id = INMEMORY_LINKS_DATA_COUNTER.lock().unwrap().len() + 1;
         let link = LinkItemBuilder::from(item.clone())
             .id(&id.to_string())
             .build();
@@ -100,11 +96,7 @@ impl UsersRepository for UsersDb {
     }
 
     async fn create(&self, info: &UserInfo) -> Result<UserInfo> {
-        let id = if INMEMORY_USERS_DATA_COUNTER.lock().unwrap().len() == 0 {
-            1
-        } else {
-            INMEMORY_USERS_DATA_COUNTER.lock().unwrap().last().unwrap() + 1
-        };
+        let id = INMEMORY_USERS_DATA_COUNTER.lock().unwrap().len() + 1;
         let user = UserInfoBuilder::from(info.clone())
             .id(&id.to_string())
             .build();
