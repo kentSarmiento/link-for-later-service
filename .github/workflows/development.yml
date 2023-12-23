@@ -54,4 +54,4 @@ jobs:
               run: cargo test --lib
 
             #- name: Integration Test
-            #  run: cargo test --test '*'
+            #  run: RUST_TEST_THREADS=1 cargo test --test '*'
