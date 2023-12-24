@@ -154,7 +154,7 @@ mod tests {
 
     use axum::{extract::State, http::StatusCode};
     use http_body_util::BodyExt;
-    use serde_json::{json, Value};
+    use serde_json::json;
 
     use crate::{
         repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
@@ -163,7 +163,7 @@ mod tests {
             MockUsers as MockUsersService,
         },
         state::AppState,
-        types::auth::Claims,
+        types::{auth::Claims, entity::LinkItem},
     };
 
     use super::*;
@@ -212,10 +212,10 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        let body: Value = serde_json::from_str(body).unwrap();
-        assert!(body[0]["id"] == "1");
-        assert!(body[0]["owner"] == "user-id");
-        assert!(body[0]["url"] == "http://link");
+        let body: Vec<LinkItem> = serde_json::from_str(body).unwrap();
+        assert!(body[0].id() == "1");
+        assert!(body[0].owner() == "user-id");
+        assert!(body[0].url() == "http://link");
     }
 
     #[tokio::test]
@@ -269,10 +269,10 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        let body: Value = serde_json::from_str(body).unwrap();
-        assert!(body["id"] == "1");
-        assert!(body["owner"] == "user-id");
-        assert!(body["url"] == "http://link");
+        let body: LinkItem = serde_json::from_str(body).unwrap();
+        assert!(body.id() == "1");
+        assert!(body.owner() == "user-id");
+        assert!(body.url() == "http://link");
     }
 
     #[tokio::test]
@@ -354,10 +354,10 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        let body: Value = serde_json::from_str(body).unwrap();
-        assert!(body["id"] == "1");
-        assert!(body["owner"] == "user-id");
-        assert!(body["url"] == "http://link");
+        let body: LinkItem = serde_json::from_str(body).unwrap();
+        assert!(body.id() == "1");
+        assert!(body.owner() == "user-id");
+        assert!(body.url() == "http://link");
     }
 
     #[tokio::test]
@@ -420,10 +420,10 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        let body: Value = serde_json::from_str(body).unwrap();
-        assert!(body["id"] == "1");
-        assert!(body["owner"] == "user-id");
-        assert!(body["url"] == "http://link");
+        let body: LinkItem = serde_json::from_str(body).unwrap();
+        assert!(body.id() == "1");
+        assert!(body.owner() == "user-id");
+        assert!(body.url() == "http://link");
     }
 
     #[tokio::test]
