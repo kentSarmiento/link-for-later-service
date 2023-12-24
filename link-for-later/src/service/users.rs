@@ -148,7 +148,29 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_register_user_repo_error() {
+    async fn test_register_user_get_repo_error() {
+        let repo_query = UserQueryBuilder::new("user@test.com").build();
+        let user_to_register = UserInfoBuilder::new("user@test.com", "test").build();
+        let request_item = user_to_register.clone();
+
+        let mut mock_users_repo = MockUsersRepo::new();
+        mock_users_repo
+            .expect_get()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .returning(|_| Err(AppError::ServerError));
+        mock_users_repo.expect_create().times(0);
+
+        let users_service = ServiceProvider {};
+        let response = users_service
+            .register(Box::new(Arc::new(mock_users_repo)), &request_item)
+            .await;
+
+        assert_eq!(response, Err(AppError::ServerError));
+    }
+
+    #[tokio::test]
+    async fn test_register_user_create_repo_error() {
         let repo_query = UserQueryBuilder::new("user@test.com").build();
         let user_to_register = UserInfoBuilder::new("user@test.com", "test").build();
         let request_item = user_to_register.clone();
