@@ -1,5 +1,9 @@
 use mongodb::{options::ClientOptions, Client};
 
+const INMEMORY_DB_KEY: &str = "INMEMORY_DB";
+const MONGODB_URI_KEY: &str = "MONGODB_URI";
+const MONGODB_DATABASE_NAME_KEY: &str = "MONGODB_DATABASE_NAME";
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
@@ -10,14 +14,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .without_time()
         .init();
 
-    let app = if std::env::var("INMEMORY_DB").is_ok() {
+    let app = if std::env::var(INMEMORY_DB_KEY).is_ok() {
         tracing::info!("Using in-memory database");
         link_for_later::app::new(link_for_later::DatabaseType::InMemory)
     } else {
         tracing::info!("Using mongodb database");
 
-        let uri = std::env::var("MONGODB_URI")?;
-        let database_name = std::env::var("MONGODB_DATABASE_NAME")?;
+        let uri = std::env::var(MONGODB_URI_KEY)?;
+        let database_name = std::env::var(MONGODB_DATABASE_NAME_KEY)?;
 
         let client_options = ClientOptions::parse(uri).await?;
         let client = Client::with_options(client_options)?;

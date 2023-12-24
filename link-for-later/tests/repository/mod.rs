@@ -7,20 +7,25 @@ use rand::Rng;
 
 use crate::entity::{LinkItem, UserInfo};
 
+const MONGODB_URI_KEY: &str = "MONGODB_URI";
+const MONGODB_DATABASE_NAME_KEY: &str = "MONGODB_DATABASE_NAME";
+const LINKS_COLLECTION_NAME_KEY: &str = "LINKS_COLLECTION_NAME";
+const USERS_COLLECTION_NAME_KEY: &str = "USERS_COLLECTION_NAME";
+
 pub fn setup() {
     let mut rng = rand::thread_rng();
     let id = rng.gen::<u32>();
 
     let links_collection = format!("{}/links", id);
-    std::env::set_var("LINKS_COLLECTION_NAME", links_collection);
+    std::env::set_var(LINKS_COLLECTION_NAME_KEY, links_collection);
 
     let users_collection = format!("{}/users", id);
-    std::env::set_var("USERS_COLLECTION_NAME", users_collection);
+    std::env::set_var(USERS_COLLECTION_NAME_KEY, users_collection);
 }
 
 pub async fn database() -> Database {
-    let uri = std::env::var("MONGODB_URI").unwrap();
-    let database_name = std::env::var("MONGODB_DATABASE_NAME").unwrap();
+    let uri = std::env::var(MONGODB_URI_KEY).unwrap();
+    let database_name = std::env::var(MONGODB_DATABASE_NAME_KEY).unwrap();
 
     let client_options = ClientOptions::parse(uri).await.unwrap();
     let client = Client::with_options(client_options).unwrap();
@@ -28,14 +33,14 @@ pub async fn database() -> Database {
 }
 
 pub async fn count_links() -> u64 {
-    let collection = std::env::var("LINKS_COLLECTION_NAME").unwrap();
+    let collection = std::env::var(LINKS_COLLECTION_NAME_KEY).unwrap();
     let collection = database().await.collection::<LinkItem>(&collection);
 
     collection.count_documents(None, None).await.unwrap()
 }
 
 pub async fn get_link(id: &str) -> LinkItem {
-    let collection = std::env::var("LINKS_COLLECTION_NAME").unwrap();
+    let collection = std::env::var(LINKS_COLLECTION_NAME_KEY).unwrap();
     let collection = database().await.collection(&collection);
 
     let id = if let Ok(id) = bson::oid::ObjectId::from_str(id) {
@@ -48,7 +53,7 @@ pub async fn get_link(id: &str) -> LinkItem {
 }
 
 pub async fn add_link(owner: &str, url: &str) -> String {
-    let collection = std::env::var("LINKS_COLLECTION_NAME").unwrap();
+    let collection = std::env::var(LINKS_COLLECTION_NAME_KEY).unwrap();
     let collection = database().await.collection(&collection);
 
     let document = doc! {"id": "1", "owner": owner, "url": url, "title": "", "description": "", "created_at": "", "updated_at": ""};
@@ -57,7 +62,7 @@ pub async fn add_link(owner: &str, url: &str) -> String {
     let id = if let Bson::ObjectId(id) = result.inserted_id {
         id.to_hex()
     } else {
-        String::new()
+        String::default()
     };
     let query = doc! {"_id": result.inserted_id.clone()};
     let update = doc! {"$set": doc! { "id": &id } };
@@ -67,14 +72,14 @@ pub async fn add_link(owner: &str, url: &str) -> String {
 }
 
 pub async fn count_users() -> u64 {
-    let collection = std::env::var("USERS_COLLECTION_NAME").unwrap();
+    let collection = std::env::var(USERS_COLLECTION_NAME_KEY).unwrap();
     let collection = database().await.collection::<UserInfo>(&collection);
 
     collection.count_documents(None, None).await.unwrap()
 }
 
 pub async fn get_user(email: &str) -> UserInfo {
-    let collection = std::env::var("USERS_COLLECTION_NAME").unwrap();
+    let collection = std::env::var(USERS_COLLECTION_NAME_KEY).unwrap();
     let collection = database().await.collection(&collection);
 
     let db_query = doc! {"email": email};
@@ -82,7 +87,7 @@ pub async fn get_user(email: &str) -> UserInfo {
 }
 
 pub async fn add_user(email: &str, password: &str) -> String {
-    let collection = std::env::var("USERS_COLLECTION_NAME").unwrap();
+    let collection = std::env::var(USERS_COLLECTION_NAME_KEY).unwrap();
     let collection = database().await.collection(&collection);
 
     let document = doc! {"id": "1", "email": email, "password": password, "verified": true, "created_at": "", "updated_at": ""};
@@ -91,7 +96,7 @@ pub async fn add_user(email: &str, password: &str) -> String {
     let id = if let Bson::ObjectId(id) = result.inserted_id {
         id.to_hex()
     } else {
-        String::new()
+        String::default()
     };
     let query = doc! {"_id": result.inserted_id.clone()};
     let update = doc! {"$set": doc! { "id": &id } };

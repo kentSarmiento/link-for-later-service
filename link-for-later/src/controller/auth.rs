@@ -7,6 +7,8 @@ use jsonwebtoken::{decode, DecodingKey, Validation};
 
 use crate::types::{auth::Claims, AppError};
 
+const JWT_SECRET_KEY: &str = "JWT_SECRET";
+
 #[async_trait]
 impl<S> FromRequestParts<S> for Claims
 where
@@ -20,7 +22,8 @@ where
                 .await
                 .map_err(|_| AppError::AuthorizationError)?;
 
-        let secret = std::env::var("JWT_SECRET").map_or_else(|_| String::new(), |secret| secret);
+        let secret =
+            std::env::var(JWT_SECRET_KEY).map_or_else(|_| String::default(), |secret| secret);
         let token_data = match decode::<Self>(
             bearer.token(),
             &DecodingKey::from_secret(secret.as_bytes()),
