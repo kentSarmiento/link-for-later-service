@@ -200,3 +200,36 @@ async fn test_login_user_not_found() {
     let body = std::str::from_utf8(&body).unwrap();
     assert_eq!(body, json!({"error": "user not found"}).to_string());
 }
+
+#[tokio::test]
+async fn test_login_user_incorrect_password() {
+    repository::setup();
+
+    repository::add_user("user@test.com", "test").await;
+    let request = r#"{
+        "email": "user@test.com",
+        "password": "incorrect"
+    }"#;
+
+    let response = app::new()
+        .await
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/v1/users/login")
+                .header("Content-Type", "application/json")
+                .body(Body::from(request))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body = std::str::from_utf8(&body).unwrap();
+    assert_eq!(
+        body,
+        json!({"error": "incorrect password for user"}).to_string()
+    );
+}

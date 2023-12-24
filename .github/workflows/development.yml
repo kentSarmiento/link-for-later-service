@@ -62,3 +62,20 @@ jobs:
                 RUST_TEST_THREADS: 1
                 MONGODB_URI: "mongodb://localhost:27017/"
                 MONGODB_DATABASE_NAME: "test"
+
+            - name: Install cargo-llvm-cov
+              uses: taiki-e/install-action@cargo-llvm-cov
+
+            - name: Install rust-covfix
+              run: |
+                curl -L https://github.com/Kogia-sima/rust-covfix/releases/latest/download/rust-covfix-linux-x86_64.tar.xz |tar Jxf -
+                mv rust-covfix-linux-x86_64/rust-covfix ./
+
+            - name: Generate and fix code coverage
+              run: |
+                cargo llvm-cov --ignore-filename-regex "main|repository" --lcov --output-path lcov.info
+                rust-covfix lcov.info -o lcov.info
+              env:
+                RUST_TEST_THREADS: 1
+                MONGODB_URI: "mongodb://localhost:27017/"
+                MONGODB_DATABASE_NAME: "test"

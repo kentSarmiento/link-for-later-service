@@ -380,3 +380,30 @@ async fn test_delete_link_item_not_found() {
     assert!(db_item.owner == "user@test.com");
     assert!(db_item.url == "http://test"); // not updated
 }
+
+#[tokio::test]
+async fn test_unauthorized_access_to_links() {
+    repository::setup();
+
+    let response = app::new()
+        .await
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/v1/links")
+                .header("Authorization", "Bearer invalid")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body = std::str::from_utf8(&body).unwrap();
+    assert_eq!(
+        body,
+        json!({"error": "invalid authorization token"}).to_string()
+    );
+}

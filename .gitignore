@@ -12,3 +12,6 @@ target/
 # Ignored files for shuttle
 .shuttle-storage
 Secrets*.toml
+
+# Ignored files for tests
+lcov.info
