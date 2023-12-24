@@ -5,6 +5,7 @@ use axum::{
 use http_body_util::BodyExt;
 use serde_json::json;
 use tower::ServiceExt;
+use tracing_test::traced_test;
 
 use crate::entity::LinkItem;
 
@@ -13,6 +14,7 @@ mod auth;
 mod entity;
 mod repository;
 
+#[traced_test]
 #[tokio::test]
 async fn test_get_links_empty() {
     repository::setup();
@@ -38,6 +40,7 @@ async fn test_get_links_empty() {
     assert_eq!(&body[..], b"[]");
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_get_links_non_empty() {
     repository::setup();
@@ -69,6 +72,7 @@ async fn test_get_links_non_empty() {
     assert!(body[0].url == "http://test");
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_get_link_item_found() {
     repository::setup();
@@ -99,6 +103,7 @@ async fn test_get_link_item_found() {
     assert!(body.url == "http://test");
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_get_link_item_not_found() {
     repository::setup();
@@ -126,6 +131,7 @@ async fn test_get_link_item_not_found() {
     assert_eq!(body, json!({"error": "link item not found"}).to_string());
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_post_link() {
     repository::setup();
@@ -166,6 +172,7 @@ async fn test_post_link() {
     assert!(db_item.url == "http://test");
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_post_link_invalid_url() {
     repository::setup();
@@ -199,6 +206,7 @@ async fn test_post_link_invalid_url() {
     assert!(db_count == 0);
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_put_link() {
     repository::setup();
@@ -242,6 +250,7 @@ async fn test_put_link() {
     assert!(db_item.url == "http://update");
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_put_link_invalid_url() {
     repository::setup();
@@ -276,6 +285,7 @@ async fn test_put_link_invalid_url() {
     assert!(db_count == 1);
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_put_link_item_not_found() {
     repository::setup();
@@ -315,6 +325,7 @@ async fn test_put_link_item_not_found() {
     assert!(db_item.url == "http://test"); // not updated
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_delete_link() {
     repository::setup();
@@ -345,6 +356,7 @@ async fn test_delete_link() {
     assert!(db_count == 0);
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_delete_link_item_not_found() {
     repository::setup();
@@ -381,8 +393,36 @@ async fn test_delete_link_item_not_found() {
     assert!(db_item.url == "http://test"); // not updated
 }
 
+#[traced_test]
 #[tokio::test]
-async fn test_unauthorized_access_to_links() {
+async fn test_unauthorized_access_to_links_no_token() {
+    repository::setup();
+
+    let response = app::new()
+        .await
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/v1/links")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body = std::str::from_utf8(&body).unwrap();
+    assert_eq!(
+        body,
+        json!({"error": "invalid authorization token"}).to_string()
+    );
+}
+
+#[traced_test]
+#[tokio::test]
+async fn test_unauthorized_access_to_links_invalid_token() {
     repository::setup();
 
     let response = app::new()

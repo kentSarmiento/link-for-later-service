@@ -5,12 +5,14 @@ use axum::{
 use http_body_util::BodyExt;
 use serde_json::{json, Value};
 use tower::ServiceExt;
+use tracing_test::traced_test;
 
 mod app;
 mod auth;
 mod entity;
 mod repository;
 
+#[traced_test]
 #[tokio::test]
 async fn test_register_user() {
     repository::setup();
@@ -46,6 +48,7 @@ async fn test_register_user() {
     assert!(db_item.password == "test");
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_register_user_invalid_email() {
     repository::setup();
@@ -78,6 +81,7 @@ async fn test_register_user_invalid_email() {
     assert!(db_count == 0);
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_register_user_already_registered() {
     repository::setup();
@@ -111,6 +115,7 @@ async fn test_register_user_already_registered() {
     assert!(db_count == 1);
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_login_user() {
     repository::setup();
@@ -142,6 +147,7 @@ async fn test_login_user() {
     assert!(!body["token"].to_string().is_empty());
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_login_user_invalid_email() {
     repository::setup();
@@ -171,6 +177,7 @@ async fn test_login_user_invalid_email() {
     assert_eq!(body, json!({"error": "invalid email"}).to_string());
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_login_user_not_found() {
     repository::setup();
@@ -201,6 +208,7 @@ async fn test_login_user_not_found() {
     assert_eq!(body, json!({"error": "user not found"}).to_string());
 }
 
+#[traced_test]
 #[tokio::test]
 async fn test_login_user_incorrect_password() {
     repository::setup();
