@@ -2,10 +2,10 @@
 ARG VARIANT
 FROM mcr.microsoft.com/vscode/devcontainers/rust:1-${VARIANT}
 
-# Setup Rust toolchain
-ARG RUST_VERSION
-RUN rustup install ${RUST_VERSION} \
-    && rustup override set ${RUST_VERSION} \
+# Setup Rust toolchain to a fixed version
+ARG FIXED_RUST_VERSION
+RUN rustup install ${FIXED_RUST_VERSION} \
+    && rustup override set ${FIXED_RUST_VERSION} \
     && rustup component add rust-src rustfmt clippy
 
 # Install Docker

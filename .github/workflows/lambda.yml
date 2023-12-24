@@ -2,29 +2,29 @@ name: lambda
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-            - name: Install Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                toolchain: 1.74.0
-                profile: minimal
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.74.0
+          profile: minimal
 
-            - name: Install Cargo Lambda
-              run: pip install cargo-lambda==1.0.0
+      - name: Install Cargo Lambda
+        run: pip install cargo-lambda==1.0.0
 
-            - name: Build lambda
-              run: cargo lambda build --release
+      - name: Build lambda
+        run: cargo lambda build --release
 
-            - name: Deploy lambda
-              run: cargo lambda deploy --enable-function-url link-for-later-lambda
-              env:
-                AWS_DEFAULT_REGION: ap-southeast-1
-                AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Deploy lambda
+        run: cargo lambda deploy --enable-function-url link-for-later-lambda
+        env:
+          AWS_DEFAULT_REGION: ap-southeast-1
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
