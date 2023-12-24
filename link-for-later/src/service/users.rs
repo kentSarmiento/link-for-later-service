@@ -14,6 +14,8 @@ use crate::{
     },
 };
 
+const JWT_SECRET_KEY: &str = "JWT_SECRET";
+
 pub struct ServiceProvider {}
 
 #[async_trait]
@@ -69,7 +71,8 @@ impl UsersService for ServiceProvider {
             timestamp(now + Duration::minutes(60))?,
         );
 
-        let secret = std::env::var("JWT_SECRET").map_or_else(|_| String::new(), |secret| secret);
+        let secret =
+            std::env::var(JWT_SECRET_KEY).map_or_else(|_| String::default(), |secret| secret);
         let token = match encode(
             &Header::default(),
             &claims,

@@ -5,9 +5,9 @@ use validator::Validate;
 pub struct LinkItemRequest {
     #[validate(url)]
     url: String,
-    #[serde(default = "String::new")]
+    #[serde(default = "String::default")]
     title: String,
-    #[serde(default = "String::new")]
+    #[serde(default = "String::default")]
     description: String,
 }
 
