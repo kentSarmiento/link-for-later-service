@@ -79,3 +79,10 @@ jobs:
                 RUST_TEST_THREADS: 1
                 MONGODB_URI: "mongodb://localhost:27017/"
                 MONGODB_DATABASE_NAME: "test"
+
+            - name: Upload coverage reports to Codecov
+              uses: codecov/codecov-action@v3
+              with:
+                file: ./lcov.info
+              env:
+                CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
