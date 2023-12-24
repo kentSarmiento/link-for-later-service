@@ -14,8 +14,11 @@ use crate::types::{
 
 use super::{Links as LinksRepository, Users as UsersRepository};
 
-const LINKS_COLLECTION_NAME: &str = "v0.1.2/links";
-const USERS_COLLECTION_NAME: &str = "v0.1.2/users";
+const LINKS_COLLECTION_NAME_KEY: &str = "LINKS_COLLECTION_NAME";
+const LINKS_COLLECTION_NAME_DEFAULT: &str = "v1/links";
+
+const USERS_COLLECTION_NAME_KEY: &str = "USERS_COLLECTION_NAME";
+const USERS_COLLECTION_NAME_DEFAULT: &str = "v1/users";
 
 pub struct LinksDb {
     links_collection: Collection<LinkItem>,
@@ -27,8 +30,8 @@ pub struct UsersDb {
 
 impl LinksDb {
     pub fn new(db: &Database) -> Self {
-        let collection_name = std::env::var("LINKS_COLLECTION_NAME")
-            .unwrap_or_else(|_| LINKS_COLLECTION_NAME.to_string());
+        let collection_name = std::env::var(LINKS_COLLECTION_NAME_KEY)
+            .unwrap_or_else(|_| LINKS_COLLECTION_NAME_DEFAULT.to_string());
         let links_collection = db.collection::<LinkItem>(&collection_name);
         Self { links_collection }
     }
@@ -36,8 +39,8 @@ impl LinksDb {
 
 impl UsersDb {
     pub fn new(db: &Database) -> Self {
-        let collection_name = std::env::var("USERS_COLLECTION_NAME")
-            .unwrap_or_else(|_| USERS_COLLECTION_NAME.to_string());
+        let collection_name = std::env::var(USERS_COLLECTION_NAME_KEY)
+            .unwrap_or_else(|_| USERS_COLLECTION_NAME_DEFAULT.to_string());
         let users_collection = db.collection::<UserInfo>(&collection_name);
         Self { users_collection }
     }
