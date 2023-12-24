@@ -91,7 +91,11 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      # https://docs.deepsource.com/docs/analyzers-test-coverage#with-github-actions
+      - name: Use pull request HEAD commit for DeepSource
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -125,3 +129,10 @@ jobs:
           file: ./lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload coverage reports to DeepSource
+        run: |
+          curl https://deepsource.io/cli | sh
+          ./bin/deepsource report --analyzer test-coverage --key rust --value-file ./lcov.info
+        env:
+          DEEPSOURCE_DSN: ${{ secrets.DEEPSOURCE_DSN }}
