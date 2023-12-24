@@ -6,12 +6,17 @@ Link for Later Service provides an API to save links in your personal library fo
 
 ## User Features
 
-- User registration/login for a personal library
-- Saving of links to library
-- Analysis of saved links in library (to add information such as label, category, description, estimated time)
+- [x] User registration/login for a personal library
+- [x] Saving of links to library
+- [ ] Analysis of saved links in library (to add information such as category, summary, estimated time to finish reading)
 
-## Deployments
+## Development Features
 
+axum...
+
+## Project Structure/Deployments
+
+A workspace...
 The project is structured into the [Service Library](./link-for-later/) and multiple binaries depending on the option to run/deploy the service
 
 - [Shuttle](./link-for-later-shuttle/)
