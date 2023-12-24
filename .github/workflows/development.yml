@@ -2,7 +2,7 @@ name: development
 
 on:
   push:
-    branches: [ test-integration ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
