@@ -74,7 +74,7 @@ jobs:
             - name: Generate and fix code coverage
               run: |
                 cargo llvm-cov --ignore-filename-regex "main|repository" --lcov --output-path lcov.info
-                rust-covfix lcov.info -o lcov.info
+                ./rust-covfix lcov.info -o lcov.info
               env:
                 RUST_TEST_THREADS: 1
                 MONGODB_URI: "mongodb://localhost:27017/"
