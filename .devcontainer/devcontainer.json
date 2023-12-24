@@ -6,8 +6,8 @@
       // Use the VARIANT arg to pick a Debian OS version: buster, bullseye
       // Use bullseye when on local on arm64/Apple Silicon.
       "VARIANT": "bullseye",
-      // Fixed Rust Version
-      "RUST_VERSION": "1.74.0"
+      // Fixed Rust Version for development
+      "FIXED_RUST_VERSION": "1.74.0"
     }
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
