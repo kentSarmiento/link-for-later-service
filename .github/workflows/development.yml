@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - ${{ env.FIXED_RUST_VERSION }}
+          - 1.74.0
           - stable
           - beta
           - nightly
@@ -36,7 +36,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - ${{ env.FIXED_RUST_VERSION }}
+          - 1.74.0
           - stable
           - beta
           - nightly
@@ -61,7 +61,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - ${{ env.FIXED_RUST_VERSION }}
+          - 1.74.0
           - stable
           - beta
           - nightly
