@@ -53,5 +53,12 @@ jobs:
             - name: Unit Test
               run: cargo test --lib
 
-            #- name: Integration Test
-            #  run: cargo test --test '*'
+            - name: Start MongoDB
+              uses: supercharge/mongodb-github-action@1.10.0
+
+            - name: Integration Test
+              run: cargo test --test '*'
+              env:
+                RUST_TEST_THREADS: 1
+                MONGODB_URI: "mongodb://localhost:27017/"
+                MONGODB_DATABASE_NAME: "test"

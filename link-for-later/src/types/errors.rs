@@ -19,7 +19,7 @@ impl fmt::Display for App {
             Self::ServerError => write!(f, "server error"),
             Self::DatabaseError => write!(f, "database error"),
             Self::LinkNotFound => write!(f, "link item not found"),
-            Self::UserAlreadyExists => write!(f, "user already exist"),
+            Self::UserAlreadyExists => write!(f, "user already regisered"),
             Self::UserNotFound => write!(f, "user not found"),
             Self::IncorrectPassword => write!(f, "incorrect password for user"),
             Self::AuthorizationError => write!(f, "invalid authorization token"),

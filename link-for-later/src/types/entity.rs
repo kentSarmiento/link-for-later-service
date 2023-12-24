@@ -20,6 +20,11 @@ impl LinkItem {
         &self.owner
     }
 
+    #[cfg(test)]
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+
     pub fn created_at(&self) -> &str {
         &self.created_at
     }

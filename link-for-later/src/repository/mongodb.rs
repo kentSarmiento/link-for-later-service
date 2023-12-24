@@ -27,14 +27,18 @@ pub struct UsersDb {
 
 impl LinksDb {
     pub fn new(db: &Database) -> Self {
-        let links_collection = db.collection::<LinkItem>(LINKS_COLLECTION_NAME);
+        let collection_name = std::env::var("LINKS_COLLECTION_NAME")
+            .unwrap_or_else(|_| LINKS_COLLECTION_NAME.to_string());
+        let links_collection = db.collection::<LinkItem>(&collection_name);
         Self { links_collection }
     }
 }
 
 impl UsersDb {
     pub fn new(db: &Database) -> Self {
-        let users_collection = db.collection::<UserInfo>(USERS_COLLECTION_NAME);
+        let collection_name = std::env::var("USERS_COLLECTION_NAME")
+            .unwrap_or_else(|_| USERS_COLLECTION_NAME.to_string());
+        let users_collection = db.collection::<UserInfo>(&collection_name);
         Self { users_collection }
     }
 }
