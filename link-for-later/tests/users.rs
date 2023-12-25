@@ -3,26 +3,30 @@ use axum::{
     http::{Request, StatusCode},
 };
 use http_body_util::BodyExt;
+use rstest::rstest;
 use serde_json::{json, Value};
 use tower::ServiceExt;
 use tracing_test::traced_test;
+
+use crate::repository::DatabaseType;
 
 mod app;
 mod auth;
 mod entity;
 mod repository;
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_register_user() {
-    repository::setup();
+async fn test_register_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
     let request = r#"{
         "email": "user@test.com",
         "password": "test"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -40,25 +44,26 @@ async fn test_register_user() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     assert_eq!(&body[..], b"");
 
-    let db_count = repository::count_users().await;
+    let db_count = repository.count_users().await;
     assert!(db_count == 1);
 
-    let db_item = repository::get_user("user@test.com").await;
+    let db_item = repository.get_user("user@test.com").await;
     assert!(db_item.email == "user@test.com");
     assert!(db_item.password == "test");
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_register_user_invalid_email() {
-    repository::setup();
+async fn test_register_user_invalid_email(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
     let request = r#"{
         "email": "user",
         "password": "test"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -77,22 +82,25 @@ async fn test_register_user_invalid_email() {
     let body = std::str::from_utf8(&body).unwrap();
     assert_eq!(body, json!({"error": "invalid email"}).to_string());
 
-    let db_count = repository::count_users().await;
+    let db_count = repository.count_users().await;
     assert!(db_count == 0);
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_register_user_already_registered() {
-    repository::setup();
+async fn test_register_user_already_registered(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+) {
+    let repository = repository::new(&db_type);
 
-    repository::add_user("user@test.com", "test").await;
+    repository.add_user("user@test.com", "test").await;
     let request = r#"{
         "email": "user@test.com",
         "password": "test"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -111,22 +119,23 @@ async fn test_register_user_already_registered() {
     let body = std::str::from_utf8(&body).unwrap();
     assert_eq!(body, json!({"error": "user already regisered"}).to_string());
 
-    let db_count = repository::count_users().await;
+    let db_count = repository.count_users().await;
     assert!(db_count == 1);
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_login_user() {
-    repository::setup();
+async fn test_login_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
-    repository::add_user("user@test.com", "test").await;
+    repository.add_user("user@test.com", "test").await;
     let request = r#"{
         "email": "user@test.com",
         "password": "test"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -147,17 +156,18 @@ async fn test_login_user() {
     assert!(!body["token"].to_string().is_empty());
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_login_user_invalid_email() {
-    repository::setup();
+async fn test_login_user_invalid_email(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    repository::new(&db_type);
 
     let request = r#"{
         "email": "user",
         "password": "test"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -177,18 +187,19 @@ async fn test_login_user_invalid_email() {
     assert_eq!(body, json!({"error": "invalid email"}).to_string());
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_login_user_not_found() {
-    repository::setup();
+async fn test_login_user_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
-    repository::add_user("user@test.com", "test").await;
+    repository.add_user("user@test.com", "test").await;
     let request = r#"{
         "email": "user2@test.com",
         "password": "test"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -208,18 +219,21 @@ async fn test_login_user_not_found() {
     assert_eq!(body, json!({"error": "user not found"}).to_string());
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_login_user_incorrect_password() {
-    repository::setup();
+async fn test_login_user_incorrect_password(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+) {
+    let repository = repository::new(&db_type);
 
-    repository::add_user("user@test.com", "test").await;
+    repository.add_user("user@test.com", "test").await;
     let request = r#"{
         "email": "user@test.com",
         "password": "incorrect"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
