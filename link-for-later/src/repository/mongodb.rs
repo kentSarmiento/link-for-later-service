@@ -1,12 +1,10 @@
-use std::str::FromStr;
-
 use axum::async_trait;
-use bson::{doc, Bson};
+use bson::{doc, to_document};
 use futures::TryStreamExt;
 use mongodb::{options::ReplaceOptions, Collection, Database};
 
 use crate::types::{
-    dto::{LinkQuery, UserQuery},
+    dto::{LinkQuery, LinkQueryBuilder, UserQuery},
     entity::LinkItem,
     entity::{LinkItemBuilder, UserInfo, UserInfoBuilder},
     AppError, Result,
@@ -49,147 +47,103 @@ impl UsersDb {
 #[async_trait]
 impl LinksRepository for LinksDb {
     async fn find(&self, query: &LinkQuery) -> Result<Vec<LinkItem>> {
-        let mut db_query = doc! {};
-        if !query.id().is_empty() {
-            let Ok(id) = bson::oid::ObjectId::from_str(query.id()) else {
-                tracing::error!("Error: {} cannot be converted to Bson ObjectId", query.id());
-                return Err(AppError::LinkNotFound);
-            };
-            db_query.insert("_id", id);
-        }
-        if !query.owner().is_empty() {
-            db_query.insert("owner", query.owner());
-        }
-        match self.links_collection.find(db_query, None).await {
-            Ok(result) => Ok(result.try_collect().await.unwrap_or_else(|_| vec![])),
-            Err(e) => {
-                tracing::error!("Error: find(): {e:?}");
-                Err(AppError::DatabaseError)
-            }
-        }
+        let db_query =
+            to_document(query).map_err(|_| AppError::DatabaseError("to_document failed".into()))?;
+        let result = self
+            .links_collection
+            .find(db_query, None)
+            .await
+            .map_err(|e| AppError::DatabaseError(format!("find() {e:?}")))?;
+        Ok(result.try_collect().await.unwrap_or_else(|_| vec![]))
     }
 
     async fn get(&self, query: &LinkQuery) -> Result<LinkItem> {
-        let mut db_query = doc! {};
-        if !query.id().is_empty() {
-            let Ok(id) = bson::oid::ObjectId::from_str(query.id()) else {
-                tracing::error!("Error: {} cannot be converted to Bson ObjectId", query.id());
-                return Err(AppError::LinkNotFound);
-            };
-            db_query.insert("_id", id);
-        }
-        if !query.owner().is_empty() {
-            db_query.insert("owner", query.owner());
-        }
-        match self.links_collection.find_one(db_query, None).await {
-            Ok(item) => item.map_or(Err(AppError::LinkNotFound), |item| {
-                let returned_item = LinkItemBuilder::from(item).id(query.id()).build();
-                Ok(returned_item)
-            }),
-            Err(e) => {
-                tracing::error!("Error: find_one(): {e:?}");
-                Err(AppError::DatabaseError)
-            }
-        }
+        let db_query =
+            to_document(query).map_err(|_| AppError::DatabaseError("to_document failed".into()))?;
+        let item = self
+            .links_collection
+            .find_one(db_query, None)
+            .await
+            .map_err(|e| AppError::DatabaseError(format!("find_one() {e:?}")))?;
+        item.ok_or(AppError::LinkNotFound)
     }
 
     async fn create(&self, item: &LinkItem) -> Result<LinkItem> {
-        match self.links_collection.insert_one(item, None).await {
-            Ok(result) => {
-                let id = if let Bson::ObjectId(id) = result.inserted_id {
-                    id.to_hex()
-                } else {
-                    tracing::error!("Error: unexpected inserted_id: {}", result.inserted_id);
-                    return Err(AppError::DatabaseError);
-                };
-                let query = doc! {"_id": result.inserted_id};
-                let update = doc! {"$set": doc! { "id": &id } };
-                self.links_collection
-                    .update_one(query, update, None)
-                    .await
-                    .unwrap();
+        let result = self
+            .links_collection
+            .insert_one(item, None)
+            .await
+            .map_err(|e| AppError::DatabaseError(format!("insert_one() {e:?}")))?;
 
-                let returned_item = LinkItemBuilder::from(item.clone()).id(&id).build();
-                Ok(returned_item)
-            }
-            Err(e) => {
-                tracing::error!("Error: insert_one(): {e:?}");
-                Err(AppError::DatabaseError)
-            }
-        }
+        let id = result.inserted_id.as_object_id().map_or_else(
+            || Err(AppError::DatabaseError("unexpected inserted_id()".into())),
+            |id| Ok(id.to_hex()),
+        )?;
+        let query = doc! {"_id": result.inserted_id};
+        let update = doc! {"$set": doc! { "id": &id } };
+        self.links_collection
+            .update_one(query, update, None)
+            .await
+            .map_err(|e| AppError::DatabaseError(format!("update_one() {e:?}")))?;
+
+        Ok(LinkItemBuilder::from(item.clone()).id(&id).build())
     }
 
     async fn update(&self, id: &str, item: &LinkItem) -> Result<LinkItem> {
-        let Ok(id) = bson::oid::ObjectId::from_str(id) else {
-            tracing::error!("Error: {id} cannot be converted to Bson ObjectId");
-            return Err(AppError::LinkNotFound);
-        };
-        let query = doc! {"_id": id, "owner": item.owner()};
+        let query = LinkQueryBuilder::new(id, item.owner()).build();
+        let db_query = to_document(&query)
+            .map_err(|_| AppError::DatabaseError("to_document failed".into()))?;
         let opts = ReplaceOptions::builder().upsert(true).build();
-        match self
-            .links_collection
-            .replace_one(query, item, Some(opts))
+        self.links_collection
+            .replace_one(db_query, item, Some(opts))
             .await
-        {
-            Ok(_) => Ok(item.clone()),
-            Err(e) => {
-                tracing::error!("Error: replace_one(): {e:?}");
-                Err(AppError::DatabaseError)
-            }
-        }
+            .map_err(|e| AppError::DatabaseError(format!("replace_one() {e:?}")))?;
+        Ok(item.clone())
     }
 
     async fn delete(&self, item: &LinkItem) -> Result<()> {
-        let Ok(id) = bson::oid::ObjectId::from_str(item.id()) else {
-            tracing::error!("Error: {} cannot be converted to Bson ObjectId", item.id());
-            return Err(AppError::LinkNotFound);
-        };
-        let query = doc! {"_id": id, "owner": item.owner()};
-        match self.links_collection.delete_one(query, None).await {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                tracing::error!("Error: delete_one(): {e:?}");
-                Err(AppError::DatabaseError)
-            }
-        }
+        let query = LinkQueryBuilder::new(item.id(), item.owner()).build();
+        let db_query = to_document(&query)
+            .map_err(|_| AppError::DatabaseError("to_document failed".into()))?;
+        self.links_collection
+            .delete_one(db_query, None)
+            .await
+            .map_err(|e| AppError::DatabaseError(format!("delete_one() {e:?}")))?;
+        Ok(())
     }
 }
 
 #[async_trait]
 impl UsersRepository for UsersDb {
     async fn get(&self, query: &UserQuery) -> Result<UserInfo> {
-        let query = doc! {"email": query.email()};
-        match self.users_collection.find_one(query, None).await {
-            Ok(item) => item.ok_or(AppError::UserNotFound),
-            Err(e) => {
-                tracing::error!("Error: find_one(): {e:?}");
-                Err(AppError::DatabaseError)
-            }
-        }
+        let db_query =
+            to_document(query).map_err(|_| AppError::DatabaseError("to_document failed".into()))?;
+        let item = self
+            .users_collection
+            .find_one(db_query, None)
+            .await
+            .map_err(|e| AppError::DatabaseError(format!("find_one() {e:?}")))?;
+        item.ok_or(AppError::UserNotFound)
     }
 
     async fn create(&self, info: &UserInfo) -> Result<UserInfo> {
-        match self.users_collection.insert_one(info, None).await {
-            Ok(result) => {
-                let id = if let Bson::ObjectId(id) = result.inserted_id {
-                    id.to_hex()
-                } else {
-                    tracing::error!("Error: unexpected inserted_id: {}", result.inserted_id);
-                    return Err(AppError::DatabaseError);
-                };
-                let query = doc! {"_id": result.inserted_id};
-                let update = doc! {"$set": doc! { "id": &id } };
-                self.users_collection
-                    .update_one(query, update, None)
-                    .await
-                    .unwrap();
-                let returned_info = UserInfoBuilder::from(info.clone()).id(&id).build();
-                Ok(returned_info)
-            }
-            Err(e) => {
-                tracing::error!("Error: insert_one(): {e:?}");
-                Err(AppError::DatabaseError)
-            }
-        }
+        let result = self
+            .users_collection
+            .insert_one(info, None)
+            .await
+            .map_err(|e| AppError::DatabaseError(format!("insert_one() {e:?}")))?;
+
+        let id = result.inserted_id.as_object_id().map_or_else(
+            || Err(AppError::DatabaseError("unexpected inserted_id()".into())),
+            |id| Ok(id.to_hex()),
+        )?;
+        let query = doc! {"_id": result.inserted_id};
+        let update = doc! {"$set": doc! { "id": &id } };
+        self.users_collection
+            .update_one(query, update, None)
+            .await
+            .map_err(|e| AppError::DatabaseError(format!("update_one() {e:?}")))?;
+
+        Ok(UserInfoBuilder::from(info.clone()).id(&id).build())
     }
 }
