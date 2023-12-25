@@ -26,6 +26,10 @@ pub trait Repository {
 pub fn new(db_type: &DatabaseType) -> Box<dyn Repository> {
     match db_type {
         DatabaseType::InMemory => Box::<inmemory::RepositoryProvider>::default(),
-        DatabaseType::MongoDb => Box::<mongodb::RepositoryProvider>::default(),
+        DatabaseType::MongoDb => {
+            let repository = mongodb::RepositoryProvider::default();
+            repository.setup();
+            Box::new(repository)
+        }
     }
 }

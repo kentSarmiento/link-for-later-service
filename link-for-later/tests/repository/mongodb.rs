@@ -14,18 +14,8 @@ const MONGODB_DATABASE_NAME_KEY: &str = "MONGODB_DATABASE_NAME";
 const LINKS_COLLECTION_NAME_KEY: &str = "LINKS_COLLECTION_NAME";
 const USERS_COLLECTION_NAME_KEY: &str = "USERS_COLLECTION_NAME";
 
+#[derive(Default)]
 pub struct RepositoryProvider {}
-
-impl Default for RepositoryProvider {
-    fn default() -> Self {
-        let mut rng = rand::thread_rng();
-        let id = rng.gen::<u32>();
-
-        std::env::set_var(LINKS_COLLECTION_NAME_KEY, format!("v{}/links", id));
-        std::env::set_var(USERS_COLLECTION_NAME_KEY, format!("v{}/users", id));
-        Self {}
-    }
-}
 
 #[async_trait]
 impl super::Repository for RepositoryProvider {
@@ -97,6 +87,16 @@ impl super::Repository for RepositoryProvider {
         collection.update_one(document, update, None).await.unwrap();
 
         id
+    }
+}
+
+impl RepositoryProvider {
+    pub fn setup(&self) {
+        let mut rng = rand::thread_rng();
+        let id = rng.gen::<u32>();
+
+        std::env::set_var(LINKS_COLLECTION_NAME_KEY, format!("v{}/links", id));
+        std::env::set_var(USERS_COLLECTION_NAME_KEY, format!("v{}/users", id));
     }
 }
 
