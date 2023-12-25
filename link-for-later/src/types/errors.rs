@@ -30,3 +30,32 @@ impl fmt::Display for App {
 }
 
 impl error::Error for App {}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_error_messages() {
+        assert_eq!(App::ServerError.to_string(), "server error");
+        assert_eq!(
+            App::DatabaseError("a database error occurred".into()).to_string(),
+            "database error"
+        );
+        assert_eq!(App::ServerError.to_string(), "server error");
+        assert_eq!(App::LinkNotFound.to_string(), "link item not found");
+        assert_eq!(App::UserAlreadyExists.to_string(), "user already regisered");
+        assert_eq!(App::UserNotFound.to_string(), "user not found");
+        assert_eq!(
+            App::IncorrectPassword.to_string(),
+            "incorrect password for user"
+        );
+        assert_eq!(
+            App::AuthorizationError.to_string(),
+            "invalid authorization token"
+        );
+        assert_eq!(App::InvalidEmail.to_string(), "invalid email");
+        assert_eq!(App::InvalidUrl.to_string(), "invalid url");
+    }
+}
