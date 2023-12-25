@@ -1,7 +1,12 @@
 #![allow(dead_code)]
 
+use axum::async_trait;
+
 use crate::entity::{LinkItem, UserInfo};
 
+use self::{inmemory::Repository as InMemoryRepo, mongodb::Repository as MongoDbRepo};
+
+pub mod inmemory;
 pub mod mongodb;
 
 #[derive(Clone)]
@@ -10,59 +15,19 @@ pub enum DatabaseType {
     InMemory,
 }
 
-pub struct Repository {
-    db_type: DatabaseType,
+#[async_trait]
+pub trait Repository {
+    async fn count_links(&self) -> u64;
+    async fn get_link(&self, id: &str) -> LinkItem;
+    async fn add_link(&self, owner: &str, url: &str) -> String;
+    async fn count_users(&self) -> u64;
+    async fn get_user(&self, email: &str) -> UserInfo;
+    async fn add_user(&self, email: &str, password: &str) -> String;
 }
 
-pub fn new(db_type: &DatabaseType) -> Repository {
-    let db_type = db_type.clone();
+pub fn new(db_type: &DatabaseType) -> Box<dyn Repository> {
     match db_type {
-        DatabaseType::InMemory => {}
-        DatabaseType::MongoDb => mongodb::setup(),
-    };
-    Repository { db_type }
-}
-
-impl Repository {
-    pub async fn count_links(&self) -> u64 {
-        match self.db_type {
-            DatabaseType::InMemory => unimplemented!(),
-            DatabaseType::MongoDb => mongodb::count_links().await,
-        }
-    }
-
-    pub async fn get_link(&self, id: &str) -> LinkItem {
-        match self.db_type {
-            DatabaseType::InMemory => unimplemented!(),
-            DatabaseType::MongoDb => mongodb::get_link(id).await,
-        }
-    }
-
-    pub async fn add_link(&self, owner: &str, url: &str) -> String {
-        match self.db_type {
-            DatabaseType::InMemory => unimplemented!(),
-            DatabaseType::MongoDb => mongodb::add_link(owner, url).await,
-        }
-    }
-
-    pub async fn count_users(&self) -> u64 {
-        match self.db_type {
-            DatabaseType::InMemory => unimplemented!(),
-            DatabaseType::MongoDb => mongodb::count_users().await,
-        }
-    }
-
-    pub async fn get_user(&self, email: &str) -> UserInfo {
-        match self.db_type {
-            DatabaseType::InMemory => unimplemented!(),
-            DatabaseType::MongoDb => mongodb::get_user(email).await,
-        }
-    }
-
-    pub async fn add_user(&self, email: &str, password: &str) -> String {
-        match self.db_type {
-            DatabaseType::InMemory => unimplemented!(),
-            DatabaseType::MongoDb => mongodb::add_user(email, password).await,
-        }
+        DatabaseType::InMemory => Box::<InMemoryRepo>::default(),
+        DatabaseType::MongoDb => Box::<MongoDbRepo>::default(),
     }
 }
