@@ -12,19 +12,19 @@ use crate::types::{
 use super::{Links as LinksRepository, Users as UsersRepository};
 
 #[derive(Default)]
-pub struct LinksDb {}
+pub struct LinksRepositoryProvider {}
 
 static INMEMORY_LINKS_DATA: Lazy<Mutex<Vec<LinkItem>>> = Lazy::new(|| Mutex::new(Vec::new()));
 static INMEMORY_LINKS_DATA_COUNTER: Lazy<Mutex<Vec<usize>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
 #[derive(Default)]
-pub struct UsersDb {}
+pub struct UsersRepositoryProvider {}
 
 static INMEMORY_USERS_DATA: Lazy<Mutex<Vec<UserInfo>>> = Lazy::new(|| Mutex::new(Vec::new()));
 static INMEMORY_USERS_DATA_COUNTER: Lazy<Mutex<Vec<usize>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
 #[async_trait]
-impl LinksRepository for LinksDb {
+impl LinksRepository for LinksRepositoryProvider {
     async fn find(&self, query: &LinkQuery) -> Result<Vec<LinkItem>> {
         let filtered_links: Vec<LinkItem> = INMEMORY_LINKS_DATA
             .lock()
@@ -84,7 +84,7 @@ impl LinksRepository for LinksDb {
 }
 
 #[async_trait]
-impl UsersRepository for UsersDb {
+impl UsersRepository for UsersRepositoryProvider {
     async fn get(&self, query: &UserQuery) -> Result<UserInfo> {
         INMEMORY_USERS_DATA
             .lock()

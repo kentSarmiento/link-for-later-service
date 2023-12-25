@@ -33,9 +33,11 @@ impl LinkItemRequest {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct LinkQuery {
+    #[serde(skip_serializing_if = "String::is_empty")]
     id: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     owner: String,
 }
 
@@ -101,7 +103,7 @@ impl UserInfoRequest {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct UserQuery {
     email: String,
 }
