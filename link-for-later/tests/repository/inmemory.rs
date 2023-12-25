@@ -4,10 +4,10 @@ use axum::async_trait;
 use crate::entity::{LinkItem, UserInfo};
 
 #[derive(Default)]
-pub struct Repository {}
+pub struct RepositoryProvider {}
 
 #[async_trait]
-impl super::Repository for Repository {
+impl super::Repository for RepositoryProvider {
     async fn count_links(&self) -> u64 {
         unimplemented!()
     }

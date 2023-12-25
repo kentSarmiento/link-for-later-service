@@ -14,9 +14,9 @@ const MONGODB_DATABASE_NAME_KEY: &str = "MONGODB_DATABASE_NAME";
 const LINKS_COLLECTION_NAME_KEY: &str = "LINKS_COLLECTION_NAME";
 const USERS_COLLECTION_NAME_KEY: &str = "USERS_COLLECTION_NAME";
 
-pub struct Repository {}
+pub struct RepositoryProvider {}
 
-impl Default for Repository {
+impl Default for RepositoryProvider {
     fn default() -> Self {
         let mut rng = rand::thread_rng();
         let id = rng.gen::<u32>();
@@ -28,7 +28,7 @@ impl Default for Repository {
 }
 
 #[async_trait]
-impl super::Repository for Repository {
+impl super::Repository for RepositoryProvider {
     async fn count_links(&self) -> u64 {
         database()
             .await

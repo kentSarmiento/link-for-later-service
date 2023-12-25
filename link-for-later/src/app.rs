@@ -15,12 +15,14 @@ pub fn new(db: Database) -> Router {
     let users_service = Arc::new(service::users::ServiceProvider {}) as DynUsersService;
     let (links_repo, users_repo) = match db {
         Database::MongoDb(db) => (
-            Arc::new(repository::mongodb::LinksDb::new(&db)) as DynLinksRepository,
-            Arc::new(repository::mongodb::UsersDb::new(&db)) as DynUsersRepository,
+            Arc::new(repository::mongodb::LinksRepositoryProvider::new(&db)) as DynLinksRepository,
+            Arc::new(repository::mongodb::UsersRepositoryProvider::new(&db)) as DynUsersRepository,
         ),
         Database::InMemory => (
-            Arc::new(repository::inmemory::LinksDb::default()) as DynLinksRepository,
-            Arc::new(repository::inmemory::UsersDb::default()) as DynUsersRepository,
+            Arc::new(repository::inmemory::LinksRepositoryProvider::default())
+                as DynLinksRepository,
+            Arc::new(repository::inmemory::UsersRepositoryProvider::default())
+                as DynUsersRepository,
         ),
     };
 

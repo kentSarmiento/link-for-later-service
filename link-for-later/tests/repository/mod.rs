@@ -4,8 +4,6 @@ use axum::async_trait;
 
 use crate::entity::{LinkItem, UserInfo};
 
-use self::{inmemory::Repository as InMemoryRepo, mongodb::Repository as MongoDbRepo};
-
 pub mod inmemory;
 pub mod mongodb;
 
@@ -27,7 +25,7 @@ pub trait Repository {
 
 pub fn new(db_type: &DatabaseType) -> Box<dyn Repository> {
     match db_type {
-        DatabaseType::InMemory => Box::<InMemoryRepo>::default(),
-        DatabaseType::MongoDb => Box::<MongoDbRepo>::default(),
+        DatabaseType::InMemory => Box::<inmemory::RepositoryProvider>::default(),
+        DatabaseType::MongoDb => Box::<mongodb::RepositoryProvider>::default(),
     }
 }

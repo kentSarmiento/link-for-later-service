@@ -18,15 +18,15 @@ const LINKS_COLLECTION_NAME_DEFAULT: &str = "v1/links";
 const USERS_COLLECTION_NAME_KEY: &str = "USERS_COLLECTION_NAME";
 const USERS_COLLECTION_NAME_DEFAULT: &str = "v1/users";
 
-pub struct LinksDb {
+pub struct LinksRepositoryProvider {
     links_collection: Collection<LinkItem>,
 }
 
-pub struct UsersDb {
+pub struct UsersRepositoryProvider {
     users_collection: Collection<UserInfo>,
 }
 
-impl LinksDb {
+impl LinksRepositoryProvider {
     pub fn new(db: &Database) -> Self {
         let collection_name = std::env::var(LINKS_COLLECTION_NAME_KEY)
             .unwrap_or_else(|_| LINKS_COLLECTION_NAME_DEFAULT.to_string());
@@ -35,7 +35,7 @@ impl LinksDb {
     }
 }
 
-impl UsersDb {
+impl UsersRepositoryProvider {
     pub fn new(db: &Database) -> Self {
         let collection_name = std::env::var(USERS_COLLECTION_NAME_KEY)
             .unwrap_or_else(|_| USERS_COLLECTION_NAME_DEFAULT.to_string());
@@ -45,7 +45,7 @@ impl UsersDb {
 }
 
 #[async_trait]
-impl LinksRepository for LinksDb {
+impl LinksRepository for LinksRepositoryProvider {
     async fn find(&self, query: &LinkQuery) -> Result<Vec<LinkItem>> {
         let db_query =
             to_document(query).map_err(|_| AppError::DatabaseError("to_document failed".into()))?;
@@ -114,7 +114,7 @@ impl LinksRepository for LinksDb {
 }
 
 #[async_trait]
-impl UsersRepository for UsersDb {
+impl UsersRepository for UsersRepositoryProvider {
     async fn get(&self, query: &UserQuery) -> Result<UserInfo> {
         let db_query =
             to_document(query).map_err(|_| AppError::DatabaseError("to_document failed".into()))?;
