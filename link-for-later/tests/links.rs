@@ -3,25 +3,29 @@ use axum::{
     http::{Request, StatusCode},
 };
 use http_body_util::BodyExt;
+use rstest::rstest;
 use serde_json::json;
 use tower::ServiceExt;
 use tracing_test::traced_test;
 
-use crate::entity::LinkItem;
+use crate::{entity::LinkItem, repository::DatabaseType};
 
 mod app;
 mod auth;
 mod entity;
 mod repository;
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_get_links_empty() {
-    repository::setup();
+async fn test_get_links_empty(
+    #[values(DatabaseType::InMemory, DatabaseType::MongoDb)] db_type: DatabaseType,
+) {
+    repository::new(&db_type);
 
     let token = auth::generate_token("user@test.com");
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -40,15 +44,16 @@ async fn test_get_links_empty() {
     assert_eq!(&body[..], b"[]");
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_get_links_non_empty() {
-    repository::setup();
+async fn test_get_links_non_empty(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
-    let id = repository::add_link("user@test.com", "http://test").await;
+    let id = repository.add_link("user@test.com", "http://test").await;
     let token = auth::generate_token("user@test.com");
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -72,15 +77,16 @@ async fn test_get_links_non_empty() {
     assert!(body[0].url == "http://test");
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_get_link_item_found() {
-    repository::setup();
+async fn test_get_link_item_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
-    let id = repository::add_link("user@test.com", "http://test").await;
+    let id = repository.add_link("user@test.com", "http://test").await;
     let token = auth::generate_token("user@test.com");
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -103,15 +109,16 @@ async fn test_get_link_item_found() {
     assert!(body.url == "http://test");
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_get_link_item_not_found() {
-    repository::setup();
+async fn test_get_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
-    repository::add_link("user@test.com", "http://test").await;
+    repository.add_link("user@test.com", "http://test").await;
     let token = auth::generate_token("user@test.com");
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -131,17 +138,18 @@ async fn test_get_link_item_not_found() {
     assert_eq!(body, json!({"error": "link item not found"}).to_string());
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_post_link() {
-    repository::setup();
+async fn test_post_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
     let token = auth::generate_token("user@test.com");
     let request = r#"{
         "url": "http://test"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -164,25 +172,26 @@ async fn test_post_link() {
     assert!(body.owner == "user@test.com");
     assert!(body.url == "http://test");
 
-    let db_count = repository::count_links().await;
+    let db_count = repository.count_links().await;
     assert!(db_count == 1);
 
-    let db_item = repository::get_link(&body.id).await;
+    let db_item = repository.get_link(&body.id).await;
     assert!(db_item.owner == "user@test.com");
     assert!(db_item.url == "http://test");
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_post_link_invalid_url() {
-    repository::setup();
+async fn test_post_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
     let token = auth::generate_token("user@test.com");
     let request = r#"{
         "url": "invalid"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -202,22 +211,23 @@ async fn test_post_link_invalid_url() {
     let body = std::str::from_utf8(&body).unwrap();
     assert_eq!(body, json!({"error": "invalid url"}).to_string());
 
-    let db_count = repository::count_links().await;
+    let db_count = repository.count_links().await;
     assert!(db_count == 0);
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_put_link() {
-    repository::setup();
+async fn test_put_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
-    let id = repository::add_link("user@test.com", "http://test").await;
+    let id = repository.add_link("user@test.com", "http://test").await;
     let token = auth::generate_token("user@test.com");
     let request = r#"{
         "url": "http://update"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -241,27 +251,28 @@ async fn test_put_link() {
     assert!(body.owner == "user@test.com");
     assert!(body.url == "http://update");
 
-    let db_count = repository::count_links().await;
+    let db_count = repository.count_links().await;
     assert!(db_count == 1);
 
-    let db_item = repository::get_link(&id).await;
+    let db_item = repository.get_link(&id).await;
     assert!(db_item.id == id);
     assert!(db_item.owner == "user@test.com");
     assert!(db_item.url == "http://update");
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_put_link_invalid_url() {
-    repository::setup();
+async fn test_put_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
-    let id = repository::add_link("user@test.com", "http://test").await;
+    let id = repository.add_link("user@test.com", "http://test").await;
     let token = auth::generate_token("user@test.com");
     let request = r#"{
         "url": "invalid"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -281,22 +292,23 @@ async fn test_put_link_invalid_url() {
     let body = std::str::from_utf8(&body).unwrap();
     assert_eq!(body, json!({"error": "invalid url"}).to_string());
 
-    let db_count = repository::count_links().await;
+    let db_count = repository.count_links().await;
     assert!(db_count == 1);
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_put_link_item_not_found() {
-    repository::setup();
+async fn test_put_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
-    let id = repository::add_link("user@test.com", "http://test").await;
+    let id = repository.add_link("user@test.com", "http://test").await;
     let token = auth::generate_token("user@test.com");
     let request = r#"{
         "url": "http://update"
     }"#;
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -316,24 +328,25 @@ async fn test_put_link_item_not_found() {
     let body = std::str::from_utf8(&body).unwrap();
     assert_eq!(body, json!({"error": "link item not found"}).to_string());
 
-    let db_count = repository::count_links().await;
+    let db_count = repository.count_links().await;
     assert!(db_count == 1);
 
-    let db_item = repository::get_link(&id).await;
+    let db_item = repository.get_link(&id).await;
     assert!(db_item.id == id);
     assert!(db_item.owner == "user@test.com");
     assert!(db_item.url == "http://test"); // not updated
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_delete_link() {
-    repository::setup();
+async fn test_delete_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
-    let id = repository::add_link("user@test.com", "http://test").await;
+    let id = repository.add_link("user@test.com", "http://test").await;
     let token = auth::generate_token("user@test.com");
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -352,19 +365,20 @@ async fn test_delete_link() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     assert_eq!(&body[..], b"");
 
-    let db_count = repository::count_links().await;
+    let db_count = repository.count_links().await;
     assert!(db_count == 0);
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_delete_link_item_not_found() {
-    repository::setup();
+async fn test_delete_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+    let repository = repository::new(&db_type);
 
-    let id = repository::add_link("user@test.com", "http://test").await;
+    let id = repository.add_link("user@test.com", "http://test").await;
     let token = auth::generate_token("user@test.com");
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -384,21 +398,24 @@ async fn test_delete_link_item_not_found() {
     let body = std::str::from_utf8(&body).unwrap();
     assert_eq!(body, json!({"error": "link item not found"}).to_string());
 
-    let db_count = repository::count_links().await;
+    let db_count = repository.count_links().await;
     assert!(db_count == 1);
 
-    let db_item = repository::get_link(&id).await;
+    let db_item = repository.get_link(&id).await;
     assert!(db_item.id == id);
     assert!(db_item.owner == "user@test.com");
     assert!(db_item.url == "http://test"); // not updated
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_unauthorized_access_to_links_no_token() {
-    repository::setup();
+async fn test_unauthorized_access_to_links_no_token(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+) {
+    repository::new(&db_type);
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
@@ -420,12 +437,15 @@ async fn test_unauthorized_access_to_links_no_token() {
     );
 }
 
+#[rstest]
 #[traced_test]
 #[tokio::test]
-async fn test_unauthorized_access_to_links_invalid_token() {
-    repository::setup();
+async fn test_unauthorized_access_to_links_invalid_token(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+) {
+    repository::new(&db_type);
 
-    let response = app::new()
+    let response = app::new(&db_type)
         .await
         .oneshot(
             Request::builder()
