@@ -43,10 +43,7 @@ async fn register(
         .await
     {
         Ok(_) => StatusCode::CREATED.into_response(),
-        Err(e) => {
-            tracing::error!("Error: {}", e);
-            e.into_response()
-        }
+        Err(e) => e.into_response(),
     }
 }
 
@@ -72,10 +69,7 @@ async fn login(
             let response = AuthResponse::new(token.jwt());
             (StatusCode::OK, Json(response)).into_response()
         }
-        Err(e) => {
-            tracing::error!("Error: {}", e);
-            e.into_response()
-        }
+        Err(e) => e.into_response(),
     }
 }
 
