@@ -12,7 +12,10 @@ Link for Later Service provides an API to save links in your personal library fo
 
 ## Development Features
 
-axum...
+- axum...
+- shuttle...
+- devcontainer
+- 
 
 ## Project Structure/Deployments
 
@@ -22,17 +25,3 @@ The project is structured into the [Service Library](./link-for-later/) and mult
 - [Shuttle](./link-for-later-shuttle/)
 - [AWS Lambda Function](./link-for-later-lambda/)
 - [Standalone server using axum](./link-for-later-axum/) (for local development)
-
-## Getting Started
-
-### Required Downloads
-
-- Docker
-- Visual Studio Code
-- [Devcontainer extension for vscode](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-
-### Setup
-
-1. Clone this repository.
-1. Open the repository in Visual Studio Code.
-1. Wait for the notification in the bottom right corner asking to `"Reopen in container"`.
