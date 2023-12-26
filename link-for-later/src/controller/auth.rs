@@ -20,21 +20,18 @@ where
         let TypedHeader(Authorization(bearer)) =
             TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state)
                 .await
-                .map_err(|_| AppError::AuthorizationError)?;
+                .map_err(|_| {
+                    AppError::AuthorizationError(String::from("Authorization token not found"))
+                })?;
 
         let secret =
             std::env::var(JWT_SECRET_KEY).map_or_else(|_| String::default(), |secret| secret);
-        let token_data = match decode::<Self>(
+        let token_data = decode::<Self>(
             bearer.token(),
             &DecodingKey::from_secret(secret.as_bytes()),
             &Validation::default(),
-        ) {
-            Ok(token) => token,
-            Err(e) => {
-                tracing::error!("Error: {}", e.to_string());
-                return Err(AppError::AuthorizationError);
-            }
-        };
+        )
+        .map_err(|e| AppError::AuthorizationError(format!("decode() {e:?}")))?;
 
         Ok(token_data.claims)
     }

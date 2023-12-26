@@ -116,7 +116,7 @@ jobs:
 
       - name: Generate and fix code coverage
         run: |
-          cargo llvm-cov --ignore-filename-regex "main|inmemory" --lcov --output-path lcov.info
+          cargo llvm-cov --ignore-filename-regex "main" --lcov --output-path lcov.info
           ./rust-covfix lcov.info -o lcov.info
         env:
           RUST_TEST_THREADS: 1
