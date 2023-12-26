@@ -8,7 +8,7 @@ pub enum App {
     UserAlreadyExists,
     UserNotFound,
     IncorrectPassword,
-    AuthorizationError,
+    AuthorizationError(String),
     InvalidEmail,
     InvalidUrl,
 }
@@ -22,7 +22,7 @@ impl fmt::Display for App {
             Self::UserAlreadyExists => write!(f, "user already regisered"),
             Self::UserNotFound => write!(f, "user not found"),
             Self::IncorrectPassword => write!(f, "incorrect password for user"),
-            Self::AuthorizationError => write!(f, "invalid authorization token"),
+            Self::AuthorizationError(_) => write!(f, "invalid authorization token"),
             Self::InvalidEmail => write!(f, "invalid email"),
             Self::InvalidUrl => write!(f, "invalid url"),
         }
@@ -47,15 +47,15 @@ mod tests {
         assert_eq!(App::LinkNotFound.to_string(), "link item not found");
         assert_eq!(App::UserAlreadyExists.to_string(), "user already regisered");
         assert_eq!(App::UserNotFound.to_string(), "user not found");
+        assert_eq!(App::InvalidEmail.to_string(), "invalid email");
+        assert_eq!(App::InvalidUrl.to_string(), "invalid url");
         assert_eq!(
             App::IncorrectPassword.to_string(),
             "incorrect password for user"
         );
         assert_eq!(
-            App::AuthorizationError.to_string(),
+            App::AuthorizationError("authorization error occurred".into()).to_string(),
             "invalid authorization token"
         );
-        assert_eq!(App::InvalidEmail.to_string(), "invalid email");
-        assert_eq!(App::InvalidUrl.to_string(), "invalid url");
     }
 }

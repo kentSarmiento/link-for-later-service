@@ -73,17 +73,12 @@ impl UsersService for ServiceProvider {
 
         let secret =
             std::env::var(JWT_SECRET_KEY).map_or_else(|_| String::default(), |secret| secret);
-        let token = match encode(
+        let token = encode(
             &Header::default(),
             &claims,
             &EncodingKey::from_secret(secret.as_bytes()),
-        ) {
-            Ok(token) => token,
-            Err(e) => {
-                tracing::error!("Error: {}", e.to_string());
-                return Err(AppError::ServerError);
-            }
-        };
+        )
+        .map_err(|_| AppError::ServerError)?;
 
         Ok(Token::new(&token))
     }
