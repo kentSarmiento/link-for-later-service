@@ -6,28 +6,31 @@ Link for Later Service provides an API to save links in your personal library fo
 
 ## User Features
 
-- User registration/login for a personal library
-- Saving of links to library
-- Analysis of saved links in library (to add information such as label, category, description, estimated time)
+- [x] User registration/login for a personal library
+- [x] Saving of links to library
+- [ ] Analysis of saved links in library (to add information such as category, summary, estimated time to finish reading)
 
-## Deployments
+## Development Features
 
-The project is structured into the [Service Library](./link-for-later/) and multiple binaries depending on the option to run/deploy the service
+- [`Axum`](https://github.com/tokio-rs/axum) as web application framework
+- Multiple deployment options:
+  - [Shuttle](https://github.com/shuttle-hq/shuttle). Refer [here](./link-for-later-shuttle/) for details.
+  - [Cargo Lambda](https://www.cargo-lambda.info/) to deploy the service as an AWS Lambda Function. Refer [here](./link-for-later-lambda/) for details.
+  - Standalone server using axum for local development. Refer [here](./link-for-later-axum/) for details.
+- Multiple repository options:
+  - MongoDB
+  - InMemory database
+  - and more coming soon...
+- Route authorization using [`jsonwebtoken`](https://github.com/Keats/jsonwebtoken)
+- Password hashing using [`argon2`](https://github.com/RustCrypto/password-hashes/tree/master/argon2)
+- Mock objects for testing using [`mockall`](https://github.com/asomers/mockall)
+- Fixture-based test framework using [`rtest`](https://github.com/la10736/rstest)
 
-- [Shuttle](./link-for-later-shuttle/)
-- [AWS Lambda Function](./link-for-later-lambda/)
-- [Standalone server using axum](./link-for-later-axum/) (for local development)
+## Development Tooling
 
-## Getting Started
-
-### Required Downloads
-
-- Docker
-- Visual Studio Code
-- [Devcontainer extension for vscode](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-
-### Setup
-
-1. Clone this repository.
-1. Open the repository in Visual Studio Code.
-1. Wait for the notification in the bottom right corner asking to `"Reopen in container"`.
+- A Rust devcontainer for VSCode
+- Github actions for CI/CD
+- [Clippy](https://github.com/rust-lang/rust-clippy) for linting/static analysis
+- [Codecov](https://about.codecov.io/) for coverage metrics
+- [DeepSource](https://deepsource.com/) for static analysis/coverage metrics management
+- Dependabot for regular dependency updates
