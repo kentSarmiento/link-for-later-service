@@ -12,35 +12,43 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
             Self::ServerError(ref e) => {
-                tracing::debug!("Server error: {}", e.to_string());
+                tracing::info!("{}", self.to_string());
+                tracing::debug!("{}: {}", self.to_string(), e.to_string());
                 (StatusCode::INTERNAL_SERVER_ERROR, self.to_string())
             }
             Self::DatabaseError(ref e) => {
-                tracing::debug!("Database error: {}", e.to_string());
+                tracing::info!("{}", self.to_string());
+                tracing::debug!("{}: {}", self.to_string(), e.to_string());
                 (StatusCode::INTERNAL_SERVER_ERROR, self.to_string())
             }
             Self::LinkNotFound(ref e) => {
-                tracing::debug!("Link not found: {}", e.to_string());
+                tracing::info!("{}", self.to_string());
+                tracing::debug!("{}: {}", self.to_string(), e.to_string());
                 (StatusCode::NOT_FOUND, self.to_string())
             }
             Self::UserAlreadyExists(ref e) => {
-                tracing::debug!("User already exists: {}", e.to_string());
+                tracing::info!("{}", self.to_string());
+                tracing::debug!("{}: {}", self.to_string(), e.to_string());
                 (StatusCode::BAD_REQUEST, self.to_string())
             }
             Self::UserNotFound(ref e) => {
-                tracing::debug!("User not found: {}", e.to_string());
+                tracing::info!("{}", self.to_string());
+                tracing::debug!("{}: {}", self.to_string(), e.to_string());
                 (StatusCode::BAD_REQUEST, self.to_string())
             }
             Self::IncorrectPassword(ref e) => {
-                tracing::debug!("Incorrect password: {}", e.to_string());
+                tracing::info!("{}", self.to_string());
+                tracing::debug!("{}: {}", self.to_string(), e.to_string());
                 (StatusCode::UNAUTHORIZED, self.to_string())
             }
             Self::AuthorizationError(ref e) => {
-                tracing::debug!("Authorization error: {}", e.to_string());
+                tracing::info!("{}", self.to_string());
+                tracing::debug!("{}: {}", self.to_string(), e.to_string());
                 (StatusCode::UNAUTHORIZED, self.to_string())
             }
             Self::ValidationError(ref e) => {
-                tracing::debug!("Payload validation error: {}", e.to_string());
+                tracing::info!("{}", self.to_string());
+                tracing::debug!("{}: {}", self.to_string(), e.to_string());
                 (StatusCode::BAD_REQUEST, self.to_string())
             }
 
