@@ -10,50 +10,51 @@ use crate::types::AppError;
 #[allow(clippy::cognitive_complexity)]
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
+        let error_message = self.to_string();
         let (status, error_message) = match self {
             Self::ServerError(ref e) => {
-                tracing::info!("{}", self.to_string());
-                tracing::debug!("{}: {}", self.to_string(), e.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, self.to_string())
+                tracing::info!("{}", error_message);
+                tracing::debug!("{}: {}", error_message, e.to_string());
+                (StatusCode::INTERNAL_SERVER_ERROR, error_message)
             }
             Self::DatabaseError(ref e) => {
-                tracing::info!("{}", self.to_string());
-                tracing::debug!("{}: {}", self.to_string(), e.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, self.to_string())
+                tracing::info!("{}", error_message);
+                tracing::debug!("{}: {}", error_message, e.to_string());
+                (StatusCode::INTERNAL_SERVER_ERROR, error_message)
             }
             Self::LinkNotFound(ref e) => {
-                tracing::info!("{}", self.to_string());
-                tracing::debug!("{}: {}", self.to_string(), e.to_string());
-                (StatusCode::NOT_FOUND, self.to_string())
+                tracing::info!("{}", error_message);
+                tracing::debug!("{}: {}", error_message, e.to_string());
+                (StatusCode::NOT_FOUND, error_message)
             }
             Self::UserAlreadyExists(ref e) => {
-                tracing::info!("{}", self.to_string());
-                tracing::debug!("{}: {}", self.to_string(), e.to_string());
-                (StatusCode::BAD_REQUEST, self.to_string())
+                tracing::info!("{}", error_message);
+                tracing::debug!("{}: {}", error_message, e.to_string());
+                (StatusCode::BAD_REQUEST, error_message)
             }
             Self::UserNotFound(ref e) => {
-                tracing::info!("{}", self.to_string());
-                tracing::debug!("{}: {}", self.to_string(), e.to_string());
-                (StatusCode::BAD_REQUEST, self.to_string())
+                tracing::info!("{}", error_message);
+                tracing::debug!("{}: {}", error_message, e.to_string());
+                (StatusCode::BAD_REQUEST, error_message)
             }
             Self::IncorrectPassword(ref e) => {
-                tracing::info!("{}", self.to_string());
-                tracing::debug!("{}: {}", self.to_string(), e.to_string());
-                (StatusCode::UNAUTHORIZED, self.to_string())
+                tracing::info!("{}", error_message);
+                tracing::debug!("{}: {}", error_message, e.to_string());
+                (StatusCode::UNAUTHORIZED, error_message)
             }
             Self::AuthorizationError(ref e) => {
-                tracing::info!("{}", self.to_string());
-                tracing::debug!("{}: {}", self.to_string(), e.to_string());
-                (StatusCode::UNAUTHORIZED, self.to_string())
+                tracing::info!("{}", error_message);
+                tracing::debug!("{}: {}", error_message, e.to_string());
+                (StatusCode::UNAUTHORIZED, error_message)
             }
             Self::ValidationError(ref e) => {
-                tracing::info!("{}", self.to_string());
-                tracing::debug!("{}: {}", self.to_string(), e.to_string());
-                (StatusCode::BAD_REQUEST, self.to_string())
+                tracing::info!("{}", error_message);
+                tracing::debug!("{}: {}", error_message, e.to_string());
+                (StatusCode::BAD_REQUEST, error_message)
             }
 
             #[cfg(test)]
-            Self::TestError => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
+            Self::TestError => (StatusCode::INTERNAL_SERVER_ERROR, error_message),
         };
 
         let body = Json(json!({
