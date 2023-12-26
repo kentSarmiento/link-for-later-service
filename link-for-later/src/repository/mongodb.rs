@@ -65,7 +65,7 @@ impl LinksRepository for LinksRepositoryProvider {
             .find_one(db_query, None)
             .await
             .map_err(|e| AppError::DatabaseError(format!("find_one() {e:?}")))?;
-        item.ok_or(AppError::LinkNotFound)
+        item.ok_or_else(|| AppError::LinkNotFound(query.id().to_owned()))
     }
 
     async fn create(&self, item: &LinkItem) -> Result<LinkItem> {
@@ -123,7 +123,7 @@ impl UsersRepository for UsersRepositoryProvider {
             .find_one(db_query, None)
             .await
             .map_err(|e| AppError::DatabaseError(format!("find_one() {e:?}")))?;
-        item.ok_or(AppError::UserNotFound)
+        item.ok_or_else(|| AppError::UserNotFound(query.email().to_owned()))
     }
 
     async fn create(&self, info: &UserInfo) -> Result<UserInfo> {

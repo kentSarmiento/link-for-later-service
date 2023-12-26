@@ -31,8 +31,7 @@ async fn register(
     match payload.validate() {
         Ok(()) => {}
         Err(e) => {
-            tracing::error!("Error: {}", e);
-            return AppError::InvalidEmail.into_response();
+            return AppError::ValidationError(format!("register() {e:?}")).into_response();
         }
     }
 
@@ -58,8 +57,7 @@ async fn login(
     match payload.validate() {
         Ok(()) => {}
         Err(e) => {
-            tracing::error!("Error: {}", e);
-            return AppError::InvalidEmail.into_response();
+            return AppError::ValidationError(format!("login() {e:?}")).into_response();
         }
     }
 
@@ -141,7 +139,7 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert_eq!(body, json!({"error": "invalid email"}).to_string());
+        assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
     #[traced_test]
@@ -155,7 +153,7 @@ mod tests {
             .expect_register()
             .withf(move |_, user| user == &user_to_register)
             .times(1)
-            .returning(|_, _| Err(AppError::ServerError));
+            .returning(|_, _| Err(AppError::TestError));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_users_service)).build();
         let response = register(State(app_state), Json(request)).await;
@@ -165,7 +163,7 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert_eq!(body, json!({"error": "server error"}).to_string());
+        assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
     #[traced_test]
@@ -209,7 +207,7 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert_eq!(body, json!({"error": "invalid email"}).to_string());
+        assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
     #[traced_test]
@@ -223,7 +221,7 @@ mod tests {
             .expect_login()
             .withf(move |_, user| user == &user_to_login)
             .times(1)
-            .returning(|_, _| Err(AppError::ServerError));
+            .returning(|_, _| Err(AppError::TestError));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_users_service)).build();
         let response = login(State(app_state), Json(request)).await;
@@ -233,7 +231,7 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert_eq!(body, json!({"error": "server error"}).to_string());
+        assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
     struct AppStateBuilder {

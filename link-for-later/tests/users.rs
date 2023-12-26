@@ -80,7 +80,7 @@ async fn test_register_user_invalid_email(#[values(DatabaseType::MongoDb)] db_ty
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let body = std::str::from_utf8(&body).unwrap();
-    assert_eq!(body, json!({"error": "invalid email"}).to_string());
+    assert_eq!(body, json!({"error": "invalid request"}).to_string());
 
     let db_count = repository.count_users().await;
     assert!(db_count == 0);
@@ -117,7 +117,10 @@ async fn test_register_user_already_registered(
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let body = std::str::from_utf8(&body).unwrap();
-    assert_eq!(body, json!({"error": "user already regisered"}).to_string());
+    assert_eq!(
+        body,
+        json!({"error": "user already registered"}).to_string()
+    );
 
     let db_count = repository.count_users().await;
     assert!(db_count == 1);
@@ -184,7 +187,7 @@ async fn test_login_user_invalid_email(#[values(DatabaseType::MongoDb)] db_type:
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let body = std::str::from_utf8(&body).unwrap();
-    assert_eq!(body, json!({"error": "invalid email"}).to_string());
+    assert_eq!(body, json!({"error": "invalid request"}).to_string());
 }
 
 #[rstest]
