@@ -209,7 +209,7 @@ async fn test_post_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: Da
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let body = std::str::from_utf8(&body).unwrap();
-    assert_eq!(body, json!({"error": "invalid url"}).to_string());
+    assert_eq!(body, json!({"error": "invalid request"}).to_string());
 
     let db_count = repository.count_links().await;
     assert!(db_count == 0);
@@ -290,7 +290,7 @@ async fn test_put_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: Dat
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let body = std::str::from_utf8(&body).unwrap();
-    assert_eq!(body, json!({"error": "invalid url"}).to_string());
+    assert_eq!(body, json!({"error": "invalid request"}).to_string());
 
     let db_count = repository.count_links().await;
     assert!(db_count == 1);
