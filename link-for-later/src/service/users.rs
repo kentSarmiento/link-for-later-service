@@ -1,3 +1,7 @@
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 use axum::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
@@ -33,8 +37,16 @@ impl UsersService for ServiceProvider {
         };
 
         let now = Utc::now().to_rfc3339();
-        // TODO: secure password
-        let registered_user_info = UserInfoBuilder::from(user_info.clone())
+
+        let password_hash = Argon2::default()
+            .hash_password(
+                user_info.password().as_bytes(),
+                &SaltString::generate(&mut OsRng),
+            )
+            .map_err(|e| AppError::ServerError(format!("hash_password() {e:?}")))?
+            .to_string();
+
+        let registered_user_info = UserInfoBuilder::new(user_info.email(), &password_hash)
             .created_at(&now)
             .updated_at(&now)
             .verified(true)
@@ -51,9 +63,11 @@ impl UsersService for ServiceProvider {
         let user_query = UserQueryBuilder::new(user_info.email()).build();
         let retrieved_user_info = users_repo.get(&user_query).await?;
 
-        if retrieved_user_info.password() != user_info.password() {
-            return Err(AppError::IncorrectPassword(user_info.email().to_owned()));
-        }
+        let parsed_hash = PasswordHash::new(retrieved_user_info.password())
+            .map_err(|e| AppError::ServerError(format!("PasswordHash::new() {e:?}")))?;
+        Argon2::default()
+            .verify_password(user_info.password().as_bytes(), &parsed_hash)
+            .map_err(|_| AppError::IncorrectPassword(user_info.email().to_owned()))?;
 
         let timestamp = |timestamp: DateTime<Utc>| -> Result<usize> {
             let timestamp: usize = timestamp
@@ -199,8 +213,13 @@ mod tests {
     async fn test_login_user() {
         let repo_query = UserQueryBuilder::new("user@test.com").build();
         let user_to_login = UserInfoBuilder::new("user@test.com", "test").build();
-        let registered_user = UserInfoBuilder::new("user@test.com", "test").build();
         let request_item = user_to_login.clone();
+
+        let password_hash = Argon2::default()
+            .hash_password(b"test", &SaltString::generate(&mut OsRng))
+            .unwrap()
+            .to_string();
+        let registered_user = UserInfoBuilder::new("user@test.com", &password_hash).build();
 
         let mut mock_users_repo = MockUsersRepo::new();
         mock_users_repo
@@ -245,8 +264,13 @@ mod tests {
     async fn test_login_user_incorrect_password() {
         let repo_query = UserQueryBuilder::new("user@test.com").build();
         let user_to_login = UserInfoBuilder::new("user@test.com", "incorrect").build();
-        let registered_user = UserInfoBuilder::new("user@test.com", "test").build();
         let request_item = user_to_login.clone();
+
+        let password_hash = Argon2::default()
+            .hash_password(b"test", &SaltString::generate(&mut OsRng))
+            .unwrap()
+            .to_string();
+        let registered_user = UserInfoBuilder::new("user@test.com", &password_hash).build();
 
         let mut mock_users_repo = MockUsersRepo::new();
         mock_users_repo

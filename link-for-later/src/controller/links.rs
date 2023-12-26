@@ -38,10 +38,7 @@ async fn list(State(app_state): State<AppState>, user: Claims) -> impl IntoRespo
         .await
     {
         Ok(list) => Json(list).into_response(),
-        Err(e) => {
-            tracing::error!("Error: {}", e);
-            e.into_response()
-        }
+        Err(e) => e.into_response(),
     }
 }
 
@@ -69,10 +66,7 @@ async fn post(
         .await
     {
         Ok(link) => (StatusCode::CREATED, Json(link)).into_response(),
-        Err(e) => {
-            tracing::error!("Error: {}", e);
-            e.into_response()
-        }
+        Err(e) => e.into_response(),
     }
 }
 
@@ -88,10 +82,7 @@ async fn get(
         .await
     {
         Ok(link) => Json(link).into_response(),
-        Err(e) => {
-            tracing::error!("Error: {}", e);
-            e.into_response()
-        }
+        Err(e) => e.into_response(),
     }
 }
 
@@ -120,10 +111,7 @@ async fn put(
         .await
     {
         Ok(link) => Json(link).into_response(),
-        Err(e) => {
-            tracing::error!("Error: {}", e);
-            e.into_response()
-        }
+        Err(e) => e.into_response(),
     }
 }
 
@@ -139,10 +127,7 @@ async fn delete(
         .await
     {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
-        Err(e) => {
-            tracing::error!("Error: {}", e);
-            e.into_response()
-        }
+        Err(e) => e.into_response(),
     }
 }
 

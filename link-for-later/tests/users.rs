@@ -1,3 +1,7 @@
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+    Argon2,
+};
 use axum::{
     body::Body,
     http::{Request, StatusCode},
@@ -49,7 +53,7 @@ async fn test_register_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseTy
 
     let db_item = repository.get_user("user@test.com").await;
     assert!(db_item.email == "user@test.com");
-    assert!(db_item.password == "test");
+    assert!(db_item.password != "test"); // verify password is not saved in plaintext
 }
 
 #[rstest]
@@ -132,7 +136,12 @@ async fn test_register_user_already_registered(
 async fn test_login_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
 
-    repository.add_user("user@test.com", "test").await;
+    let password_hash = Argon2::default()
+        .hash_password(b"test", &SaltString::generate(&mut OsRng))
+        .unwrap()
+        .to_string();
+    repository.add_user("user@test.com", &password_hash).await;
+
     let request = r#"{
         "email": "user@test.com",
         "password": "test"
@@ -196,7 +205,12 @@ async fn test_login_user_invalid_email(#[values(DatabaseType::MongoDb)] db_type:
 async fn test_login_user_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
 
-    repository.add_user("user@test.com", "test").await;
+    let password_hash = Argon2::default()
+        .hash_password(b"test", &SaltString::generate(&mut OsRng))
+        .unwrap()
+        .to_string();
+    repository.add_user("user@test.com", &password_hash).await;
+
     let request = r#"{
         "email": "user2@test.com",
         "password": "test"
@@ -230,7 +244,12 @@ async fn test_login_user_incorrect_password(
 ) {
     let repository = repository::new(&db_type);
 
-    repository.add_user("user@test.com", "test").await;
+    let password_hash = Argon2::default()
+        .hash_password(b"test", &SaltString::generate(&mut OsRng))
+        .unwrap()
+        .to_string();
+    repository.add_user("user@test.com", &password_hash).await;
+
     let request = r#"{
         "email": "user@test.com",
         "password": "incorrect"
