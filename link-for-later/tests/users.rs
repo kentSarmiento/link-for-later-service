@@ -53,7 +53,7 @@ async fn test_register_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseTy
 
     let db_item = repository.get_user("user@test.com").await;
     assert!(db_item.email == "user@test.com");
-    assert!(db_item.password != "test");
+    assert!(db_item.password != "test"); // verify password is not saved in plaintext
 }
 
 #[rstest]
