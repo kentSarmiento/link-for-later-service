@@ -91,8 +91,11 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+
       # https://docs.deepsource.com/docs/analyzers-test-coverage#with-github-actions
       - name: Use pull request HEAD commit for DeepSource
+        if: github.event_name == 'pull_request'
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
