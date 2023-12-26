@@ -12,16 +12,25 @@ Link for Later Service provides an API to save links in your personal library fo
 
 ## Development Features
 
-- axum...
-- shuttle...
-- devcontainer
-- 
+- [`Axum`](https://github.com/tokio-rs/axum) as web application framework
+- Multiple deployment options:
+  - [Shuttle](https://github.com/shuttle-hq/shuttle). Refer [here](./link-for-later-shuttle/) for details.
+  - [Cargo Lambda](https://www.cargo-lambda.info/) to deploy the service as an AWS Lambda Function. Refer [here](./link-for-later-lambda/) for details.
+  - Standalone server using axum for local development. Refer [here](./link-for-later-axum/) for details.
+- Multiple repository options:
+  - MongoDB
+  - InMemory database
+  - and more coming soon...
+- Route authorization using [`jsonwebtoken`](https://github.com/Keats/jsonwebtoken)
+- Password hashing using [`argon2`](https://github.com/RustCrypto/password-hashes/tree/master/argon2)
+- Mock objects for testing using [`mockall`](https://github.com/asomers/mockall)
+- Fixture-based test framework using [`rtest`](https://github.com/la10736/rstest)
 
-## Project Structure/Deployments
+## Development Tooling
 
-A workspace...
-The project is structured into the [Service Library](./link-for-later/) and multiple binaries depending on the option to run/deploy the service
-
-- [Shuttle](./link-for-later-shuttle/)
-- [AWS Lambda Function](./link-for-later-lambda/)
-- [Standalone server using axum](./link-for-later-axum/) (for local development)
+- A Rust devcontainer for VSCode
+- Github actions for CI/CD
+- [Clippy](https://github.com/rust-lang/rust-clippy) for linting/static analysis
+- [Codecov](https://about.codecov.io/) for coverage metrics
+- [DeepSource](https://deepsource.com/) for static analysis/coverage metrics management
+- Dependabot for regular dependency updates
