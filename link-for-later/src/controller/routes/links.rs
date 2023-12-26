@@ -7,13 +7,9 @@ use axum::{
 use validator::Validate;
 
 use crate::{
-    state::AppState,
-    types::{
-        auth::Claims,
-        dto::{LinkItemRequest, LinkQueryBuilder},
-        entity::LinkItemBuilder,
-        AppError,
-    },
+    dto::{Claims, LinkItemRequest, LinkQueryBuilder},
+    entity::LinkItemBuilder,
+    types::{AppError, AppState},
 };
 
 pub fn routes(state: AppState) -> Router<AppState> {
@@ -141,13 +137,12 @@ mod tests {
     use tracing_test::traced_test;
 
     use crate::{
+        entity::LinkItem,
         repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
         service::{
             DynLinks as DynLinksService, MockLinks as MockLinksService,
             MockUsers as MockUsersService,
         },
-        state::AppState,
-        types::{auth::Claims, entity::LinkItem},
     };
 
     use super::*;

@@ -2,13 +2,11 @@ use axum::async_trait;
 use chrono::Utc;
 
 use crate::{
+    dto::{LinkQuery, LinkQueryBuilder},
+    entity::{LinkItem, LinkItemBuilder},
     repository,
     service::Links as LinksService,
-    types::{
-        dto::{LinkQuery, LinkQueryBuilder},
-        entity::{LinkItem, LinkItemBuilder},
-        Result,
-    },
+    types::Result,
 };
 
 pub struct ServiceProvider {}

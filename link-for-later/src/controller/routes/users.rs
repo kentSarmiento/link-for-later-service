@@ -2,12 +2,9 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Js
 use validator::Validate;
 
 use crate::{
-    state::AppState,
-    types::{
-        dto::{AuthResponse, UserInfoRequest},
-        entity::UserInfoBuilder,
-        AppError,
-    },
+    dto::{LoginResponse, UserInfoRequest},
+    entity::UserInfoBuilder,
+    types::{AppError, AppState},
 };
 
 pub fn routes(state: AppState) -> Router<AppState> {
@@ -66,7 +63,7 @@ async fn login(
         .await
     {
         Ok(token) => {
-            let response = AuthResponse::new(token.jwt());
+            let response = LoginResponse::new(token.jwt());
             (StatusCode::OK, Json(response)).into_response()
         }
         Err(e) => e.into_response(),
@@ -82,13 +79,12 @@ mod tests {
     use tracing_test::traced_test;
 
     use crate::{
+        dto::Token,
         repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
         service::{
             DynUsers as DynUsersService, MockLinks as MockLinksService,
             MockUsers as MockUsersService,
         },
-        state::AppState,
-        types::auth::Token,
     };
 
     use super::*;

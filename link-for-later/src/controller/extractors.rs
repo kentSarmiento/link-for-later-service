@@ -5,7 +5,7 @@ use axum_extra::{
 };
 use jsonwebtoken::{decode, DecodingKey, Validation};
 
-use crate::types::{auth::Claims, AppError};
+use crate::{dto::Claims, types::AppError};
 
 const JWT_SECRET_KEY: &str = "JWT_SECRET";
 

@@ -8,14 +8,11 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use std::convert::TryInto;
 
 use crate::{
+    dto::{Claims, Token, UserQueryBuilder},
+    entity::{UserInfo, UserInfoBuilder},
     repository,
     service::Users as UsersService,
-    types::{
-        auth::{Claims, Token},
-        dto::UserQueryBuilder,
-        entity::{UserInfo, UserInfoBuilder},
-        AppError, Result,
-    },
+    types::{AppError, Result},
 };
 
 const JWT_SECRET_KEY: &str = "JWT_SECRET";
