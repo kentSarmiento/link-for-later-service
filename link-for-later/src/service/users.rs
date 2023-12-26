@@ -60,7 +60,7 @@ impl UsersService for ServiceProvider {
             let timestamp: usize = timestamp
                 .timestamp()
                 .try_into()
-                .map_err(|_| AppError::ServerError)?;
+                .map_err(|e| AppError::ServerError(format!("timestamp() {e:?}")))?;
             Ok(timestamp)
         };
 
@@ -78,7 +78,7 @@ impl UsersService for ServiceProvider {
             &claims,
             &EncodingKey::from_secret(secret.as_bytes()),
         )
-        .map_err(|_| AppError::ServerError)?;
+        .map_err(|e| AppError::ServerError(format!("encode() {e:?}")))?;
 
         Ok(Token::new(&token))
     }
@@ -156,7 +156,7 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(|_| Err(AppError::ServerError));
+            .returning(|_| Err(AppError::TestError));
         mock_users_repo.expect_create().times(0);
 
         let users_service = ServiceProvider {};
@@ -164,7 +164,7 @@ mod tests {
             .register(Box::new(Arc::new(mock_users_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::ServerError));
+        assert_eq!(response, Err(AppError::TestError));
     }
 
     #[tokio::test]
@@ -183,14 +183,14 @@ mod tests {
             .expect_create()
             //.withf(move |user| user == &user_to_register)
             .times(1)
-            .returning(move |_| Err(AppError::ServerError));
+            .returning(move |_| Err(AppError::TestError));
 
         let users_service = ServiceProvider {};
         let response = users_service
             .register(Box::new(Arc::new(mock_users_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::ServerError));
+        assert_eq!(response, Err(AppError::TestError));
     }
 
     #[tokio::test]

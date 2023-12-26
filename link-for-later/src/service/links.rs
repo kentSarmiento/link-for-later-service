@@ -147,14 +147,14 @@ mod tests {
             .expect_find()
             .withf(move |query| query == &expected_query)
             .times(1)
-            .returning(|_| Err(AppError::ServerError));
+            .returning(|_| Err(AppError::TestError));
 
         let links_service = ServiceProvider {};
         let response = links_service
             .search(Box::new(Arc::new(mock_links_repo)), &repo_query)
             .await;
 
-        assert_eq!(response, Err(AppError::ServerError));
+        assert_eq!(response, Err(AppError::TestError));
     }
 
     #[tokio::test]
@@ -239,14 +239,14 @@ mod tests {
             .expect_create()
             //.withf(move |item| item == &item_to_create)
             .times(1)
-            .returning(|_| Err(AppError::ServerError));
+            .returning(|_| Err(AppError::TestError));
 
         let links_service = ServiceProvider {};
         let response = links_service
             .create(Box::new(Arc::new(mock_links_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::ServerError));
+        assert_eq!(response, Err(AppError::TestError));
     }
 
     #[tokio::test]
@@ -348,14 +348,14 @@ mod tests {
             //.withf(move |item| item == &item_to_update)
             .times(1)
             .in_sequence(&mut seq)
-            .returning(|_, _| Err(AppError::ServerError));
+            .returning(|_, _| Err(AppError::TestError));
 
         let links_service = ServiceProvider {};
         let response = links_service
             .update(Box::new(Arc::new(mock_links_repo)), "1", &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::ServerError));
+        assert_eq!(response, Err(AppError::TestError));
     }
 
     #[tokio::test]
@@ -450,13 +450,13 @@ mod tests {
             //.withf(move |item| item == &item_to_delete)
             .times(1)
             .in_sequence(&mut seq)
-            .returning(|_| Err(AppError::ServerError));
+            .returning(|_| Err(AppError::TestError));
 
         let links_service = ServiceProvider {};
         let response = links_service
             .delete(Box::new(Arc::new(mock_links_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::ServerError));
+        assert_eq!(response, Err(AppError::TestError));
     }
 }
