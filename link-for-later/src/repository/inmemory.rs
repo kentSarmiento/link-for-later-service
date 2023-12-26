@@ -134,8 +134,8 @@ mod tests {
         let repo_query = LinkQueryBuilder::default().owner("user-id").build();
         let links_repository = LinksRepositoryProvider::default();
 
-        let links = links_repository.find(&repo_query).await.unwrap();
-        assert!(links.is_empty());
+        let retrieved_items = links_repository.find(&repo_query).await.unwrap();
+        assert!(retrieved_items.is_empty());
     }
 
     #[tokio::test]
@@ -147,9 +147,11 @@ mod tests {
         let expected_items = vec![created_item.clone()];
 
         let repo_query = LinkQueryBuilder::default().owner("user-id").build();
-        let links = links_repository.find(&repo_query).await.unwrap();
-        assert!(!links.is_empty());
-        assert!(links.iter().all(|item| expected_items.contains(item)));
+        let retrieved_items = links_repository.find(&repo_query).await.unwrap();
+        assert!(!retrieved_items.is_empty());
+        assert!(retrieved_items
+            .iter()
+            .all(|item| expected_items.contains(item)));
     }
 
     #[tokio::test]
@@ -200,10 +202,10 @@ mod tests {
             .await
             .unwrap();
 
-        let verification_item = LinkItemBuilder::from(created_item.clone())
-            .title("title")
-            .build();
-        assert_eq!(verification_item, updated_item);
+        let repo_query = LinkQueryBuilder::new(updated_item.id(), "user-id").build();
+        let retrieved_item = links_repository.get(&repo_query).await.unwrap();
+
+        assert_eq!(updated_item, retrieved_item);
     }
 
     #[tokio::test]
