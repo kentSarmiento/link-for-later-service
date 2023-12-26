@@ -27,8 +27,8 @@ impl UsersService for ServiceProvider {
     ) -> Result<UserInfo> {
         let user_query = UserQueryBuilder::new(user_info.email()).build();
         let user_info = match users_repo.get(&user_query).await {
-            Ok(_) => return Err(AppError::UserAlreadyExists),
-            Err(AppError::UserNotFound) => user_info.clone(),
+            Ok(_) => return Err(AppError::UserAlreadyExists(user_info.email().to_owned())),
+            Err(AppError::UserNotFound(_)) => user_info.clone(),
             Err(e) => return Err(e),
         };
 
@@ -52,8 +52,7 @@ impl UsersService for ServiceProvider {
         let retrieved_user_info = users_repo.get(&user_query).await?;
 
         if retrieved_user_info.password() != user_info.password() {
-            tracing::info!("invalid password for user {}", &user_info.email());
-            return Err(AppError::IncorrectPassword);
+            return Err(AppError::IncorrectPassword(user_info.email().to_owned()));
         }
 
         let timestamp = |timestamp: DateTime<Utc>| -> Result<usize> {
@@ -106,7 +105,7 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(|_| Err(AppError::UserNotFound));
+            .returning(|_| Err(AppError::UserNotFound("user@test.com".into())));
         mock_users_repo
             .expect_create()
             //.withf(move |user| user == &user_to_register)
@@ -142,7 +141,10 @@ mod tests {
             .register(Box::new(Arc::new(mock_users_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::UserAlreadyExists));
+        assert_eq!(
+            response,
+            Err(AppError::UserAlreadyExists("user@test.com".into()))
+        );
     }
 
     #[tokio::test]
@@ -178,7 +180,7 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(|_| Err(AppError::UserNotFound));
+            .returning(|_| Err(AppError::UserNotFound("user@test.com".into())));
         mock_users_repo
             .expect_create()
             //.withf(move |user| user == &user_to_register)
@@ -226,14 +228,17 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(move |_| Err(AppError::UserNotFound));
+            .returning(move |_| Err(AppError::UserNotFound("user@test.com".into())));
 
         let users_service = ServiceProvider {};
         let response = users_service
             .login(Box::new(Arc::new(mock_users_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::UserNotFound));
+        assert_eq!(
+            response,
+            Err(AppError::UserNotFound("user@test.com".into()))
+        );
     }
 
     #[tokio::test]
@@ -255,6 +260,9 @@ mod tests {
             .login(Box::new(Arc::new(mock_users_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::IncorrectPassword));
+        assert_eq!(
+            response,
+            Err(AppError::IncorrectPassword("user@test.com".into()))
+        );
     }
 }

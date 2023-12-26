@@ -53,8 +53,7 @@ async fn post(
     match payload.validate() {
         Ok(()) => {}
         Err(e) => {
-            tracing::error!("Error: {}", e);
-            return AppError::InvalidUrl.into_response();
+            return AppError::ValidationError(format!("post_link() {e:?}")).into_response();
         }
     }
 
@@ -105,8 +104,7 @@ async fn put(
     match payload.validate() {
         Ok(()) => {}
         Err(e) => {
-            tracing::error!("Error: {}", e);
-            return AppError::InvalidUrl.into_response();
+            return AppError::ValidationError(format!("put_link() {e:?}")).into_response();
         }
     }
 
@@ -301,7 +299,7 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert_eq!(body, json!({"error": "invalid url"}).to_string());
+        assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
     #[traced_test]
@@ -458,7 +456,7 @@ mod tests {
 
         let body = body.collect().await.unwrap().to_bytes();
         let body = std::str::from_utf8(&body).unwrap();
-        assert_eq!(body, json!({"error": "invalid url"}).to_string());
+        assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
     #[traced_test]

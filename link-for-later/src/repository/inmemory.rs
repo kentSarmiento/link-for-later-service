@@ -46,7 +46,7 @@ impl LinksRepository for LinksRepositoryProvider {
             .iter()
             .find(|link| link.id() == query.id() && link.owner() == query.owner())
             .cloned()
-            .ok_or(AppError::LinkNotFound)
+            .ok_or_else(|| AppError::LinkNotFound(query.id().to_owned()))
     }
 
     async fn create(&self, item: &LinkItem) -> Result<LinkItem> {
@@ -66,7 +66,7 @@ impl LinksRepository for LinksRepositoryProvider {
             .iter()
             .find(|link| link.id() == id && link.owner() == item.owner())
             .cloned()
-            .ok_or(AppError::LinkNotFound)?;
+            .ok_or_else(|| AppError::LinkNotFound(id.to_owned()))?;
         self.delete(item).await?;
         INMEMORY_LINKS_DATA.lock().unwrap().push(item.clone());
         Ok(item.clone())
@@ -92,7 +92,7 @@ impl UsersRepository for UsersRepositoryProvider {
             .iter()
             .find(|user| user.email() == query.email())
             .cloned()
-            .ok_or(AppError::UserNotFound)
+            .ok_or_else(|| AppError::UserNotFound(query.email().to_owned()))
     }
 
     async fn create(&self, info: &UserInfo) -> Result<UserInfo> {

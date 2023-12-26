@@ -193,14 +193,14 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(|_| Err(AppError::LinkNotFound));
+            .returning(|_| Err(AppError::LinkNotFound("1".into())));
 
         let links_service = ServiceProvider {};
         let response = links_service
             .get(Box::new(Arc::new(mock_links_repo)), &request_query)
             .await;
 
-        assert_eq!(response, Err(AppError::LinkNotFound));
+        assert_eq!(response, Err(AppError::LinkNotFound("1".into())));
     }
 
     #[tokio::test]
@@ -307,7 +307,7 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(|_| Err(AppError::LinkNotFound));
+            .returning(|_| Err(AppError::LinkNotFound("1".into())));
         mock_links_repo
             .expect_update()
             //.withf(move |item| item == &item_to_update)
@@ -318,7 +318,7 @@ mod tests {
             .update(Box::new(Arc::new(mock_links_repo)), "1", &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::LinkNotFound));
+        assert_eq!(response, Err(AppError::LinkNotFound("1".into())));
     }
 
     #[tokio::test]
@@ -409,7 +409,7 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(|_| Err(AppError::LinkNotFound));
+            .returning(|_| Err(AppError::LinkNotFound("1".into())));
         mock_links_repo
             .expect_delete()
             //.withf(move |item| item == &item_to_delete)
@@ -420,7 +420,7 @@ mod tests {
             .delete(Box::new(Arc::new(mock_links_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::LinkNotFound));
+        assert_eq!(response, Err(AppError::LinkNotFound("1".into())));
     }
 
     #[tokio::test]
