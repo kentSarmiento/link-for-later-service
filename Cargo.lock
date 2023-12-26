@@ -1324,7 +1324,6 @@ dependencies = [
  "jsonwebtoken",
  "mockall",
  "mongodb",
- "once_cell",
  "rand",
  "rstest",
  "serde",
