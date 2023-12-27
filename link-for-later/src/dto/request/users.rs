@@ -26,7 +26,7 @@ impl Info {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Query {
     email: String,
 }
@@ -45,7 +45,7 @@ pub struct QueryBuilder {
 impl QueryBuilder {
     pub fn new(email: &str) -> Self {
         Self {
-            email: email.to_string(),
+            email: email.to_owned(),
         }
     }
 

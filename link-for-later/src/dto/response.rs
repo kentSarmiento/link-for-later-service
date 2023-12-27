@@ -8,7 +8,7 @@ pub struct Login {
 impl Login {
     pub fn new(token: &str) -> Self {
         Self {
-            token: token.to_string(),
+            token: token.to_owned(),
         }
     }
 }

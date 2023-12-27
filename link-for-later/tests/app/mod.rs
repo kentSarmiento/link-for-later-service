@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use axum::Router;
 
 use crate::repository::{mongodb, DatabaseType};

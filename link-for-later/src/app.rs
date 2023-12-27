@@ -32,6 +32,7 @@ pub fn new(db: Database) -> Router {
         .with_state(state)
 }
 
+#[allow(missing_debug_implementations)]
 #[derive(Clone)]
 pub struct State {
     links_service: DynLinksService,

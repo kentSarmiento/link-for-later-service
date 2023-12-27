@@ -28,7 +28,7 @@ pub struct UsersRepositoryProvider {
 impl LinksRepositoryProvider {
     pub fn new(db: &Database) -> Self {
         let collection_name = std::env::var(LINKS_COLLECTION_NAME_KEY)
-            .unwrap_or_else(|_| LINKS_COLLECTION_NAME_DEFAULT.to_string());
+            .unwrap_or_else(|_| LINKS_COLLECTION_NAME_DEFAULT.to_owned());
         let links_collection = db.collection::<LinkItem>(&collection_name);
         Self { links_collection }
     }
@@ -37,7 +37,7 @@ impl LinksRepositoryProvider {
 impl UsersRepositoryProvider {
     pub fn new(db: &Database) -> Self {
         let collection_name = std::env::var(USERS_COLLECTION_NAME_KEY)
-            .unwrap_or_else(|_| USERS_COLLECTION_NAME_DEFAULT.to_string());
+            .unwrap_or_else(|_| USERS_COLLECTION_NAME_DEFAULT.to_owned());
         let users_collection = db.collection::<UserInfo>(&collection_name);
         Self { users_collection }
     }
