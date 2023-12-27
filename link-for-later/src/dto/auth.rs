@@ -7,11 +7,6 @@ pub struct Claims {
     exp: usize,  // expiration time
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Token {
-    jwt: String,
-}
-
 impl Claims {
     pub fn new(sub: &str, iat: usize, exp: usize) -> Self {
         Self {
@@ -24,6 +19,11 @@ impl Claims {
     pub fn id(&self) -> &str {
         &self.sub
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Token {
+    jwt: String,
 }
 
 impl Token {

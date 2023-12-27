@@ -2,10 +2,10 @@ use std::sync::Mutex;
 
 use axum::async_trait;
 
-use crate::types::{
+use crate::{
     dto::{LinkQuery, LinkQueryBuilder, UserQuery},
     entity::{LinkItem, LinkItemBuilder, UserInfo, UserInfoBuilder},
-    AppError, Result,
+    types::{AppError, Result},
 };
 
 use super::{Links as LinksRepository, Users as UsersRepository};
@@ -125,7 +125,7 @@ impl UsersRepository for UsersRepositoryProvider {
 #[cfg(test)]
 mod tests {
 
-    use crate::types::dto::UserQueryBuilder;
+    use crate::dto::UserQueryBuilder;
 
     use super::*;
 

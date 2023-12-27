@@ -134,6 +134,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload coverage reports to DeepSource
+        if: github.event_name == 'pull_request'
         run: |
           curl https://deepsource.io/cli | sh
           ./bin/deepsource report --analyzer test-coverage --key rust --value-file ./lcov.info

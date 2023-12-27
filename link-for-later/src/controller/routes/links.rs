@@ -7,16 +7,12 @@ use axum::{
 use validator::Validate;
 
 use crate::{
-    state::AppState,
-    types::{
-        auth::Claims,
-        dto::{LinkItemRequest, LinkQueryBuilder},
-        entity::LinkItemBuilder,
-        AppError,
-    },
+    dto::{Claims, LinkItemRequest, LinkQueryBuilder},
+    entity::LinkItemBuilder,
+    types::{AppError, AppState},
 };
 
-pub fn routes(state: AppState) -> Router<AppState> {
+pub fn router(state: AppState) -> Router<AppState> {
     Router::new()
         .nest(
             "/v1",
@@ -50,7 +46,7 @@ async fn post(
     match payload.validate() {
         Ok(()) => {}
         Err(e) => {
-            return AppError::ValidationError(format!("post_link() {e:?}")).into_response();
+            return AppError::Validation(format!("post_link() {e:?}")).into_response();
         }
     }
 
@@ -95,7 +91,7 @@ async fn put(
     match payload.validate() {
         Ok(()) => {}
         Err(e) => {
-            return AppError::ValidationError(format!("put_link() {e:?}")).into_response();
+            return AppError::Validation(format!("put_link() {e:?}")).into_response();
         }
     }
 
@@ -141,13 +137,12 @@ mod tests {
     use tracing_test::traced_test;
 
     use crate::{
+        entity::LinkItem,
         repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
         service::{
             DynLinks as DynLinksService, MockLinks as MockLinksService,
             MockUsers as MockUsersService,
         },
-        state::AppState,
-        types::{auth::Claims, entity::LinkItem},
     };
 
     use super::*;
@@ -214,7 +209,7 @@ mod tests {
             .expect_search()
             .withf(move |_, query| query == &repo_query)
             .times(1)
-            .returning(|_, _| Err(AppError::TestError));
+            .returning(|_, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = list(State(app_state), Claims::new("user-id", 0, 0)).await;
@@ -298,7 +293,7 @@ mod tests {
             .expect_create()
             .withf(move |_, item| item == &item_to_create)
             .times(1)
-            .returning(|_, _| Err(AppError::TestError));
+            .returning(|_, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = post(
@@ -361,7 +356,7 @@ mod tests {
             .expect_get()
             .withf(move |_, query| query == &repo_query)
             .times(1)
-            .returning(|_, _| Err(AppError::TestError));
+            .returning(|_, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = get(
@@ -458,7 +453,7 @@ mod tests {
             .expect_update()
             .withf(move |_, id, item| id == "1" && item == &item_to_update)
             .times(1)
-            .returning(|_, _, _| Err(AppError::TestError));
+            .returning(|_, _, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = put(
@@ -511,7 +506,7 @@ mod tests {
             .expect_delete()
             .withf(move |_, item| item == &item_to_delete)
             .times(1)
-            .returning(|_, _| Err(AppError::TestError));
+            .returning(|_, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = delete(
