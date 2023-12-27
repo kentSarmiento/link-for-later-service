@@ -76,7 +76,6 @@ mod tests {
 
     use http_body_util::BodyExt;
     use serde_json::json;
-    use tracing_test::traced_test;
 
     use crate::{
         dto::Token,
@@ -89,7 +88,6 @@ mod tests {
 
     use super::*;
 
-    #[traced_test]
     #[tokio::test]
     async fn test_register_user() {
         let request = UserInfoRequest::new("user@test.com", "test");
@@ -113,7 +111,6 @@ mod tests {
         assert_eq!(&body[..], b"");
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_register_user_invalid_email() {
         let request = UserInfoRequest::new("user", "test");
@@ -132,7 +129,6 @@ mod tests {
         assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_register_user_service_error() {
         let request = UserInfoRequest::new("user@test.com", "test");
@@ -156,7 +152,6 @@ mod tests {
         assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_login_user() {
         let request = UserInfoRequest::new("user@test.com", "test");
@@ -181,7 +176,6 @@ mod tests {
         assert_eq!(body, json!({"token": "test"}).to_string());
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_login_user_invalid_email() {
         let request = UserInfoRequest::new("user", "test");
@@ -200,7 +194,6 @@ mod tests {
         assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_login_user_service_error() {
         let request = UserInfoRequest::new("user@test.com", "test");
