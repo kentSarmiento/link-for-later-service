@@ -8,7 +8,6 @@ use http_body_util::BodyExt;
 use rstest::rstest;
 use serde_json::json;
 use tower::ServiceExt;
-use tracing_test::traced_test;
 
 use crate::{entity::LinkItem, repository::DatabaseType};
 
@@ -18,7 +17,6 @@ mod entity;
 mod repository;
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_get_links_empty(
     #[values(DatabaseType::InMemory, DatabaseType::MongoDb)] db_type: DatabaseType,
@@ -47,7 +45,6 @@ async fn test_get_links_empty(
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_get_links_non_empty(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -80,7 +77,6 @@ async fn test_get_links_non_empty(#[values(DatabaseType::MongoDb)] db_type: Data
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_get_link_item_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -112,7 +108,6 @@ async fn test_get_link_item_found(#[values(DatabaseType::MongoDb)] db_type: Data
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_get_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -141,7 +136,6 @@ async fn test_get_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: 
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_post_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -183,7 +177,6 @@ async fn test_post_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) 
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_post_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -218,7 +211,6 @@ async fn test_post_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: Da
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_put_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -263,7 +255,6 @@ async fn test_put_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_put_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -299,7 +290,6 @@ async fn test_put_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: Dat
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_put_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -340,7 +330,6 @@ async fn test_put_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: 
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_delete_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -372,7 +361,6 @@ async fn test_delete_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_delete_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -410,7 +398,6 @@ async fn test_delete_link_item_not_found(#[values(DatabaseType::MongoDb)] db_typ
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_unauthorized_access_to_links_no_token(
     #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
@@ -440,7 +427,6 @@ async fn test_unauthorized_access_to_links_no_token(
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_unauthorized_access_to_links_invalid_token(
     #[values(DatabaseType::MongoDb)] db_type: DatabaseType,

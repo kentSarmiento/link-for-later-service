@@ -14,9 +14,9 @@ Link for Later Service provides an API to save links in your personal library fo
 
 - [`Axum`](https://github.com/tokio-rs/axum) as web application framework
 - Multiple deployment options:
-  - [Shuttle](https://github.com/shuttle-hq/shuttle). Refer [here](./link-for-later-shuttle/) for details.
+  - [Shuttle](https://github.com/shuttle-hq/shuttle) application. Refer [here](./link-for-later-shuttle/) for details.
   - [Cargo Lambda](https://www.cargo-lambda.info/) to deploy the service as an AWS Lambda Function. Refer [here](./link-for-later-lambda/) for details.
-  - Standalone server using axum for local development. Refer [here](./link-for-later-axum/) for details.
+  - Standalone server using axum for local development. Refer [here](./link-for-later/src/bin/) for details.
 - Multiple repository options:
   - MongoDB
   - InMemory database
