@@ -21,7 +21,7 @@ where
             TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state)
                 .await
                 .map_err(|_| {
-                    AppError::AuthorizationError(String::from("Authorization token not found"))
+                    AppError::Authorization(String::from("Authorization token not found"))
                 })?;
 
         let secret =
@@ -31,7 +31,7 @@ where
             &DecodingKey::from_secret(secret.as_bytes()),
             &Validation::default(),
         )
-        .map_err(|e| AppError::AuthorizationError(format!("decode() {e:?}")))?;
+        .map_err(|e| AppError::Authorization(format!("decode() {e:?}")))?;
 
         Ok(token_data.claims)
     }

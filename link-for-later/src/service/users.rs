@@ -40,7 +40,7 @@ impl UsersService for ServiceProvider {
                 user_info.password().as_bytes(),
                 &SaltString::generate(&mut OsRng),
             )
-            .map_err(|e| AppError::ServerError(format!("hash_password() {e:?}")))?
+            .map_err(|e| AppError::Server(format!("hash_password() {e:?}")))?
             .to_string();
 
         let registered_user_info = UserInfoBuilder::new(user_info.email(), &password_hash)
@@ -61,7 +61,7 @@ impl UsersService for ServiceProvider {
         let retrieved_user_info = users_repo.get(&user_query).await?;
 
         let parsed_hash = PasswordHash::new(retrieved_user_info.password())
-            .map_err(|e| AppError::ServerError(format!("PasswordHash::new() {e:?}")))?;
+            .map_err(|e| AppError::Server(format!("PasswordHash::new() {e:?}")))?;
         Argon2::default()
             .verify_password(user_info.password().as_bytes(), &parsed_hash)
             .map_err(|_| AppError::IncorrectPassword(user_info.email().to_owned()))?;
@@ -70,7 +70,7 @@ impl UsersService for ServiceProvider {
             let timestamp: usize = timestamp
                 .timestamp()
                 .try_into()
-                .map_err(|e| AppError::ServerError(format!("timestamp() {e:?}")))?;
+                .map_err(|e| AppError::Server(format!("timestamp() {e:?}")))?;
             Ok(timestamp)
         };
 
@@ -88,7 +88,7 @@ impl UsersService for ServiceProvider {
             &claims,
             &EncodingKey::from_secret(secret.as_bytes()),
         )
-        .map_err(|e| AppError::ServerError(format!("encode() {e:?}")))?;
+        .map_err(|e| AppError::Server(format!("encode() {e:?}")))?;
 
         Ok(Token::new(&token))
     }
@@ -169,7 +169,7 @@ mod tests {
             .expect_get()
             .withf(move |query| query == &repo_query)
             .times(1)
-            .returning(|_| Err(AppError::TestError));
+            .returning(|_| Err(AppError::Test));
         mock_users_repo.expect_create().times(0);
 
         let users_service = ServiceProvider {};
@@ -177,7 +177,7 @@ mod tests {
             .register(Box::new(Arc::new(mock_users_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::TestError));
+        assert_eq!(response, Err(AppError::Test));
     }
 
     #[tokio::test]
@@ -196,14 +196,14 @@ mod tests {
             .expect_create()
             //.withf(move |user| user == &user_to_register)
             .times(1)
-            .returning(move |_| Err(AppError::TestError));
+            .returning(move |_| Err(AppError::Test));
 
         let users_service = ServiceProvider {};
         let response = users_service
             .register(Box::new(Arc::new(mock_users_repo)), &request_item)
             .await;
 
-        assert_eq!(response, Err(AppError::TestError));
+        assert_eq!(response, Err(AppError::Test));
     }
 
     #[tokio::test]

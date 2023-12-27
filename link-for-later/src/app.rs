@@ -75,33 +75,33 @@ impl State {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
-    ServerError(String),
-    DatabaseError(String),
     LinkNotFound(String),
     UserAlreadyExists(String),
     UserNotFound(String),
     IncorrectPassword(String),
-    AuthorizationError(String),
-    ValidationError(String),
+    Authorization(String),
+    Validation(String),
+    Database(String),
+    Server(String),
 
     #[cfg(test)]
-    TestError,
+    Test,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::ServerError(_) => write!(f, "server error"),
-            Self::DatabaseError(_) => write!(f, "database error"),
             Self::LinkNotFound(_) => write!(f, "link item not found"),
             Self::UserAlreadyExists(_) => write!(f, "user already registered"),
             Self::UserNotFound(_) => write!(f, "user not found"),
             Self::IncorrectPassword(_) => write!(f, "incorrect password for user"),
-            Self::AuthorizationError(_) => write!(f, "invalid authorization token"),
-            Self::ValidationError(_) => write!(f, "invalid request"),
+            Self::Authorization(_) => write!(f, "invalid authorization token"),
+            Self::Validation(_) => write!(f, "invalid request"),
+            Self::Database(_) => write!(f, "database error"),
+            Self::Server(_) => write!(f, "server error"),
 
             #[cfg(test)]
-            Self::TestError => write!(f, "test error"),
+            Self::Test => write!(f, "test error"),
         }
     }
 }

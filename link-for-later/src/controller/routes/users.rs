@@ -28,7 +28,7 @@ async fn register(
     match payload.validate() {
         Ok(()) => {}
         Err(e) => {
-            return AppError::ValidationError(format!("register() {e:?}")).into_response();
+            return AppError::Validation(format!("register() {e:?}")).into_response();
         }
     }
 
@@ -51,7 +51,7 @@ async fn login(
     match payload.validate() {
         Ok(()) => {}
         Err(e) => {
-            return AppError::ValidationError(format!("login() {e:?}")).into_response();
+            return AppError::Validation(format!("login() {e:?}")).into_response();
         }
     }
 
@@ -143,7 +143,7 @@ mod tests {
             .expect_register()
             .withf(move |_, user| user == &user_to_register)
             .times(1)
-            .returning(|_, _| Err(AppError::TestError));
+            .returning(|_, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_users_service)).build();
         let response = register(State(app_state), Json(request)).await;
@@ -211,7 +211,7 @@ mod tests {
             .expect_login()
             .withf(move |_, user| user == &user_to_login)
             .times(1)
-            .returning(|_, _| Err(AppError::TestError));
+            .returning(|_, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_users_service)).build();
         let response = login(State(app_state), Json(request)).await;
