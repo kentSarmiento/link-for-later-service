@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct LinkItem {
+pub struct Item {
     id: String,
     owner: String,
     url: String,
@@ -11,7 +11,7 @@ pub struct LinkItem {
     updated_at: String,
 }
 
-impl LinkItem {
+impl Item {
     pub fn id(&self) -> &str {
         &self.id
     }
@@ -31,7 +31,7 @@ impl LinkItem {
 }
 
 #[derive(Default)]
-pub struct LinkItemBuilder {
+pub struct ItemBuilder {
     id: String,
     owner: String,
     url: String,
@@ -41,7 +41,7 @@ pub struct LinkItemBuilder {
     updated_at: String,
 }
 
-impl LinkItemBuilder {
+impl ItemBuilder {
     pub fn new(url: &str) -> Self {
         Self {
             url: url.to_string(),
@@ -84,8 +84,8 @@ impl LinkItemBuilder {
         self
     }
 
-    pub fn build(self) -> LinkItem {
-        LinkItem {
+    pub fn build(self) -> Item {
+        Item {
             id: self.id,
             owner: self.owner,
             url: self.url,
@@ -97,8 +97,8 @@ impl LinkItemBuilder {
     }
 }
 
-impl From<LinkItem> for LinkItemBuilder {
-    fn from(item: LinkItem) -> Self {
+impl From<Item> for ItemBuilder {
+    fn from(item: Item) -> Self {
         Self {
             id: item.id,
             owner: item.owner,
@@ -107,91 +107,6 @@ impl From<LinkItem> for LinkItemBuilder {
             description: item.description,
             created_at: item.created_at,
             updated_at: item.updated_at,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UserInfo {
-    id: String,
-    email: String,
-    password: String,
-    verified: bool,
-    created_at: String,
-    updated_at: String,
-}
-
-impl UserInfo {
-    pub fn email(&self) -> &str {
-        &self.email
-    }
-
-    pub fn password(&self) -> &str {
-        &self.password
-    }
-}
-
-#[derive(Default)]
-pub struct UserInfoBuilder {
-    id: String,
-    email: String,
-    password: String,
-    verified: bool,
-    created_at: String,
-    updated_at: String,
-}
-
-impl UserInfoBuilder {
-    pub fn new(email: &str, password: &str) -> Self {
-        Self {
-            email: email.to_string(),
-            password: password.to_string(),
-            ..Default::default()
-        }
-    }
-
-    pub fn id(mut self, id: &str) -> Self {
-        self.id = id.to_string();
-        self
-    }
-
-    #[allow(clippy::missing_const_for_fn)]
-    pub fn verified(mut self, verified: bool) -> Self {
-        self.verified = verified;
-        self
-    }
-
-    pub fn created_at(mut self, created_at: &str) -> Self {
-        self.created_at = created_at.to_string();
-        self
-    }
-
-    pub fn updated_at(mut self, updated_at: &str) -> Self {
-        self.updated_at = updated_at.to_string();
-        self
-    }
-
-    pub fn build(self) -> UserInfo {
-        UserInfo {
-            id: self.id,
-            email: self.email,
-            password: self.password,
-            verified: self.verified,
-            created_at: self.created_at,
-            updated_at: self.updated_at,
-        }
-    }
-}
-
-impl From<UserInfo> for UserInfoBuilder {
-    fn from(info: UserInfo) -> Self {
-        Self {
-            id: info.id,
-            email: info.email,
-            password: info.password,
-            verified: info.verified,
-            created_at: info.created_at,
-            updated_at: info.updated_at,
         }
     }
 }

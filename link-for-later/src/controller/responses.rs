@@ -13,14 +13,6 @@ impl IntoResponse for AppError {
         let error_message = self.to_string();
         tracing::info!("{}", error_message);
         let (status, error_message) = match self {
-            Self::ServerError(ref e) => {
-                tracing::debug!("{}: {}", error_message, e.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, error_message)
-            }
-            Self::DatabaseError(ref e) => {
-                tracing::debug!("{}: {}", error_message, e.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, error_message)
-            }
             Self::LinkNotFound(ref e) => {
                 tracing::debug!("{}: {}", error_message, e.to_string());
                 (StatusCode::NOT_FOUND, error_message)
@@ -37,17 +29,25 @@ impl IntoResponse for AppError {
                 tracing::debug!("{}: {}", error_message, e.to_string());
                 (StatusCode::UNAUTHORIZED, error_message)
             }
-            Self::AuthorizationError(ref e) => {
+            Self::Authorization(ref e) => {
                 tracing::debug!("{}: {}", error_message, e.to_string());
                 (StatusCode::UNAUTHORIZED, error_message)
             }
-            Self::ValidationError(ref e) => {
+            Self::Validation(ref e) => {
                 tracing::debug!("{}: {}", error_message, e.to_string());
                 (StatusCode::BAD_REQUEST, error_message)
             }
+            Self::Database(ref e) => {
+                tracing::debug!("{}: {}", error_message, e.to_string());
+                (StatusCode::INTERNAL_SERVER_ERROR, error_message)
+            }
+            Self::Server(ref e) => {
+                tracing::debug!("{}: {}", error_message, e.to_string());
+                (StatusCode::INTERNAL_SERVER_ERROR, error_message)
+            }
 
             #[cfg(test)]
-            Self::TestError => (StatusCode::INTERNAL_SERVER_ERROR, error_message),
+            Self::Test => (StatusCode::INTERNAL_SERVER_ERROR, error_message),
         };
 
         let body = Json(json!({
@@ -66,13 +66,13 @@ mod tests {
     #[test]
     fn test_error_response() {
         assert_eq!(
-            AppError::ServerError("a server operation failed".into())
+            AppError::Server("a server operation failed".into())
                 .into_response()
                 .status(),
             StatusCode::INTERNAL_SERVER_ERROR
         );
         assert_eq!(
-            AppError::DatabaseError("a database operation failed".into())
+            AppError::Database("a database operation failed".into())
                 .into_response()
                 .status(),
             StatusCode::INTERNAL_SERVER_ERROR
@@ -102,13 +102,13 @@ mod tests {
             StatusCode::UNAUTHORIZED
         );
         assert_eq!(
-            AppError::AuthorizationError("an authorization error occurred".into())
+            AppError::Authorization("an authorization error occurred".into())
                 .into_response()
                 .status(),
             StatusCode::UNAUTHORIZED
         );
         assert_eq!(
-            AppError::ValidationError("a validation error occurred".into())
+            AppError::Validation("a validation error occurred".into())
                 .into_response()
                 .status(),
             StatusCode::BAD_REQUEST

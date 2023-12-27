@@ -1,4 +1,3 @@
-pub mod auth;
-pub mod error;
-pub mod links;
-pub mod users;
+pub mod extractors;
+pub mod responses;
+pub mod routes;
