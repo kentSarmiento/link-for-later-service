@@ -1,6 +1,6 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 
-pub use crate::types::Database as DatabaseType;
+pub use types::Database as DatabaseType;
 pub mod app;
 
 mod controller;

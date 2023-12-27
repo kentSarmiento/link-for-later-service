@@ -12,7 +12,7 @@ use crate::{
     types::{AppError, AppState},
 };
 
-pub fn routes(state: AppState) -> Router<AppState> {
+pub fn router(state: AppState) -> Router<AppState> {
     Router::new()
         .nest(
             "/v1",

@@ -1,5 +1,4 @@
-use std::sync::Arc;
-use std::{error, fmt};
+use std::{error, fmt, sync::Arc};
 
 use axum::Router;
 
@@ -28,8 +27,8 @@ pub fn new(db: Database) -> Router {
 
     let state = State::new(links_service, users_service, links_repo, users_repo);
     Router::new()
-        .merge(controller::routes::links::routes(state.clone()))
-        .merge(controller::routes::users::routes(state.clone()))
+        .merge(controller::routes::links::router(state.clone()))
+        .merge(controller::routes::users::router(state.clone()))
         .with_state(state)
 }
 
