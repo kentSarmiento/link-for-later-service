@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use chrono::Utc;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};

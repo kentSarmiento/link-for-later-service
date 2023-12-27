@@ -33,7 +33,7 @@ impl Item {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Query {
     #[serde(skip_serializing_if = "String::is_empty")]
     id: String,
@@ -60,13 +60,13 @@ pub struct QueryBuilder {
 impl QueryBuilder {
     pub fn new(id: &str, owner: &str) -> Self {
         Self {
-            id: id.to_string(),
-            owner: owner.to_string(),
+            id: id.to_owned(),
+            owner: owner.to_owned(),
         }
     }
 
     pub fn owner(mut self, owner: &str) -> Self {
-        self.owner = owner.to_string();
+        self.owner = owner.to_owned();
         self
     }
 

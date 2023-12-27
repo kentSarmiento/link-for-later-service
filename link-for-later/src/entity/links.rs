@@ -44,43 +44,43 @@ pub struct ItemBuilder {
 impl ItemBuilder {
     pub fn new(url: &str) -> Self {
         Self {
-            url: url.to_string(),
+            url: url.to_owned(),
             ..Default::default()
         }
     }
 
     pub fn id(mut self, id: &str) -> Self {
-        self.id = id.to_string();
+        self.id = id.to_owned();
         self
     }
 
     pub fn owner(mut self, owner: &str) -> Self {
-        self.owner = owner.to_string();
+        self.owner = owner.to_owned();
         self
     }
 
     pub fn url(mut self, url: &str) -> Self {
-        self.url = url.to_string();
+        self.url = url.to_owned();
         self
     }
 
     pub fn title(mut self, title: &str) -> Self {
-        self.title = title.to_string();
+        self.title = title.to_owned();
         self
     }
 
     pub fn description(mut self, description: &str) -> Self {
-        self.description = description.to_string();
+        self.description = description.to_owned();
         self
     }
 
     pub fn created_at(mut self, created_at: &str) -> Self {
-        self.created_at = created_at.to_string();
+        self.created_at = created_at.to_owned();
         self
     }
 
     pub fn updated_at(mut self, updated_at: &str) -> Self {
-        self.updated_at = updated_at.to_string();
+        self.updated_at = updated_at.to_owned();
         self
     }
 

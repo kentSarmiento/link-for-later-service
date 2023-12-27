@@ -33,14 +33,14 @@ pub struct InfoBuilder {
 impl InfoBuilder {
     pub fn new(email: &str, password: &str) -> Self {
         Self {
-            email: email.to_string(),
-            password: password.to_string(),
+            email: email.to_owned(),
+            password: password.to_owned(),
             ..Default::default()
         }
     }
 
     pub fn id(mut self, id: &str) -> Self {
-        self.id = id.to_string();
+        self.id = id.to_owned();
         self
     }
 
@@ -51,12 +51,12 @@ impl InfoBuilder {
     }
 
     pub fn created_at(mut self, created_at: &str) -> Self {
-        self.created_at = created_at.to_string();
+        self.created_at = created_at.to_owned();
         self
     }
 
     pub fn updated_at(mut self, updated_at: &str) -> Self {
-        self.updated_at = updated_at.to_string();
+        self.updated_at = updated_at.to_owned();
         self
     }
 

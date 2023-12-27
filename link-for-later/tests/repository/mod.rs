@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use axum::async_trait;
 
 use crate::entity::{LinkItem, UserInfo};

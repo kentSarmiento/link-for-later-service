@@ -10,7 +10,7 @@ pub struct Claims {
 impl Claims {
     pub fn new(sub: &str, iat: usize, exp: usize) -> Self {
         Self {
-            sub: sub.to_string(),
+            sub: sub.to_owned(),
             iat,
             exp,
         }
@@ -29,7 +29,7 @@ pub struct Token {
 impl Token {
     pub fn new(jwt: &str) -> Self {
         Self {
-            jwt: jwt.to_string(),
+            jwt: jwt.to_owned(),
         }
     }
 

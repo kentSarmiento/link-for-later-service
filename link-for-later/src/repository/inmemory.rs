@@ -44,7 +44,7 @@ impl LinksRepository for LinksRepositoryProvider {
         let filtered_links: Vec<LinkItem> = self
             .links_data
             .lock()
-            .unwrap()
+            .map_err(|e| AppError::Database(format!("find() {e:?}")))?
             .iter()
             .filter(|link| {
                 (link.id() == query.id() || query.id().is_empty())
@@ -58,7 +58,7 @@ impl LinksRepository for LinksRepositoryProvider {
     async fn get(&self, query: &LinkQuery) -> Result<LinkItem> {
         self.links_data
             .lock()
-            .unwrap()
+            .map_err(|e| AppError::Database(format!("get() {e:?}")))?
             .iter()
             .find(|link| link.id() == query.id() && link.owner() == query.owner())
             .cloned()
@@ -66,25 +66,39 @@ impl LinksRepository for LinksRepositoryProvider {
     }
 
     async fn create(&self, item: &LinkItem) -> Result<LinkItem> {
-        let id = self.links_data_counter.lock().unwrap().len() + 1;
+        let id = self
+            .links_data_counter
+            .lock()
+            .map_err(|e| AppError::Database(format!("create() {e:?}")))?
+            .len()
+            + 1;
         let link = LinkItemBuilder::from(item.clone())
             .id(&id.to_string())
             .build();
-        self.links_data.lock().unwrap().push(link.clone());
-        self.links_data_counter.lock().unwrap().push(id);
+        self.links_data
+            .lock()
+            .map_err(|e| AppError::Database(format!("create() {e:?}")))?
+            .push(link.clone());
+        self.links_data_counter
+            .lock()
+            .map_err(|e| AppError::Database(format!("create() {e:?}")))?
+            .push(id);
         Ok(link)
     }
 
     async fn update(&self, id: &str, item: &LinkItem) -> Result<LinkItem> {
         self.links_data
             .lock()
-            .unwrap()
+            .map_err(|e| AppError::Database(format!("update() {e:?}")))?
             .iter()
             .find(|link| link.id() == id && link.owner() == item.owner())
             .cloned()
             .ok_or_else(|| AppError::LinkNotFound(id.to_owned()))?;
         self.delete(item).await?;
-        self.links_data.lock().unwrap().push(item.clone());
+        self.links_data
+            .lock()
+            .map_err(|e| AppError::Database(format!("update() {e:?}")))?
+            .push(item.clone());
         Ok(item.clone())
     }
 
@@ -93,7 +107,7 @@ impl LinksRepository for LinksRepositoryProvider {
         self.get(&query).await?;
         self.links_data
             .lock()
-            .unwrap()
+            .map_err(|e| AppError::Database(format!("delete() {e:?}")))?
             .retain(|link| link.id() != query.id());
         Ok(())
     }
@@ -104,7 +118,7 @@ impl UsersRepository for UsersRepositoryProvider {
     async fn get(&self, query: &UserQuery) -> Result<UserInfo> {
         self.users_data
             .lock()
-            .unwrap()
+            .map_err(|e| AppError::Database(format!("get() {e:?}")))?
             .iter()
             .find(|user| user.email() == query.email())
             .cloned()
@@ -112,12 +126,23 @@ impl UsersRepository for UsersRepositoryProvider {
     }
 
     async fn create(&self, info: &UserInfo) -> Result<UserInfo> {
-        let id = self.users_data_counter.lock().unwrap().len() + 1;
+        let id = self
+            .users_data_counter
+            .lock()
+            .map_err(|e| AppError::Database(format!("create() {e:?}")))?
+            .len()
+            + 1;
         let user = UserInfoBuilder::from(info.clone())
             .id(&id.to_string())
             .build();
-        self.users_data.lock().unwrap().push(user.clone());
-        self.users_data_counter.lock().unwrap().push(id);
+        self.users_data
+            .lock()
+            .map_err(|e| AppError::Database(format!("create() {e:?}")))?
+            .push(user.clone());
+        self.users_data_counter
+            .lock()
+            .map_err(|e| AppError::Database(format!("create() {e:?}")))?
+            .push(id);
         Ok(user)
     }
 }
