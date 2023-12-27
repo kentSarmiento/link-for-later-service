@@ -1359,21 +1359,9 @@ dependencies = [
  "tokio",
  "tower",
  "tracing",
+ "tracing-subscriber",
  "tracing-test",
  "validator",
-]
-
-[[package]]
-name = "link-for-later-axum"
-version = "0.1.0"
-dependencies = [
- "axum 0.7.2",
- "link-for-later",
- "mongodb",
- "tokio",
- "tower",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
