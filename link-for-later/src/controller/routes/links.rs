@@ -134,7 +134,6 @@ mod tests {
     use axum::{extract::State, http::StatusCode};
     use http_body_util::BodyExt;
     use serde_json::json;
-    use tracing_test::traced_test;
 
     use crate::{
         entity::LinkItem,
@@ -147,7 +146,6 @@ mod tests {
 
     use super::*;
 
-    #[traced_test]
     #[tokio::test]
     async fn test_get_links_empty() {
         let repo_query = LinkQueryBuilder::default().owner("user-id").build();
@@ -169,7 +167,6 @@ mod tests {
         assert_eq!(&body[..], b"[]");
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_get_links_non_empty() {
         let repo_query = LinkQueryBuilder::default().owner("user-id").build();
@@ -199,7 +196,6 @@ mod tests {
         assert!(body[0].url() == "http://link");
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_get_links_service_error() {
         let repo_query = LinkQueryBuilder::default().owner("user-id").build();
@@ -222,7 +218,6 @@ mod tests {
         assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_post_link() {
         let request = LinkItemRequest::new("http://link");
@@ -258,7 +253,6 @@ mod tests {
         assert!(body.url() == "http://link");
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_post_link_invalid_url() {
         let request = LinkItemRequest::new("invalid-link");
@@ -282,7 +276,6 @@ mod tests {
         assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_post_link_service_error() {
         let request = LinkItemRequest::new("http://link");
@@ -311,7 +304,6 @@ mod tests {
         assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_get_link() {
         let repo_query = LinkQueryBuilder::new("1", "user-id").build();
@@ -346,7 +338,6 @@ mod tests {
         assert!(body.url() == "http://link");
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_get_link_service_error() {
         let repo_query = LinkQueryBuilder::new("1", "user-id").build();
@@ -374,7 +365,6 @@ mod tests {
         assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_put_link() {
         let request = LinkItemRequest::new("http://link");
@@ -414,7 +404,6 @@ mod tests {
         assert!(body.url() == "http://link");
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_put_link_invalid_url() {
         let request = LinkItemRequest::new("invalid-link");
@@ -439,7 +428,6 @@ mod tests {
         assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_put_link_service_error() {
         let request = LinkItemRequest::new("http://link");
@@ -472,7 +460,6 @@ mod tests {
         assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_delete_link() {
         let item_to_delete = LinkItemBuilder::default().id("1").owner("user-id").build();
@@ -496,7 +483,6 @@ mod tests {
         assert_eq!(StatusCode::NO_CONTENT, parts.status);
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_delete_link_service_error() {
         let item_to_delete = LinkItemBuilder::default().id("1").owner("user-id").build();

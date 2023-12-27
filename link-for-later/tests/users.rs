@@ -12,7 +12,6 @@ use http_body_util::BodyExt;
 use rstest::rstest;
 use serde_json::{json, Value};
 use tower::ServiceExt;
-use tracing_test::traced_test;
 
 use crate::repository::DatabaseType;
 
@@ -22,7 +21,6 @@ mod entity;
 mod repository;
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_register_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -59,7 +57,6 @@ async fn test_register_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseTy
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_register_user_invalid_email(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -93,7 +90,6 @@ async fn test_register_user_invalid_email(#[values(DatabaseType::MongoDb)] db_ty
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_register_user_already_registered(
     #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
@@ -133,7 +129,6 @@ async fn test_register_user_already_registered(
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_login_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -171,7 +166,6 @@ async fn test_login_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseType)
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_login_user_invalid_email(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     repository::new(&db_type);
@@ -202,7 +196,6 @@ async fn test_login_user_invalid_email(#[values(DatabaseType::MongoDb)] db_type:
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_login_user_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let repository = repository::new(&db_type);
@@ -239,7 +232,6 @@ async fn test_login_user_not_found(#[values(DatabaseType::MongoDb)] db_type: Dat
 }
 
 #[rstest]
-#[traced_test]
 #[tokio::test]
 async fn test_login_user_incorrect_password(
     #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
