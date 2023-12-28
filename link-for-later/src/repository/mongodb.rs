@@ -12,10 +12,10 @@ use crate::{
 use super::{Links as LinksRepository, Users as UsersRepository};
 
 const LINKS_COLLECTION_NAME_KEY: &str = "LINKS_COLLECTION_NAME";
-const LINKS_COLLECTION_NAME_DEFAULT: &str = "v1/links";
+const LINKS_COLLECTION_NAME_DEFAULT: &str = "v0.1/links";
 
 const USERS_COLLECTION_NAME_KEY: &str = "USERS_COLLECTION_NAME";
-const USERS_COLLECTION_NAME_DEFAULT: &str = "v1/users";
+const USERS_COLLECTION_NAME_DEFAULT: &str = "v0.1/users";
 
 pub struct LinksRepositoryProvider {
     links_collection: Collection<LinkItem>,

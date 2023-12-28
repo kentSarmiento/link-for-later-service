@@ -7,6 +7,8 @@ pub struct Item {
     url: String,
     title: String,
     description: String,
+    word_count: usize,
+    reading_time: usize, // average reading speed is 200-250 words per minute
     created_at: String,
     updated_at: String,
 }
@@ -20,7 +22,6 @@ impl Item {
         &self.owner
     }
 
-    #[cfg(test)]
     pub fn url(&self) -> &str {
         &self.url
     }
@@ -37,6 +38,8 @@ pub struct ItemBuilder {
     url: String,
     title: String,
     description: String,
+    word_count: usize,
+    reading_time: usize,
     created_at: String,
     updated_at: String,
 }
@@ -74,6 +77,16 @@ impl ItemBuilder {
         self
     }
 
+    pub const fn word_count(mut self, word_count: usize) -> Self {
+        self.word_count = word_count;
+        self
+    }
+
+    pub const fn reading_time(mut self, reading_time: usize) -> Self {
+        self.reading_time = reading_time;
+        self
+    }
+
     pub fn created_at(mut self, created_at: &str) -> Self {
         self.created_at = created_at.to_owned();
         self
@@ -91,6 +104,8 @@ impl ItemBuilder {
             url: self.url,
             title: self.title,
             description: self.description,
+            word_count: self.word_count,
+            reading_time: self.reading_time,
             created_at: self.created_at,
             updated_at: self.updated_at,
         }
@@ -105,6 +120,8 @@ impl From<Item> for ItemBuilder {
             url: item.url,
             title: item.title,
             description: item.description,
+            word_count: item.word_count,
+            reading_time: item.reading_time,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }

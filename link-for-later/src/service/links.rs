@@ -1,12 +1,13 @@
 use axum::async_trait;
 use chrono::Utc;
+use html2text::from_read;
 
 use crate::{
     dto::{LinkQuery, LinkQueryBuilder},
     entity::{LinkItem, LinkItemBuilder},
     repository,
     service::Links as LinksService,
-    types::Result,
+    types::{AppError, Result},
 };
 
 pub struct ServiceProvider {}
@@ -35,7 +36,15 @@ impl LinksService for ServiceProvider {
         link_item: &LinkItem,
     ) -> Result<LinkItem> {
         let now = Utc::now().to_rfc3339();
+
+        // another service -- start
+        let (word_count, reading_time) = analyze_url(link_item.url()).await;
+        tracing::info!("word_count: {word_count}, reading_time: {reading_time}");
+        // another service -- end
+
         let created_link_item = LinkItemBuilder::from(link_item.clone())
+            .word_count(word_count)
+            .reading_time(reading_time)
             .created_at(&now)
             .updated_at(&now)
             .build();
@@ -70,6 +79,38 @@ impl LinksService for ServiceProvider {
         links_repo.get(&link_query).await?;
         links_repo.delete(link_item).await
     }
+}
+
+async fn analyze_url(url: &str) -> (usize, usize) {
+    (fetch_webpage(url).await).map_or((0, 0), |webpage| {
+        let word_count = count_words(&webpage);
+        let reading_time = estimate_reading_time(word_count);
+        (word_count, reading_time)
+    })
+}
+
+async fn fetch_webpage(url: &str) -> Result<String> {
+    let response = reqwest::get(url)
+        .await
+        .map_err(|e| AppError::Server(format!("fetch_webpage() {e:?}")))?
+        .text()
+        .await
+        .map_err(|e| AppError::Server(format!("fetch_webpage() {e:?}")))?;
+
+    Ok(from_read(response.as_bytes(), 80))
+}
+
+fn count_words(text: &str) -> usize {
+    text.split_whitespace().count()
+}
+
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss
+)]
+fn estimate_reading_time(word_count: usize) -> usize {
+    (word_count as f64 / 200.0).ceil() as usize
 }
 
 #[cfg(test)]
