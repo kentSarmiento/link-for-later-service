@@ -6,8 +6,10 @@ use crate::{
     entity::{LinkItem, LinkItemBuilder},
     repository,
     service::Links as LinksService,
-    types::Result,
+    types::{AppError, Result},
 };
+
+const ANALYSIS_SERVICE_URL: &str = "ANALYSIS_SERVICE_URL";
 
 pub struct ServiceProvider {}
 
@@ -40,9 +42,24 @@ impl LinksService for ServiceProvider {
             .updated_at(&now)
             .build();
 
-        links_repo.create(&created_link_item).await
+        let created_link_item = links_repo.create(&created_link_item).await?;
 
-        /* send request to another service */
+        match std::env::var(ANALYSIS_SERVICE_URL) {
+            Ok(url) => {
+                let client = reqwest::Client::new();
+                client
+                    .post(url)
+                    .json(&created_link_item)
+                    .send()
+                    .await
+                    .map_err(|e| AppError::Server(format!("client.post() {e:?}")))?;
+            }
+            Err(_) => {
+                tracing::warn!("Analysis Service URL is not set");
+            }
+        }
+
+        Ok(created_link_item)
     }
 
     async fn update(
