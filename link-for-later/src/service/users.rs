@@ -33,8 +33,6 @@ impl UsersService for ServiceProvider {
             Err(e) => return Err(e),
         };
 
-        let now = Utc::now().to_rfc3339();
-
         let password_hash = Argon2::default()
             .hash_password(
                 user_info.password().as_bytes(),
@@ -43,6 +41,7 @@ impl UsersService for ServiceProvider {
             .map_err(|e| AppError::Server(format!("hash_password() {e:?}")))?
             .to_string();
 
+        let now = Utc::now();
         let registered_user_info = UserInfoBuilder::new(user_info.email(), &password_hash)
             .created_at(&now)
             .updated_at(&now)

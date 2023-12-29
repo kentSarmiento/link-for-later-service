@@ -34,13 +34,15 @@ impl LinksService for ServiceProvider {
         links_repo: Box<repository::DynLinks>,
         link_item: &LinkItem,
     ) -> Result<LinkItem> {
-        let now = Utc::now().to_rfc3339();
+        let now = Utc::now();
         let created_link_item = LinkItemBuilder::from(link_item.clone())
             .created_at(&now)
             .updated_at(&now)
             .build();
 
         links_repo.create(&created_link_item).await
+
+        /* send request to another service */
     }
 
     async fn update(
@@ -52,7 +54,7 @@ impl LinksService for ServiceProvider {
         let link_query = LinkQueryBuilder::new(id, link_item.owner()).build();
         let retrieved_link_item = links_repo.get(&link_query).await?;
 
-        let now = Utc::now().to_rfc3339();
+        let now = Utc::now();
         let updated_link_item = LinkItemBuilder::from(link_item.clone())
             .created_at(retrieved_link_item.created_at())
             .updated_at(&now)

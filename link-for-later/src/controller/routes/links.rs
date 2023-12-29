@@ -100,6 +100,10 @@ async fn put(
         .owner(user.id())
         .title(payload.title())
         .description(payload.description())
+        .word_count(payload.word_count())
+        .reading_time(payload.reading_time())
+        .summary(payload.summary())
+        .label(payload.label())
         .build();
     match app_state
         .links_service()

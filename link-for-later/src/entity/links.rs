@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -7,8 +8,12 @@ pub struct Item {
     url: String,
     title: String,
     description: String,
-    created_at: String,
-    updated_at: String,
+    word_count: usize,
+    reading_time: usize,
+    summary: String,
+    label: String,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
 impl Item {
@@ -25,7 +30,7 @@ impl Item {
         &self.url
     }
 
-    pub fn created_at(&self) -> &str {
+    pub const fn created_at(&self) -> &DateTime<Utc> {
         &self.created_at
     }
 }
@@ -37,8 +42,12 @@ pub struct ItemBuilder {
     url: String,
     title: String,
     description: String,
-    created_at: String,
-    updated_at: String,
+    word_count: usize,
+    reading_time: usize,
+    summary: String,
+    label: String,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
 impl ItemBuilder {
@@ -74,12 +83,32 @@ impl ItemBuilder {
         self
     }
 
-    pub fn created_at(mut self, created_at: &str) -> Self {
+    pub const fn word_count(mut self, word_count: usize) -> Self {
+        self.word_count = word_count;
+        self
+    }
+
+    pub const fn reading_time(mut self, reading_time: usize) -> Self {
+        self.reading_time = reading_time;
+        self
+    }
+
+    pub fn summary(mut self, summary: &str) -> Self {
+        self.summary = summary.to_owned();
+        self
+    }
+
+    pub fn label(mut self, label: &str) -> Self {
+        self.label = label.to_owned();
+        self
+    }
+
+    pub fn created_at(mut self, created_at: &DateTime<Utc>) -> Self {
         self.created_at = created_at.to_owned();
         self
     }
 
-    pub fn updated_at(mut self, updated_at: &str) -> Self {
+    pub fn updated_at(mut self, updated_at: &DateTime<Utc>) -> Self {
         self.updated_at = updated_at.to_owned();
         self
     }
@@ -91,6 +120,10 @@ impl ItemBuilder {
             url: self.url,
             title: self.title,
             description: self.description,
+            word_count: self.word_count,
+            reading_time: self.reading_time,
+            summary: self.summary,
+            label: self.label,
             created_at: self.created_at,
             updated_at: self.updated_at,
         }
@@ -105,6 +138,10 @@ impl From<Item> for ItemBuilder {
             url: item.url,
             title: item.title,
             description: item.description,
+            word_count: item.word_count,
+            reading_time: item.reading_time,
+            summary: item.summary,
+            label: item.label,
             created_at: item.created_at,
             updated_at: item.updated_at,
         }
