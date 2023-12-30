@@ -13,6 +13,7 @@ use crate::{
 
 pub type DynLinks = Arc<dyn Links + Send + Sync>;
 pub type DynUsers = Arc<dyn Users + Send + Sync>;
+pub type DynAnalysis = Arc<dyn Analysis + Send + Sync>;
 
 #[cfg_attr(test, automock)]
 #[async_trait]
@@ -65,5 +66,12 @@ pub trait Users {
     ) -> Result<Token>;
 }
 
+#[cfg_attr(test, automock)]
+#[async_trait]
+pub trait Analysis {
+    async fn analyze(&self, link_item: &LinkItem) -> Result<()>;
+}
+
+pub mod analysis;
 pub mod links;
 pub mod users;

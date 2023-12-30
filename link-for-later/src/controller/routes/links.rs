@@ -142,8 +142,9 @@ mod tests {
     use crate::{
         entity::LinkItem,
         repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
+        service::DynLinks as DynLinksService,
         service::{
-            DynLinks as DynLinksService, MockLinks as MockLinksService,
+            MockAnalysis as MockAnalysisService, MockLinks as MockLinksService,
             MockUsers as MockUsersService,
         },
     };
@@ -527,6 +528,7 @@ mod tests {
             AppState::new(
                 self.links_service,
                 Arc::new(MockUsersService::new()),
+                Arc::new(MockAnalysisService::new()),
                 Arc::new(MockLinksRepo::new()),
                 Arc::new(MockUsersRepo::new()),
             )

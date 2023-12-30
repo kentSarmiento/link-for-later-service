@@ -80,8 +80,9 @@ mod tests {
     use crate::{
         dto::Token,
         repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
+        service::DynUsers as DynUsersService,
         service::{
-            DynUsers as DynUsersService, MockLinks as MockLinksService,
+            MockAnalysis as MockAnalysisService, MockLinks as MockLinksService,
             MockUsers as MockUsersService,
         },
     };
@@ -230,6 +231,7 @@ mod tests {
             AppState::new(
                 Arc::new(MockLinksService::new()),
                 self.users_service,
+                Arc::new(MockAnalysisService::new()),
                 Arc::new(MockLinksRepo::new()),
                 Arc::new(MockUsersRepo::new()),
             )

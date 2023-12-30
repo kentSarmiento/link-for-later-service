@@ -17,6 +17,7 @@ use crate::{
 
 const JWT_SECRET_KEY: &str = "JWT_SECRET";
 
+#[derive(Default)]
 pub struct ServiceProvider {}
 
 #[async_trait]
