@@ -27,7 +27,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' # deploy only in main
+    if: github.event_name == 'push' # deploy only in main
     steps:
       - uses: actions/checkout@v3
 
