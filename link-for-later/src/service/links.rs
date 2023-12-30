@@ -65,14 +65,8 @@ impl LinksService for ServiceProvider {
         id: &str,
         link_item: &LinkItem,
     ) -> Result<LinkItem> {
-        let get_query = LinkQueryBuilder::default().id(id).build();
-        let retrieved_item = links_repo.get(&get_query).await?;
-
-        if link_item.owner() != retrieved_item.owner() {
-            return Err(AppError::Authorization(String::from(
-                "User is not authorized to access resource",
-            )));
-        }
+        let link_query = LinkQueryBuilder::new(id, link_item.owner()).build();
+        let retrieved_item = self.get(links_repo.clone(), &link_query).await?;
 
         let now = Utc::now();
         let updated_link_item = LinkItemBuilder::from(link_item.clone())
@@ -94,16 +88,10 @@ impl LinksService for ServiceProvider {
         links_repo: Box<repository::DynLinks>,
         link_item: &LinkItem,
     ) -> Result<()> {
-        let get_query = LinkQueryBuilder::default().id(link_item.id()).build();
-        let retrieved_item = links_repo.get(&get_query).await?;
+        let link_query = LinkQueryBuilder::new(link_item.id(), link_item.owner()).build();
+        self.get(links_repo.clone(), &link_query).await?;
 
-        if link_item.owner() == retrieved_item.owner() {
-            links_repo.delete(link_item).await
-        } else {
-            Err(AppError::Authorization(String::from(
-                "User is not authorized to access resource",
-            )))
-        }
+        links_repo.delete(link_item).await
     }
 }
 
