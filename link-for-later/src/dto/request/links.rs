@@ -5,10 +5,18 @@ use validator::Validate;
 pub struct Item {
     #[validate(url)]
     url: String,
-    #[serde(default = "String::default")]
+    #[serde(default)]
     title: String,
-    #[serde(default = "String::default")]
+    #[serde(default)]
     description: String,
+    #[serde(default)]
+    word_count: usize,
+    #[serde(default)]
+    reading_time: usize,
+    #[serde(default)]
+    summary: String,
+    #[serde(default)]
+    label: String,
 }
 
 impl Item {
@@ -24,10 +32,26 @@ impl Item {
         &self.description
     }
 
+    pub const fn word_count(&self) -> usize {
+        self.word_count
+    }
+
+    pub const fn reading_time(&self) -> usize {
+        self.reading_time
+    }
+
+    pub fn summary(&self) -> &str {
+        &self.summary
+    }
+
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+
     #[cfg(test)]
     pub fn new(url: &str) -> Self {
         Self {
-            url: url.to_string(),
+            url: url.to_owned(),
             ..Default::default()
         }
     }

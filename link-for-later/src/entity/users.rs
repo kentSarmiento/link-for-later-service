@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -6,8 +7,8 @@ pub struct Info {
     email: String,
     password: String,
     verified: bool,
-    created_at: String,
-    updated_at: String,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
 impl Info {
@@ -26,8 +27,8 @@ pub struct InfoBuilder {
     email: String,
     password: String,
     verified: bool,
-    created_at: String,
-    updated_at: String,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
 impl InfoBuilder {
@@ -44,18 +45,17 @@ impl InfoBuilder {
         self
     }
 
-    #[allow(clippy::missing_const_for_fn)]
-    pub fn verified(mut self, verified: bool) -> Self {
+    pub const fn verified(mut self, verified: bool) -> Self {
         self.verified = verified;
         self
     }
 
-    pub fn created_at(mut self, created_at: &str) -> Self {
+    pub fn created_at(mut self, created_at: &DateTime<Utc>) -> Self {
         self.created_at = created_at.to_owned();
         self
     }
 
-    pub fn updated_at(mut self, updated_at: &str) -> Self {
+    pub fn updated_at(mut self, updated_at: &DateTime<Utc>) -> Self {
         self.updated_at = updated_at.to_owned();
         self
     }

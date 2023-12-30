@@ -17,6 +17,7 @@ use crate::{
 
 const JWT_SECRET_KEY: &str = "JWT_SECRET";
 
+#[derive(Default)]
 pub struct ServiceProvider {}
 
 #[async_trait]
@@ -33,8 +34,6 @@ impl UsersService for ServiceProvider {
             Err(e) => return Err(e),
         };
 
-        let now = Utc::now().to_rfc3339();
-
         let password_hash = Argon2::default()
             .hash_password(
                 user_info.password().as_bytes(),
@@ -43,6 +42,7 @@ impl UsersService for ServiceProvider {
             .map_err(|e| AppError::Server(format!("hash_password() {e:?}")))?
             .to_string();
 
+        let now = Utc::now();
         let registered_user_info = UserInfoBuilder::new(user_info.email(), &password_hash)
             .created_at(&now)
             .updated_at(&now)
@@ -119,7 +119,7 @@ mod tests {
             .returning(|_| Err(AppError::UserNotFound("user@test.com".into())));
         mock_users_repo
             .expect_create()
-            //.withf(move |user| user == &user_to_register)
+            .withf(move |user| user.email() == user_to_register.email())
             .times(1)
             .returning(move |_| Ok(registered_user.clone()));
 
@@ -194,7 +194,7 @@ mod tests {
             .returning(|_| Err(AppError::UserNotFound("user@test.com".into())));
         mock_users_repo
             .expect_create()
-            //.withf(move |user| user == &user_to_register)
+            .withf(move |user| user.email() == user_to_register.email())
             .times(1)
             .returning(move |_| Err(AppError::Test));
 

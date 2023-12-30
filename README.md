@@ -8,7 +8,10 @@ Link for Later Service provides an API to save links in your personal library fo
 
 - [x] User registration/login for a personal library
 - [x] Saving of links to library
-- [ ] Analysis of saved links in library (to add information such as category, summary, estimated time to finish reading)
+- [ ] Analysis of saved links in library
+  - [x] Estimated time to finish reading
+  - [ ] Summary of contents
+  - [ ] Category
 
 ## Development Features
 
@@ -24,13 +27,14 @@ Link for Later Service provides an API to save links in your personal library fo
 - Route authorization using [`jsonwebtoken`](https://github.com/Keats/jsonwebtoken)
 - Password hashing using [`argon2`](https://github.com/RustCrypto/password-hashes/tree/master/argon2)
 - Mock objects for testing using [`mockall`](https://github.com/asomers/mockall)
-- Fixture-based test framework using [`rtest`](https://github.com/la10736/rstest)
+- HTTP mocks for testing using [`mockito`](https://github.com/lipanski/mockito)
+- Fixture-based test framework using [`rstest`](https://github.com/la10736/rstest)
 
 ## Development Tooling
 
-- A Rust devcontainer for VSCode
-- Github actions for CI/CD
+- [Devcontainer](https://code.visualstudio.com/docs/devcontainers/containers) for development in VSCode
+- [Github Actions](https://github.com/dependabot) for CI/CD
+- [Github Dependabot](https://github.com/actions) for regular dependency updates
 - [Clippy](https://github.com/rust-lang/rust-clippy) for linting/static analysis
 - [Codecov](https://about.codecov.io/) for coverage metrics
 - [DeepSource](https://deepsource.com/) for static analysis/coverage metrics management
-- Dependabot for regular dependency updates
