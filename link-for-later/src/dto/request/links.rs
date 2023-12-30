@@ -51,7 +51,7 @@ impl Item {
     #[cfg(test)]
     pub fn new(url: &str) -> Self {
         Self {
-            url: url.to_string(),
+            url: url.to_owned(),
             ..Default::default()
         }
     }

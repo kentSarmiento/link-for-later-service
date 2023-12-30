@@ -20,8 +20,8 @@ impl Info {
     #[cfg(test)]
     pub fn new(email: &str, password: &str) -> Self {
         Self {
-            email: email.to_string(),
-            password: password.to_string(),
+            email: email.to_owned(),
+            password: password.to_owned(),
         }
     }
 }

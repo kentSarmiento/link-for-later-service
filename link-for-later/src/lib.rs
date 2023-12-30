@@ -28,10 +28,7 @@
 )]
 #![forbid(unsafe_code)]
 #![allow(elided_lifetimes_in_paths)]
-#![cfg_attr(
-    test,
-    allow(clippy::str_to_string, clippy::unwrap_used, clippy::expect_used,)
-)]
+#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used,))]
 
 pub use types::Database as DatabaseType;
 pub mod app;

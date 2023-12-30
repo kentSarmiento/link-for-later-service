@@ -9,9 +9,9 @@ Link for Later Service provides an API to save links in your personal library fo
 - [x] User registration/login for a personal library
 - [x] Saving of links to library
 - [ ] Analysis of saved links in library
-  - [x] estimated time to finish reading
-  - [ ] summary of contents
-  - [ ] category
+  - [x] Estimated time to finish reading
+  - [ ] Summary of contents
+  - [ ] Category
 
 ## Development Features
 
@@ -27,6 +27,7 @@ Link for Later Service provides an API to save links in your personal library fo
 - Route authorization using [`jsonwebtoken`](https://github.com/Keats/jsonwebtoken)
 - Password hashing using [`argon2`](https://github.com/RustCrypto/password-hashes/tree/master/argon2)
 - Mock objects for testing using [`mockall`](https://github.com/asomers/mockall)
+- HTTP mocks for testing using [`mockito`](https://github.com/lipanski/mockito)
 - Fixture-based test framework using [`rstest`](https://github.com/la10736/rstest)
 
 ## Development Tooling
