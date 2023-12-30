@@ -7,12 +7,13 @@ use mockall::{automock, predicate::*};
 use crate::{
     dto::{LinkQuery, Token},
     entity::{LinkItem, UserInfo},
-    repository,
+    repository, service,
     types::Result,
 };
 
 pub type DynLinks = Arc<dyn Links + Send + Sync>;
 pub type DynUsers = Arc<dyn Users + Send + Sync>;
+pub type DynAnalysis = Arc<dyn Analysis + Send + Sync>;
 
 #[cfg_attr(test, automock)]
 #[async_trait]
@@ -31,12 +32,14 @@ pub trait Links {
 
     async fn create(
         &self,
+        analysis_service: Box<service::DynAnalysis>,
         links_repo: Box<repository::DynLinks>,
         link_item: &LinkItem,
     ) -> Result<LinkItem>;
 
     async fn update(
         &self,
+        analysis_service: Box<service::DynAnalysis>,
         links_repo: Box<repository::DynLinks>,
         id: &str,
         link_item: &LinkItem,
@@ -65,5 +68,12 @@ pub trait Users {
     ) -> Result<Token>;
 }
 
+#[cfg_attr(test, automock)]
+#[async_trait]
+pub trait Analysis {
+    async fn analyze(&self, link_item: &LinkItem) -> Result<()>;
+}
+
+pub mod analysis;
 pub mod links;
 pub mod users;

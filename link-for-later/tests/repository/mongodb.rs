@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use axum::async_trait;
 use bson::doc;
+use chrono::Utc;
 use mongodb::{options::ClientOptions, Client, Database};
 use rand::Rng;
 
@@ -43,12 +44,25 @@ impl super::Repository for RepositoryProvider {
             .await
             .collection(&std::env::var(LINKS_COLLECTION_NAME_KEY).unwrap());
 
-        let document = doc! {"id": "1", "owner": owner, "url": url, "title": "", "description": "", "created_at": "", "updated_at": ""};
-        let result = collection.insert_one(document.clone(), None).await.unwrap();
+        let item = LinkItem {
+            id: "1".to_owned(),
+            owner: owner.to_owned(),
+            url: url.to_owned(),
+            title: "".to_owned(),
+            description: "".to_owned(),
+            word_count: 0,
+            reading_time: 0,
+            summary: "".to_owned(),
+            label: "".to_owned(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let result = collection.insert_one(item, None).await.unwrap();
 
         let id = result.inserted_id.as_object_id().unwrap().to_hex();
+        let query = doc! {"_id": result.inserted_id.clone()};
         let update = doc! {"$set": doc! { "id": &id } };
-        collection.update_one(document, update, None).await.unwrap();
+        collection.update_one(query, update, None).await.unwrap();
 
         id
     }
@@ -78,12 +92,20 @@ impl super::Repository for RepositoryProvider {
             .await
             .collection(&std::env::var(USERS_COLLECTION_NAME_KEY).unwrap());
 
-        let document = doc! {"id": "1", "email": email, "password": password, "verified": true, "created_at": "", "updated_at": ""};
-        let result = collection.insert_one(document.clone(), None).await.unwrap();
+        let info = UserInfo {
+            id: "1".to_owned(),
+            email: email.to_owned(),
+            password: password.to_owned(),
+            verified: true,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let result = collection.insert_one(info, None).await.unwrap();
 
         let id = result.inserted_id.as_object_id().unwrap().to_hex();
+        let query = doc! {"_id": result.inserted_id.clone()};
         let update = doc! {"$set": doc! { "id": &id } };
-        collection.update_one(document, update, None).await.unwrap();
+        collection.update_one(query, update, None).await.unwrap();
 
         id
     }

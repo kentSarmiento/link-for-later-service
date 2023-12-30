@@ -5,13 +5,18 @@ use axum::Router;
 use crate::{
     controller, repository,
     repository::{DynLinks as DynLinksRepository, DynUsers as DynUsersRepository},
-    service::{self, DynLinks as DynLinksService, DynUsers as DynUsersService},
+    service,
+    service::{
+        DynAnalysis as DynAnalysisService, DynLinks as DynLinksService, DynUsers as DynUsersService,
+    },
     types::Database,
 };
 
 pub fn new(db: Database) -> Router {
-    let links_service = Arc::new(service::links::ServiceProvider {}) as DynLinksService;
-    let users_service = Arc::new(service::users::ServiceProvider {}) as DynUsersService;
+    let links_service = Arc::new(service::links::ServiceProvider::default()) as DynLinksService;
+    let users_service = Arc::new(service::users::ServiceProvider::default()) as DynUsersService;
+    let analysis_service =
+        Arc::new(service::analysis::ServiceProvider::default()) as DynAnalysisService;
     let (links_repo, users_repo) = match db {
         Database::MongoDb(db) => (
             Arc::new(repository::mongodb::LinksRepositoryProvider::new(&db)) as DynLinksRepository,
@@ -25,7 +30,13 @@ pub fn new(db: Database) -> Router {
         ),
     };
 
-    let state = State::new(links_service, users_service, links_repo, users_repo);
+    let state = State::new(
+        links_service,
+        users_service,
+        analysis_service,
+        links_repo,
+        users_repo,
+    );
     Router::new()
         .merge(controller::routes::links::router(state.clone()))
         .merge(controller::routes::users::router(state.clone()))
@@ -37,6 +48,7 @@ pub fn new(db: Database) -> Router {
 pub struct State {
     links_service: DynLinksService,
     users_service: DynUsersService,
+    analysis_service: DynAnalysisService,
     links_repo: DynLinksRepository,
     users_repo: DynUsersRepository,
 }
@@ -46,12 +58,14 @@ impl State {
     pub fn new(
         links_service: DynLinksService,
         users_service: DynUsersService,
+        analysis_service: DynAnalysisService,
         links_repo: DynLinksRepository,
         users_repo: DynUsersRepository,
     ) -> Self {
         Self {
             links_service,
             users_service,
+            analysis_service,
             links_repo,
             users_repo,
         }
@@ -63,6 +77,10 @@ impl State {
 
     pub fn users_service(&self) -> &DynUsersService {
         &self.users_service
+    }
+
+    pub fn analysis_service(&self) -> &DynAnalysisService {
+        &self.analysis_service
     }
 
     pub fn links_repo(&self) -> &DynLinksRepository {

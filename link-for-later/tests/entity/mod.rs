@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -7,8 +8,12 @@ pub struct LinkItem {
     pub url: String,
     pub title: String,
     pub description: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub word_count: usize,
+    pub reading_time: usize,
+    pub summary: String,
+    pub label: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -17,6 +22,6 @@ pub struct UserInfo {
     pub email: String,
     pub password: String,
     pub verified: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }

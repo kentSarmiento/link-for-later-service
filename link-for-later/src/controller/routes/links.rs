@@ -58,7 +58,11 @@ async fn post(
         .build();
     match app_state
         .links_service()
-        .create(Box::new(app_state.links_repo().clone()), &link_item)
+        .create(
+            Box::new(app_state.analysis_service().clone()),
+            Box::new(app_state.links_repo().clone()),
+            &link_item,
+        )
         .await
     {
         Ok(link) => (StatusCode::CREATED, Json(link)).into_response(),
@@ -100,10 +104,19 @@ async fn put(
         .owner(user.id())
         .title(payload.title())
         .description(payload.description())
+        .word_count(payload.word_count())
+        .reading_time(payload.reading_time())
+        .summary(payload.summary())
+        .label(payload.label())
         .build();
     match app_state
         .links_service()
-        .update(Box::new(app_state.links_repo().clone()), &id, &link_item)
+        .update(
+            Box::new(app_state.analysis_service().clone()),
+            Box::new(app_state.links_repo().clone()),
+            &id,
+            &link_item,
+        )
         .await
     {
         Ok(link) => Json(link).into_response(),
@@ -138,8 +151,9 @@ mod tests {
     use crate::{
         entity::LinkItem,
         repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
+        service::DynLinks as DynLinksService,
         service::{
-            DynLinks as DynLinksService, MockLinks as MockLinksService,
+            MockAnalysis as MockAnalysisService, MockLinks as MockLinksService,
             MockUsers as MockUsersService,
         },
     };
@@ -230,9 +244,9 @@ mod tests {
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_create()
-            .withf(move |_, item| item == &item_to_create)
+            .withf(move |_, _, item| item == &item_to_create)
             .times(1)
-            .returning(move |_, _| Ok(created_item.clone()));
+            .returning(move |_, _, _| Ok(created_item.clone()));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = post(
@@ -284,9 +298,9 @@ mod tests {
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_create()
-            .withf(move |_, item| item == &item_to_create)
+            .withf(move |_, _, item| item == &item_to_create)
             .times(1)
-            .returning(|_, _| Err(AppError::Test));
+            .returning(|_, _, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = post(
@@ -380,9 +394,9 @@ mod tests {
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_update()
-            .withf(move |_, id, item| id == "1" && item == &item_to_update)
+            .withf(move |_, _, id, item| id == "1" && item == &item_to_update)
             .times(1)
-            .returning(move |_, _, _| Ok(updated_item.clone()));
+            .returning(move |_, _, _, _| Ok(updated_item.clone()));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = put(
@@ -439,9 +453,9 @@ mod tests {
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_update()
-            .withf(move |_, id, item| id == "1" && item == &item_to_update)
+            .withf(move |_, _, id, item| id == "1" && item == &item_to_update)
             .times(1)
-            .returning(|_, _, _| Err(AppError::Test));
+            .returning(|_, _, _, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = put(
@@ -523,6 +537,7 @@ mod tests {
             AppState::new(
                 self.links_service,
                 Arc::new(MockUsersService::new()),
+                Arc::new(MockAnalysisService::new()),
                 Arc::new(MockLinksRepo::new()),
                 Arc::new(MockUsersRepo::new()),
             )
