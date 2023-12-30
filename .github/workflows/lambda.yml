@@ -3,6 +3,8 @@ name: lambda
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   deploy:
@@ -23,6 +25,7 @@ jobs:
         run: cargo lambda build --release
 
       - name: Deploy lambda
+        if: github.event_name == 'push' # deploy only in main
         run: cargo lambda deploy --enable-function-url link-for-later-lambda
         env:
           AWS_DEFAULT_REGION: ap-southeast-1
