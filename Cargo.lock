@@ -1453,7 +1453,6 @@ dependencies = [
  "shuttle-shared-db",
  "tokio",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
