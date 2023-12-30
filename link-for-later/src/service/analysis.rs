@@ -60,9 +60,9 @@ mod tests {
             .mock("POST", "/")
             .with_status(202)
             .match_body(mockito::Matcher::AllOf(vec![
-                mockito::Matcher::Regex("http://link".to_owned()),
-                mockito::Matcher::Regex("1".to_owned()),
-                mockito::Matcher::Regex("user-id".to_owned()),
+                mockito::Matcher::Regex(r#""id":"1""#.to_owned()),
+                mockito::Matcher::Regex(r#""url":"http://link""#.to_owned()),
+                mockito::Matcher::Regex(r#""owner":"user-id""#.to_owned()),
             ]))
             .create();
 
