@@ -25,7 +25,6 @@ impl Item {
         &self.owner
     }
 
-    #[cfg(test)]
     pub fn url(&self) -> &str {
         &self.url
     }

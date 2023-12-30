@@ -7,7 +7,7 @@ use mockall::{automock, predicate::*};
 use crate::{
     dto::{LinkQuery, Token},
     entity::{LinkItem, UserInfo},
-    repository,
+    repository, service,
     types::Result,
 };
 
@@ -32,12 +32,14 @@ pub trait Links {
 
     async fn create(
         &self,
+        analysis_service: Box<service::DynAnalysis>,
         links_repo: Box<repository::DynLinks>,
         link_item: &LinkItem,
     ) -> Result<LinkItem>;
 
     async fn update(
         &self,
+        analysis_service: Box<service::DynAnalysis>,
         links_repo: Box<repository::DynLinks>,
         id: &str,
         link_item: &LinkItem,

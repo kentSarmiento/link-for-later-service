@@ -119,7 +119,7 @@ mod tests {
             .returning(|_| Err(AppError::UserNotFound("user@test.com".into())));
         mock_users_repo
             .expect_create()
-            //.withf(move |user| user == &user_to_register)
+            .withf(move |user| user.email() == user_to_register.email())
             .times(1)
             .returning(move |_| Ok(registered_user.clone()));
 
@@ -194,7 +194,7 @@ mod tests {
             .returning(|_| Err(AppError::UserNotFound("user@test.com".into())));
         mock_users_repo
             .expect_create()
-            //.withf(move |user| user == &user_to_register)
+            .withf(move |user| user.email() == user_to_register.email())
             .times(1)
             .returning(move |_| Err(AppError::Test));
 
