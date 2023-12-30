@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,8 +24,12 @@ jobs:
       - name: Build lambda
         run: cargo lambda build --release
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' # deploy only in main
+    steps:
       - name: Deploy lambda
-        if: github.event_name == 'push' # deploy only in main
         run: cargo lambda deploy --enable-function-url link-for-later-lambda
         env:
           AWS_DEFAULT_REGION: ap-southeast-1
