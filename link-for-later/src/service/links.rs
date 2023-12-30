@@ -6,7 +6,7 @@ use crate::{
     entity::{LinkItem, LinkItemBuilder},
     repository, service,
     service::Links as LinksService,
-    types::Result,
+    types::{AppError, Result},
 };
 
 #[derive(Default)]
@@ -27,7 +27,16 @@ impl LinksService for ServiceProvider {
         links_repo: Box<repository::DynLinks>,
         link_query: &LinkQuery,
     ) -> Result<LinkItem> {
-        links_repo.get(link_query).await
+        let get_query = LinkQueryBuilder::default().id(link_query.id()).build();
+        let retrieved_item = links_repo.get(&get_query).await?;
+
+        if link_query.owner() == retrieved_item.owner() {
+            Ok(retrieved_item)
+        } else {
+            Err(AppError::Authorization(String::from(
+                "User is not authorized to access resource",
+            )))
+        }
     }
 
     async fn create(
@@ -56,18 +65,24 @@ impl LinksService for ServiceProvider {
         id: &str,
         link_item: &LinkItem,
     ) -> Result<LinkItem> {
-        let link_query = LinkQueryBuilder::new(id, link_item.owner()).build();
-        let retrieved_link_item = links_repo.get(&link_query).await?;
+        let get_query = LinkQueryBuilder::default().id(id).build();
+        let retrieved_item = links_repo.get(&get_query).await?;
+
+        if link_item.owner() != retrieved_item.owner() {
+            return Err(AppError::Authorization(String::from(
+                "User is not authorized to access resource",
+            )));
+        }
 
         let now = Utc::now();
         let updated_link_item = LinkItemBuilder::from(link_item.clone())
-            .created_at(retrieved_link_item.created_at())
+            .created_at(retrieved_item.created_at())
             .updated_at(&now)
             .build();
 
         let updated_link_item = links_repo.update(id, &updated_link_item).await?;
 
-        if updated_link_item.url() != retrieved_link_item.url() {
+        if updated_link_item.url() != retrieved_item.url() {
             analysis_service.analyze(&updated_link_item).await?;
         }
 
@@ -79,9 +94,16 @@ impl LinksService for ServiceProvider {
         links_repo: Box<repository::DynLinks>,
         link_item: &LinkItem,
     ) -> Result<()> {
-        let link_query = LinkQueryBuilder::new(link_item.id(), link_item.owner()).build();
-        links_repo.get(&link_query).await?;
-        links_repo.delete(link_item).await
+        let get_query = LinkQueryBuilder::default().id(link_item.id()).build();
+        let retrieved_item = links_repo.get(&get_query).await?;
+
+        if link_item.owner() == retrieved_item.owner() {
+            links_repo.delete(link_item).await
+        } else {
+            Err(AppError::Authorization(String::from(
+                "User is not authorized to access resource",
+            )))
+        }
     }
 }
 
@@ -184,7 +206,7 @@ mod tests {
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
             .expect_get()
-            .withf(move |query| query == &repo_query)
+            .withf(move |query| query == &LinkQueryBuilder::default().id("1").build())
             .times(1)
             .returning(move |_| Ok(retrieved_item.clone()));
 
@@ -198,6 +220,35 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_get_link_unauthorized() {
+        let repo_query = LinkQueryBuilder::new("1", "unauthorized-user-id").build();
+        let retrieved_item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let request_query = repo_query.clone();
+
+        let mut mock_links_repo = MockLinksRepo::new();
+        mock_links_repo
+            .expect_get()
+            .withf(move |query| query == &LinkQueryBuilder::default().id("1").build())
+            .times(1)
+            .returning(move |_| Ok(retrieved_item.clone()));
+
+        let links_service = ServiceProvider {};
+        let response = links_service
+            .get(Box::new(Arc::new(mock_links_repo)), &request_query)
+            .await;
+
+        assert_eq!(
+            response,
+            Err(AppError::Authorization(
+                "User is not authorized to access resource".into()
+            ))
+        );
+    }
+
+    #[tokio::test]
     async fn test_get_link_not_found() {
         let repo_query = LinkQueryBuilder::new("1", "user-id").build();
         let request_query = repo_query.clone();
@@ -205,7 +256,7 @@ mod tests {
         let mut mock_links_repo = MockLinksRepo::new();
         mock_links_repo
             .expect_get()
-            .withf(move |query| query == &repo_query)
+            .withf(move |query| query == &LinkQueryBuilder::default().id("1").build())
             .times(1)
             .returning(|_| Err(AppError::LinkNotFound("1".into())));
 
@@ -342,7 +393,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_link() {
-        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let repo_query = LinkQueryBuilder::default().id("1").build();
         let item_to_update = LinkItemBuilder::new("http://link")
             .owner("user-id")
             .description("sample link")
@@ -399,7 +450,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_link_update_url() {
-        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let repo_query = LinkQueryBuilder::default().id("1").build();
         let item_to_update = LinkItemBuilder::new("http://updated-link")
             .owner("user-id")
             .build();
@@ -463,8 +514,50 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_update_link_unauthorized() {
+        let repo_query = LinkQueryBuilder::default().id("1").build();
+        let item_to_update = LinkItemBuilder::new("http://link")
+            .owner("unauthorized-user-id")
+            .description("sample link")
+            .build();
+        let retrieved_item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let request_item = item_to_update.clone();
+
+        let mut mock_links_repo = MockLinksRepo::new();
+        mock_links_repo
+            .expect_get()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .returning(move |_| Ok(retrieved_item.clone()));
+        mock_links_repo.expect_update().times(0);
+
+        let mut mock_analysis_service = MockAnalysisService::new();
+        mock_analysis_service.expect_analyze().times(0);
+
+        let links_service = ServiceProvider {};
+        let response = links_service
+            .update(
+                Box::new(Arc::new(mock_analysis_service)),
+                Box::new(Arc::new(mock_links_repo)),
+                "1",
+                &request_item,
+            )
+            .await;
+
+        assert_eq!(
+            response,
+            Err(AppError::Authorization(
+                "User is not authorized to access resource".into()
+            ))
+        );
+    }
+
+    #[tokio::test]
     async fn test_update_link_not_found() {
-        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let repo_query = LinkQueryBuilder::default().id("1").build();
         let item_to_update = LinkItemBuilder::new("http://link")
             .owner("user-id")
             .description("sample link")
@@ -497,7 +590,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_link_repo_error() {
-        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let repo_query = LinkQueryBuilder::default().id("1").build();
         let item_to_update = LinkItemBuilder::new("http://link")
             .owner("user-id")
             .description("sample link")
@@ -547,7 +640,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_link_analyze_error() {
-        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let repo_query = LinkQueryBuilder::default().id("1").build();
         let item_to_update = LinkItemBuilder::new("http://updated-link")
             .owner("user-id")
             .build();
@@ -610,7 +703,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_delete_link() {
-        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let repo_query = LinkQueryBuilder::default().id("1").build();
         let item_to_delete = LinkItemBuilder::new("http://link")
             .id("1")
             .owner("user-id")
@@ -650,8 +743,42 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_delete_link_unauthorized() {
+        let repo_query = LinkQueryBuilder::default().id("1").build();
+        let item_to_delete = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("unauthorized-user-id")
+            .build();
+        let retrieved_item = LinkItemBuilder::new("http://link")
+            .id("1")
+            .owner("user-id")
+            .build();
+        let request_item = item_to_delete.clone();
+
+        let mut mock_links_repo = MockLinksRepo::new();
+        mock_links_repo
+            .expect_get()
+            .withf(move |query| query == &repo_query)
+            .times(1)
+            .returning(move |_| Ok(retrieved_item.clone()));
+        mock_links_repo.expect_delete().times(0);
+
+        let links_service = ServiceProvider {};
+        let response = links_service
+            .delete(Box::new(Arc::new(mock_links_repo)), &request_item)
+            .await;
+
+        assert_eq!(
+            response,
+            Err(AppError::Authorization(
+                "User is not authorized to access resource".into()
+            ))
+        );
+    }
+
+    #[tokio::test]
     async fn test_delete_link_not_found() {
-        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let repo_query = LinkQueryBuilder::default().id("1").build();
         let item_to_delete = LinkItemBuilder::new("http://link")
             .id("1")
             .owner("user-id")
@@ -683,7 +810,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_delete_link_repo_error() {
-        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+        let repo_query = LinkQueryBuilder::default().id("1").build();
         let item_to_delete = LinkItemBuilder::new("http://link")
             .id("1")
             .owner("user-id")

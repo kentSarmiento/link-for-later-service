@@ -89,6 +89,11 @@ impl QueryBuilder {
         }
     }
 
+    pub fn id(mut self, id: &str) -> Self {
+        self.id = id.to_owned();
+        self
+    }
+
     pub fn owner(mut self, owner: &str) -> Self {
         self.owner = owner.to_owned();
         self
