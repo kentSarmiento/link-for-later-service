@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v3
 
@@ -25,7 +26,6 @@ jobs:
         run: cargo lambda build --release
 
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' # deploy only in main
     steps:
