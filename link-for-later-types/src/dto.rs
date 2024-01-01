@@ -1,4 +1,3 @@
-pub use auth::{Claims, Token};
 pub use request::links::{
     Item as LinkItemRequest, Query as LinkQuery, QueryBuilder as LinkQueryBuilder,
 };
@@ -7,6 +6,5 @@ pub use request::users::{
 };
 pub use response::Login as LoginResponse;
 
-mod auth;
 mod request;
 mod response;

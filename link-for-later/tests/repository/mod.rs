@@ -1,6 +1,6 @@
 use axum::async_trait;
 
-use crate::entity::{LinkItem, UserInfo};
+use link_for_later_types::entity::{LinkItem, UserInfo};
 
 pub mod inmemory;
 pub mod mongodb;

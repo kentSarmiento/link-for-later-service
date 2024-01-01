@@ -9,13 +9,6 @@ updates:
   open-pull-requests-limit: 15
 
 - package-ecosystem: "cargo"
-  directory: "/link-for-later-axum"
-  schedule:
-    interval: weekly
-    time: "00:00"
-  open-pull-requests-limit: 15
-
-- package-ecosystem: "cargo"
   directory: "/link-for-later-lambda"
   schedule:
     interval: weekly
@@ -24,6 +17,13 @@ updates:
 
 - package-ecosystem: "cargo"
   directory: "/link-for-later-shuttle"
+  schedule:
+    interval: weekly
+    time: "00:00"
+  open-pull-requests-limit: 15
+
+- package-ecosystem: "cargo"
+  directory: "/link-for-later-types"
   schedule:
     interval: weekly
     time: "00:00"

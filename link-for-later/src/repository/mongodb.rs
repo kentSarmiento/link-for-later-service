@@ -3,10 +3,9 @@ use bson::{doc, to_document};
 use futures::TryStreamExt;
 use mongodb::{options::ReplaceOptions, Collection, Database};
 
-use crate::{
-    dto::{LinkQuery, LinkQueryBuilder, UserQuery},
-    entity::{LinkItem, LinkItemBuilder, UserInfo, UserInfoBuilder},
-    types::{AppError, Result},
+use crate::types::{
+    AppError, LinkItem, LinkItemBuilder, LinkQuery, LinkQueryBuilder, Result, UserInfo,
+    UserInfoBuilder, UserQuery,
 };
 
 use super::{Links as LinksRepository, Users as UsersRepository};

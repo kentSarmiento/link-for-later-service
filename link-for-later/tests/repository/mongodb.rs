@@ -2,11 +2,12 @@ use std::str::FromStr;
 
 use axum::async_trait;
 use bson::doc;
-use chrono::Utc;
 use mongodb::{options::ClientOptions, Client, Database};
 use rand::Rng;
 
-use crate::entity::{LinkItem, UserInfo};
+use link_for_later_types::entity::{LinkItem, LinkItemBuilder, UserInfo, UserInfoBuilder};
+
+use super::Repository;
 
 const MONGODB_URI_KEY: &str = "MONGODB_URI";
 const MONGODB_DATABASE_NAME_KEY: &str = "MONGODB_DATABASE_NAME";
@@ -18,7 +19,7 @@ const USERS_COLLECTION_NAME_KEY: &str = "USERS_COLLECTION_NAME";
 pub struct RepositoryProvider {}
 
 #[async_trait]
-impl super::Repository for RepositoryProvider {
+impl Repository for RepositoryProvider {
     async fn count_links(&self) -> u64 {
         database()
             .await
@@ -44,19 +45,7 @@ impl super::Repository for RepositoryProvider {
             .await
             .collection(&std::env::var(LINKS_COLLECTION_NAME_KEY).unwrap());
 
-        let item = LinkItem {
-            id: "1".to_owned(),
-            owner: owner.to_owned(),
-            url: url.to_owned(),
-            title: "".to_owned(),
-            description: "".to_owned(),
-            word_count: 0,
-            reading_time: 0,
-            summary: "".to_owned(),
-            label: "".to_owned(),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        };
+        let item = LinkItemBuilder::new(url).id("1").owner(owner).build();
         let result = collection.insert_one(item, None).await.unwrap();
 
         let id = result.inserted_id.as_object_id().unwrap().to_hex();
@@ -92,14 +81,7 @@ impl super::Repository for RepositoryProvider {
             .await
             .collection(&std::env::var(USERS_COLLECTION_NAME_KEY).unwrap());
 
-        let info = UserInfo {
-            id: "1".to_owned(),
-            email: email.to_owned(),
-            password: password.to_owned(),
-            verified: true,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        };
+        let info = UserInfoBuilder::new(email, password).id("1").build();
         let result = collection.insert_one(info, None).await.unwrap();
 
         let id = result.inserted_id.as_object_id().unwrap().to_hex();

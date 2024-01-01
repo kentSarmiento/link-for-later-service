@@ -19,6 +19,7 @@ chrono = { version = "0.4.31", default-features = false, features=["clock", "ser
 futures = "0.3.29"
 http-body-util = "0.1.0"
 jsonwebtoken = "9.2.0"
+link-for-later-types = { path = "../link-for-later-types" }
 mongodb = "2.8.0"
 reqwest = { version = "0.11.23", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1.0.193", features = ["derive"] }

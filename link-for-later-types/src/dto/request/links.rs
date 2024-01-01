@@ -48,7 +48,6 @@ impl Item {
         &self.label
     }
 
-    #[cfg(test)]
     pub fn new(url: &str) -> Self {
         Self {
             url: url.to_owned(),

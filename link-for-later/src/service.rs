@@ -5,10 +5,8 @@ use axum::async_trait;
 use mockall::{automock, predicate::*};
 
 use crate::{
-    dto::{LinkQuery, Token},
-    entity::{LinkItem, UserInfo},
     repository, service,
-    types::Result,
+    types::{LinkItem, LinkQuery, Result, Token, UserInfo},
 };
 
 pub type DynLinks = Arc<dyn Links + Send + Sync>;

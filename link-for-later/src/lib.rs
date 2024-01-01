@@ -33,9 +33,8 @@
 pub use types::Database as DatabaseType;
 pub mod app;
 
+mod auth;
 mod controller;
-mod dto;
-mod entity;
 mod repository;
 mod service;
 mod types;

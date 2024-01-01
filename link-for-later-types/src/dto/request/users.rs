@@ -17,7 +17,6 @@ impl Info {
         &self.password
     }
 
-    #[cfg(test)]
     pub fn new(email: &str, password: &str) -> Self {
         Self {
             email: email.to_owned(),

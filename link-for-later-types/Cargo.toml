@@ -1,0 +1,12 @@
+[package]
+name = "link-for-later-types"
+version = "0.1.0"
+edition = "2021"
+description = "Types used in Link for Later Service"
+repository = "https://github.com/kentSarmiento/link-for-later-types"
+publish = false
+
+[dependencies]
+chrono = { version = "0.4.31", default-features = false, features = ["clock", "serde"] }
+serde = { version = "1.0.193", features = ["derive"] }
+validator = { version = "0.16.1", features = ["derive"] }
