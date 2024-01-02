@@ -1384,7 +1384,6 @@ dependencies = [
  "futures",
  "http-body-util",
  "jsonwebtoken",
- "link-for-later-types",
  "mockall",
  "mockito",
  "mongodb",
@@ -1424,16 +1423,6 @@ dependencies = [
  "shuttle-shared-db",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "link-for-later-types"
-version = "0.1.0"
-source = "git+https://github.com/kentSarmiento/link-for-later-types?tag=v0.1.0#d0f536b3135865cb78b5678b86884b1733871eb4"
-dependencies = [
- "chrono",
- "serde",
- "validator",
 ]
 
 [[package]]
