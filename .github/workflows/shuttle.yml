@@ -8,12 +8,30 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # currently failing because of using private repository:
+      #- name: Deploy using shuttle
+      #  uses: shuttle-hq/deploy-action@main
+      #  with:
+      #    deploy-key: ${{ secrets.SHUTTLE_API_KEY }}
+      #    no-test: "true"
+
       - uses: de-vri-es/setup-git-credentials@v2
         with:
           credentials: "https://${{ github.repository_owner }}:${{ secrets.GIT_CREDENTIALS }}@github.com"
 
-      - name: Deploy using shuttle
-        uses: shuttle-hq/deploy-action@main
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
         with:
-          deploy-key: ${{ secrets.SHUTTLE_API_KEY }}
-          no-test: "true"
+          toolchain: 1.74.0
+          profile: minimal
+
+      - name: Install cargo-binstall
+        uses: taiki-e/install-action@cargo-binstall
+
+      - name: Install cargo-shuttle
+        run: cargo binstall -y --locked cargo-shuttle
+
+      - name: Deploy to Shuttle
+        run: cargo shuttle deploy --no-test \
+        env:
+          SHUTTLE_API_KEY: ${{ secrets.SHUTTLE_API_KEY }}
