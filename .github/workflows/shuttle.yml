@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: de-vri-es/setup-git-credentials@v2
         with:
-          credentials: "https://${{ secrets.GIT_CREDENTIALS }}@github.com"
+          credentials: "https://${{ github.repository_owner }}:${{ secrets.GIT_CREDENTIALS }}@github.com"
 
       - name: Deploy using shuttle
         uses: shuttle-hq/deploy-action@main

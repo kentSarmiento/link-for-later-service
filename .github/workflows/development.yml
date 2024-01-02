@@ -24,7 +24,7 @@ jobs:
 
       - uses: de-vri-es/setup-git-credentials@v2
         with:
-          credentials: "https://${{ secrets.GIT_CREDENTIALS }}@github.com"
+          credentials: "https://${{ github.repository_owner }}:${{ secrets.GIT_CREDENTIALS }}@github.com"
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -49,7 +49,7 @@ jobs:
 
       - uses: de-vri-es/setup-git-credentials@v2
         with:
-          credentials: "https://${{ secrets.GIT_CREDENTIALS }}@github.com"
+          credentials: "https://${{ github.repository_owner }}:${{ secrets.GIT_CREDENTIALS }}@github.com"
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -78,7 +78,7 @@ jobs:
 
       - uses: de-vri-es/setup-git-credentials@v2
         with:
-          credentials: "https://${{ secrets.GIT_CREDENTIALS }}@github.com"
+          credentials: "https://${{ github.repository_owner }}:${{ secrets.GIT_CREDENTIALS }}@github.com"
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -114,7 +114,7 @@ jobs:
 
       - uses: de-vri-es/setup-git-credentials@v2
         with:
-          credentials: "https://${{ secrets.GIT_CREDENTIALS }}@github.com"
+          credentials: "https://${{ github.repository_owner }}:${{ secrets.GIT_CREDENTIALS }}@github.com"
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
