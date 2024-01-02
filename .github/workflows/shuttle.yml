@@ -32,6 +32,11 @@ jobs:
         run: cargo binstall -y --locked cargo-shuttle
 
       - name: Deploy to Shuttle
-        run: cargo shuttle deploy --no-test --name link-for-later --working-directory .
+        run: |
+          cargo shuttle deploy \
+          --no-test --name link-for-later \
+          | awk '!/Database URI.*?$/'
+        working-directory: ${{ inputs.working-directory }}
         env:
           SHUTTLE_API_KEY: ${{ secrets.SHUTTLE_API_KEY }}
+        shell: bash
