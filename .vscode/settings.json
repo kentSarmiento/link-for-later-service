@@ -2,6 +2,6 @@
     "rust-analyzer.linkedProjects": [
         "./link-for-later/Cargo.toml",
         "./link-for-later-lambda/Cargo.toml",
-        "./link-for-later-shuttle/Cargo.toml",
+        "./link-for-later-shuttle/Cargo.toml"
     ]
 }

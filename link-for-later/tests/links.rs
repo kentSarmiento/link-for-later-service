@@ -9,11 +9,12 @@ use rstest::rstest;
 use serde_json::json;
 use tower::ServiceExt;
 
-use crate::{entity::LinkItem, repository::DatabaseType};
+use link_for_later_types::entity::LinkItem;
+
+use crate::repository::DatabaseType;
 
 mod app;
 mod auth;
-mod entity;
 mod repository;
 
 #[rstest]
@@ -69,11 +70,11 @@ async fn test_get_links_non_empty(#[values(DatabaseType::MongoDb)] db_type: Data
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let body = std::str::from_utf8(&body).unwrap();
-    let body: Vec<LinkItem> = serde_json::from_str(body).unwrap();
+    let body: Vec<link_for_later_types::entity::LinkItem> = serde_json::from_str(body).unwrap();
     assert!(body.len() == 1);
-    assert!(body[0].id == id);
-    assert!(body[0].owner == "user@test.com");
-    assert!(body[0].url == "http://test");
+    assert!(body[0].id() == id);
+    assert!(body[0].owner() == "user@test.com");
+    assert!(body[0].url() == "http://test");
 }
 
 #[rstest]
@@ -102,9 +103,9 @@ async fn test_get_link_item_found(#[values(DatabaseType::MongoDb)] db_type: Data
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let body = std::str::from_utf8(&body).unwrap();
     let body: LinkItem = serde_json::from_str(body).unwrap();
-    assert!(body.id == id);
-    assert!(body.owner == "user@test.com");
-    assert!(body.url == "http://test");
+    assert!(body.id() == id);
+    assert!(body.owner() == "user@test.com");
+    assert!(body.url() == "http://test");
 }
 
 #[rstest]
@@ -165,15 +166,15 @@ async fn test_post_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) 
     let body = std::str::from_utf8(&body).unwrap();
     let body: LinkItem = serde_json::from_str(body).unwrap();
 
-    assert!(body.owner == "user@test.com");
-    assert!(body.url == "http://test");
+    assert!(body.owner() == "user@test.com");
+    assert!(body.url() == "http://test");
 
     let db_count = repository.count_links().await;
     assert!(db_count == 1);
 
-    let db_item = repository.get_link(&body.id).await;
-    assert!(db_item.owner == "user@test.com");
-    assert!(db_item.url == "http://test");
+    let db_item = repository.get_link(body.id()).await;
+    assert!(db_item.owner() == "user@test.com");
+    assert!(db_item.url() == "http://test");
 }
 
 #[rstest]
@@ -241,17 +242,17 @@ async fn test_put_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
     let body = std::str::from_utf8(&body).unwrap();
     let body: LinkItem = serde_json::from_str(body).unwrap();
 
-    assert!(body.id == id);
-    assert!(body.owner == "user@test.com");
-    assert!(body.url == "http://update");
+    assert!(body.id() == id);
+    assert!(body.owner() == "user@test.com");
+    assert!(body.url() == "http://update");
 
     let db_count = repository.count_links().await;
     assert!(db_count == 1);
 
     let db_item = repository.get_link(&id).await;
-    assert!(db_item.id == id);
-    assert!(db_item.owner == "user@test.com");
-    assert!(db_item.url == "http://update");
+    assert!(db_item.id() == id);
+    assert!(db_item.owner() == "user@test.com");
+    assert!(db_item.url() == "http://update");
 }
 
 #[rstest]
@@ -324,9 +325,9 @@ async fn test_put_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: 
     assert!(db_count == 1);
 
     let db_item = repository.get_link(&id).await;
-    assert!(db_item.id == id);
-    assert!(db_item.owner == "user@test.com");
-    assert!(db_item.url == "http://test"); // not updated
+    assert!(db_item.id() == id);
+    assert!(db_item.owner() == "user@test.com");
+    assert!(db_item.url() == "http://test"); // not updated
 }
 
 #[rstest]
@@ -392,9 +393,9 @@ async fn test_delete_link_item_not_found(#[values(DatabaseType::MongoDb)] db_typ
     assert!(db_count == 1);
 
     let db_item = repository.get_link(&id).await;
-    assert!(db_item.id == id);
-    assert!(db_item.owner == "user@test.com");
-    assert!(db_item.url == "http://test"); // not updated
+    assert!(db_item.id() == id);
+    assert!(db_item.owner() == "user@test.com");
+    assert!(db_item.url() == "http://test"); // not updated
 }
 
 #[rstest]

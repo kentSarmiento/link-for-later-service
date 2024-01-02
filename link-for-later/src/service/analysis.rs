@@ -1,9 +1,8 @@
 use axum::async_trait;
 
 use crate::{
-    entity::LinkItem,
     service::Analysis as AnalysisService,
-    types::{AppError, Result},
+    types::{AppError, LinkItem, Result},
 };
 
 const ANALYSIS_SERVICE_URL: &str = "ANALYSIS_SERVICE_URL";
@@ -43,7 +42,7 @@ impl Default for ServiceProvider {
 #[cfg(test)]
 mod tests {
 
-    use crate::entity::LinkItemBuilder;
+    use crate::types::LinkItemBuilder;
 
     use super::*;
 

@@ -2,7 +2,6 @@
     clippy::all,
     clippy::pedantic,
     clippy::nursery,
-    clippy::cargo,
 
     clippy::style,
     clippy::suspicious,
@@ -33,9 +32,8 @@
 pub use types::Database as DatabaseType;
 pub mod app;
 
+mod auth;
 mod controller;
-mod dto;
-mod entity;
 mod repository;
 mod service;
 mod types;

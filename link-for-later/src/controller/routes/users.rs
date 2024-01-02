@@ -1,11 +1,7 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Json, Router};
 use validator::Validate;
 
-use crate::{
-    dto::{LoginResponse, UserInfoRequest},
-    entity::UserInfoBuilder,
-    types::{AppError, AppState},
-};
+use crate::types::{AppError, AppState, LoginResponse, UserInfoBuilder, UserInfoRequest};
 
 pub fn router(state: AppState) -> Router<AppState> {
     Router::new()
@@ -78,13 +74,13 @@ mod tests {
     use serde_json::json;
 
     use crate::{
-        dto::Token,
         repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
         service::DynUsers as DynUsersService,
         service::{
             MockAnalysis as MockAnalysisService, MockLinks as MockLinksService,
             MockUsers as MockUsersService,
         },
+        types::Token,
     };
 
     use super::*;

@@ -17,7 +17,6 @@ use crate::repository::DatabaseType;
 
 mod app;
 mod auth;
-mod entity;
 mod repository;
 
 #[rstest]
@@ -52,8 +51,8 @@ async fn test_register_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseTy
     assert!(db_count == 1);
 
     let db_item = repository.get_user("user@test.com").await;
-    assert!(db_item.email == "user@test.com");
-    assert!(db_item.password != "test"); // verify password is not saved in plaintext
+    assert!(db_item.email() == "user@test.com");
+    assert!(db_item.password() != "test"); // verify password is not saved in plaintext
 }
 
 #[rstest]

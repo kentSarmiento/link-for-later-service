@@ -6,10 +6,8 @@ use axum::{
 };
 use validator::Validate;
 
-use crate::{
-    dto::{Claims, LinkItemRequest, LinkQueryBuilder},
-    entity::LinkItemBuilder,
-    types::{AppError, AppState},
+use crate::types::{
+    AppError, AppState, Claims, LinkItemBuilder, LinkItemRequest, LinkQueryBuilder,
 };
 
 pub fn router(state: AppState) -> Router<AppState> {
@@ -149,13 +147,13 @@ mod tests {
     use serde_json::json;
 
     use crate::{
-        entity::LinkItem,
         repository::{MockLinks as MockLinksRepo, MockUsers as MockUsersRepo},
         service::DynLinks as DynLinksService,
         service::{
             MockAnalysis as MockAnalysisService, MockLinks as MockLinksService,
             MockUsers as MockUsersService,
         },
+        types::LinkItem,
     };
 
     use super::*;
