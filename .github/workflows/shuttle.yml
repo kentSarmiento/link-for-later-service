@@ -8,8 +8,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup git credentials
-        run: git config --global url."https://${{ secrets.GIT_CREDENTIALS }}@github.com".insteadOf https://github.com
+      - uses: de-vri-es/setup-git-credentials@v2
+        with:
+          credentials: "https://${{ secrets.GIT_CREDENTIALS }}@github.com"
 
       - name: Deploy using shuttle
         uses: shuttle-hq/deploy-action@main
