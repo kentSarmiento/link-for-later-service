@@ -32,6 +32,7 @@ jobs:
         run: cargo binstall -y --locked cargo-shuttle
 
       - name: Deploy to Shuttle
-        run: cargo shuttle deploy --no-test --working-directory .
+        run: cargo shuttle deploy --no-test
+        working-directory: .
         env:
           SHUTTLE_API_KEY: ${{ secrets.SHUTTLE_API_KEY }}
