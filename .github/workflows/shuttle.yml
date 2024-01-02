@@ -2,7 +2,7 @@ name: shuttle
 
 on:
   push:
-    branches: [main]
+    branches: [fix-shuttle-deployment]
 
 jobs:
   deploy:
