@@ -1,7 +1,9 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, routing, Json, Router};
 use validator::Validate;
 
-use crate::types::{AppError, AppState, LoginResponse, UserInfoBuilder, UserInfoRequest};
+use crate::types::{
+    AppError, AppState, UserInfoBuilder, UserLoginRequest, UserLoginResponse, UserRegisterRequest,
+};
 
 pub fn router(state: AppState) -> Router<AppState> {
     Router::new()
@@ -19,7 +21,7 @@ pub fn router(state: AppState) -> Router<AppState> {
 
 async fn register(
     State(app_state): State<AppState>,
-    Json(payload): Json<UserInfoRequest>,
+    Json(payload): Json<UserRegisterRequest>,
 ) -> impl IntoResponse {
     match payload.validate() {
         Ok(()) => {}
@@ -29,7 +31,9 @@ async fn register(
     }
 
     let users_repo = app_state.users_repo().clone();
-    let user_info = UserInfoBuilder::new(payload.email(), payload.password()).build();
+    let user_info = UserInfoBuilder::new(payload.email(), payload.password())
+        .admin(payload.admin())
+        .build();
     match app_state
         .users_service()
         .register(Box::new(users_repo), &user_info)
@@ -42,7 +46,7 @@ async fn register(
 
 async fn login(
     State(app_state): State<AppState>,
-    Json(payload): Json<UserInfoRequest>,
+    Json(payload): Json<UserLoginRequest>,
 ) -> impl IntoResponse {
     match payload.validate() {
         Ok(()) => {}
@@ -59,7 +63,7 @@ async fn login(
         .await
     {
         Ok(token) => {
-            let response = LoginResponse::new(token.jwt());
+            let response = UserLoginResponse::new(token.jwt());
             (StatusCode::OK, Json(response)).into_response()
         }
         Err(e) => e.into_response(),
@@ -71,6 +75,7 @@ mod tests {
     use std::sync::Arc;
 
     use http_body_util::BodyExt;
+    use rstest::rstest;
     use serde_json::json;
 
     use crate::{
@@ -85,11 +90,16 @@ mod tests {
 
     use super::*;
 
+    #[rstest]
     #[tokio::test]
-    async fn test_register_user() {
-        let request = UserInfoRequest::new("user@test.com", "test");
-        let user_to_register = UserInfoBuilder::new("user@test.com", "test").build();
-        let registered_user = UserInfoBuilder::new("user@test.com", "test").build();
+    async fn test_register_user(#[values(true, false)] is_admin: bool) {
+        let request = UserRegisterRequest::new("user@test.com", "test", is_admin);
+        let user_to_register = UserInfoBuilder::new("user@test.com", "test")
+            .admin(is_admin)
+            .build();
+        let registered_user = UserInfoBuilder::new("user@test.com", "test")
+            .admin(is_admin)
+            .build();
 
         let mut mock_users_service = MockUsersService::new();
         mock_users_service
@@ -108,9 +118,10 @@ mod tests {
         assert_eq!(&body[..], b"");
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_register_user_invalid_email() {
-        let request = UserInfoRequest::new("user", "test");
+    async fn test_register_user_invalid_email(#[values(true, false)] is_admin: bool) {
+        let request = UserRegisterRequest::new("user", "test", is_admin);
 
         let mut mock_users_service = MockUsersService::new();
         mock_users_service.expect_register().times(0);
@@ -126,10 +137,13 @@ mod tests {
         assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_register_user_service_error() {
-        let request = UserInfoRequest::new("user@test.com", "test");
-        let user_to_register = UserInfoBuilder::new("user@test.com", "test").build();
+    async fn test_register_user_service_error(#[values(true, false)] is_admin: bool) {
+        let request = UserRegisterRequest::new("user@test.com", "test", is_admin);
+        let user_to_register = UserInfoBuilder::new("user@test.com", "test")
+            .admin(is_admin)
+            .build();
 
         let mut mock_users_service = MockUsersService::new();
         mock_users_service
@@ -151,7 +165,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_login_user() {
-        let request = UserInfoRequest::new("user@test.com", "test");
+        let request = UserLoginRequest::new("user@test.com", "test");
         let user_to_login = UserInfoBuilder::new("user@test.com", "test").build();
         let token = Token::new("test");
 
@@ -175,7 +189,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_login_user_invalid_email() {
-        let request = UserInfoRequest::new("user", "test");
+        let request = UserLoginRequest::new("user", "test");
 
         let mut mock_users_service = MockUsersService::new();
         mock_users_service.expect_login().times(0);
@@ -193,7 +207,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_login_user_service_error() {
-        let request = UserInfoRequest::new("user@test.com", "test");
+        let request = UserLoginRequest::new("user@test.com", "test");
         let user_to_login = UserInfoBuilder::new("user@test.com", "test").build();
 
         let mut mock_users_service = MockUsersService::new();

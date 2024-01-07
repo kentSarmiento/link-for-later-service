@@ -1428,8 +1428,8 @@ dependencies = [
 
 [[package]]
 name = "link-for-later-types"
-version = "0.1.0"
-source = "git+https://github.com/kentSarmiento/link-for-later-types?tag=v0.1.0#d0f536b3135865cb78b5678b86884b1733871eb4"
+version = "0.2.0"
+source = "git+https://github.com/kentSarmiento/link-for-later-types?branch=develop#e3c1599733b1cf3da0ebea9df881ec77e17b53b4"
 dependencies = [
  "chrono",
  "serde",

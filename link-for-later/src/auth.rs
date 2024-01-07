@@ -3,14 +3,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Claims {
     sub: String, // email
+    admin: bool, // admin role
     iat: usize,  // creation time
     exp: usize,  // expiration time
 }
 
 impl Claims {
-    pub fn new(sub: &str, iat: usize, exp: usize) -> Self {
+    pub fn new(sub: &str, admin: bool, iat: usize, exp: usize) -> Self {
         Self {
             sub: sub.to_owned(),
+            admin,
             iat,
             exp,
         }
@@ -18,6 +20,10 @@ impl Claims {
 
     pub fn id(&self) -> &str {
         &self.sub
+    }
+
+    pub fn is_admin(&self) -> bool {
+        self.admin
     }
 }
 

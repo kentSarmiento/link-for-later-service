@@ -75,6 +75,7 @@ impl UsersService for ServiceProvider {
         let now = Utc::now();
         let claims = Claims::new(
             retrieved_user_info.email(),
+            retrieved_user_info.admin(),
             timestamp(now)?,
             timestamp(now + Duration::minutes(60))?,
         );

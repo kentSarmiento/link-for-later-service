@@ -144,6 +144,7 @@ mod tests {
 
     use axum::{extract::State, http::StatusCode};
     use http_body_util::BodyExt;
+    use rstest::rstest;
     use serde_json::json;
 
     use crate::{
@@ -158,8 +159,9 @@ mod tests {
 
     use super::*;
 
+    #[rstest]
     #[tokio::test]
-    async fn test_get_links_empty() {
+    async fn test_get_links_empty(#[values(true, false)] is_admin: bool) {
         let repo_query = LinkQueryBuilder::default().owner("user-id").build();
 
         let mut mock_links_service = MockLinksService::new();
@@ -170,7 +172,7 @@ mod tests {
             .returning(|_, _| Ok(vec![]));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
-        let response = list(State(app_state), Claims::new("user-id", 0, 0)).await;
+        let response = list(State(app_state), Claims::new("user-id", is_admin, 0, 0)).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::OK, parts.status);
@@ -179,8 +181,9 @@ mod tests {
         assert_eq!(&body[..], b"[]");
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_get_links_non_empty() {
+    async fn test_get_links_non_empty(#[values(true, false)] is_admin: bool) {
         let repo_query = LinkQueryBuilder::default().owner("user-id").build();
         let item = LinkItemBuilder::new("http://link")
             .id("1")
@@ -195,7 +198,7 @@ mod tests {
             .returning(move |_, _| Ok(vec![item.clone()]));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
-        let response = list(State(app_state), Claims::new("user-id", 0, 0)).await;
+        let response = list(State(app_state), Claims::new("user-id", is_admin, 0, 0)).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::OK, parts.status);
@@ -208,8 +211,9 @@ mod tests {
         assert!(body[0].url() == "http://link");
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_get_links_service_error() {
+    async fn test_get_links_service_error(#[values(true, false)] is_admin: bool) {
         let repo_query = LinkQueryBuilder::default().owner("user-id").build();
 
         let mut mock_links_service = MockLinksService::new();
@@ -220,7 +224,7 @@ mod tests {
             .returning(|_, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
-        let response = list(State(app_state), Claims::new("user-id", 0, 0)).await;
+        let response = list(State(app_state), Claims::new("user-id", is_admin, 0, 0)).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
@@ -230,8 +234,9 @@ mod tests {
         assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_post_link() {
+    async fn test_post_link(#[values(true, false)] is_admin: bool) {
         let request = LinkItemRequest::new("http://link");
         let item_to_create = LinkItemBuilder::new("http://link").owner("user-id").build();
         let created_item = LinkItemBuilder::new("http://link")
@@ -249,7 +254,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = post(
             State(app_state),
-            Claims::new("user-id", 0, 0),
+            Claims::new("user-id", is_admin, 0, 0),
             Json(request),
         )
         .await;
@@ -265,8 +270,9 @@ mod tests {
         assert!(body.url() == "http://link");
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_post_link_invalid_url() {
+    async fn test_post_link_invalid_url(#[values(true, false)] is_admin: bool) {
         let request = LinkItemRequest::new("invalid-link");
 
         let mut mock_links_service = MockLinksService::new();
@@ -275,7 +281,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = post(
             State(app_state),
-            Claims::new("user-id", 0, 0),
+            Claims::new("user-id", is_admin, 0, 0),
             Json(request),
         )
         .await;
@@ -288,8 +294,9 @@ mod tests {
         assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_post_link_service_error() {
+    async fn test_post_link_service_error(#[values(true, false)] is_admin: bool) {
         let request = LinkItemRequest::new("http://link");
         let item_to_create = LinkItemBuilder::new("http://link").owner("user-id").build();
 
@@ -303,7 +310,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = post(
             State(app_state),
-            Claims::new("user-id", 0, 0),
+            Claims::new("user-id", is_admin, 0, 0),
             Json(request),
         )
         .await;
@@ -316,8 +323,9 @@ mod tests {
         assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_get_link() {
+    async fn test_get_link(#[values(true, false)] is_admin: bool) {
         let repo_query = LinkQueryBuilder::new("1", "user-id").build();
         let retrieved_item = LinkItemBuilder::new("http://link")
             .id("1")
@@ -334,7 +342,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = get(
             State(app_state),
-            Claims::new("user-id", 0, 0),
+            Claims::new("user-id", is_admin, 0, 0),
             Path(String::from("1")),
         )
         .await;
@@ -350,8 +358,9 @@ mod tests {
         assert!(body.url() == "http://link");
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_get_link_service_error() {
+    async fn test_get_link_service_error(#[values(true, false)] is_admin: bool) {
         let repo_query = LinkQueryBuilder::new("1", "user-id").build();
 
         let mut mock_links_service = MockLinksService::new();
@@ -364,7 +373,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = get(
             State(app_state),
-            Claims::new("user-id", 0, 0),
+            Claims::new("user-id", is_admin, 0, 0),
             Path(String::from("1")),
         )
         .await;
@@ -377,8 +386,9 @@ mod tests {
         assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_put_link() {
+    async fn test_put_link(#[values(true, false)] is_admin: bool) {
         let request = LinkItemRequest::new("http://link");
         let item_to_update = LinkItemBuilder::new("http://link")
             .id("1")
@@ -399,7 +409,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = put(
             State(app_state),
-            Claims::new("user-id", 0, 0),
+            Claims::new("user-id", is_admin, 0, 0),
             Path(String::from("1")),
             Json(request),
         )
@@ -416,8 +426,9 @@ mod tests {
         assert!(body.url() == "http://link");
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_put_link_invalid_url() {
+    async fn test_put_link_invalid_url(#[values(true, false)] is_admin: bool) {
         let request = LinkItemRequest::new("invalid-link");
 
         let mut mock_links_service = MockLinksService::new();
@@ -426,7 +437,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = put(
             State(app_state),
-            Claims::new("user-id", 0, 0),
+            Claims::new("user-id", is_admin, 0, 0),
             Path(String::from("1")),
             Json(request),
         )
@@ -440,8 +451,9 @@ mod tests {
         assert_eq!(body, json!({"error": "invalid request"}).to_string());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_put_link_service_error() {
+    async fn test_put_link_service_error(#[values(true, false)] is_admin: bool) {
         let request = LinkItemRequest::new("http://link");
         let item_to_update = LinkItemBuilder::new("http://link")
             .id("1")
@@ -458,7 +470,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = put(
             State(app_state),
-            Claims::new("user-id", 0, 0),
+            Claims::new("user-id", is_admin, 0, 0),
             Path(String::from("1")),
             Json(request),
         )
@@ -472,8 +484,9 @@ mod tests {
         assert_eq!(body, json!({"error": "test error"}).to_string());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_delete_link() {
+    async fn test_delete_link(#[values(true, false)] is_admin: bool) {
         let item_to_delete = LinkItemBuilder::default().id("1").owner("user-id").build();
 
         let mut mock_links_service = MockLinksService::new();
@@ -486,7 +499,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = delete(
             State(app_state),
-            Claims::new("user-id", 0, 0),
+            Claims::new("user-id", is_admin, 0, 0),
             Path(String::from("1")),
         )
         .await;
@@ -495,8 +508,9 @@ mod tests {
         assert_eq!(StatusCode::NO_CONTENT, parts.status);
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_delete_link_service_error() {
+    async fn test_delete_link_service_error(#[values(true, false)] is_admin: bool) {
         let item_to_delete = LinkItemBuilder::default().id("1").owner("user-id").build();
 
         let mut mock_links_service = MockLinksService::new();
@@ -509,7 +523,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = delete(
             State(app_state),
-            Claims::new("user-id", 0, 0),
+            Claims::new("user-id", is_admin, 0, 0),
             Path(String::from("1")),
         )
         .await;
