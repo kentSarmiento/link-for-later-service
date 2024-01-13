@@ -19,35 +19,31 @@ pub trait Links {
     async fn search(
         &self,
         links_repo: Box<repository::DynLinks>,
-        link_query: &LinkQuery,
+        query: &LinkQuery,
     ) -> Result<Vec<LinkItem>>;
 
     async fn get(
         &self,
         links_repo: Box<repository::DynLinks>,
-        link_query: &LinkQuery,
+        query: &LinkQuery,
     ) -> Result<LinkItem>;
 
     async fn create(
         &self,
         analysis_service: Box<service::DynAnalysis>,
         links_repo: Box<repository::DynLinks>,
-        link_item: &LinkItem,
+        item: &LinkItem,
     ) -> Result<LinkItem>;
 
     async fn update(
         &self,
         analysis_service: Box<service::DynAnalysis>,
         links_repo: Box<repository::DynLinks>,
-        id: &str,
-        link_item: &LinkItem,
+        query: &LinkQuery,
+        item: &LinkItem,
     ) -> Result<LinkItem>;
 
-    async fn delete(
-        &self,
-        links_repo: Box<repository::DynLinks>,
-        link_item: &LinkItem,
-    ) -> Result<()>;
+    async fn delete(&self, links_repo: Box<repository::DynLinks>, query: &LinkQuery) -> Result<()>;
 }
 
 #[cfg_attr(test, automock)]

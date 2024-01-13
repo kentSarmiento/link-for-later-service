@@ -25,10 +25,13 @@ pub fn router(state: AppState) -> Router<AppState> {
 }
 
 async fn list(State(app_state): State<AppState>, user: Claims) -> impl IntoResponse {
-    let link_query = LinkQueryBuilder::default().owner(user.id()).build();
+    let query = LinkQueryBuilder::default()
+        .user(user.id())
+        .is_from_admin(user.is_admin())
+        .build();
     match app_state
         .links_service()
-        .search(Box::new(app_state.links_repo().clone()), &link_query)
+        .search(Box::new(app_state.links_repo().clone()), &query)
         .await
     {
         Ok(list) => Json(list).into_response(),
@@ -48,7 +51,7 @@ async fn post(
         }
     }
 
-    let link_item = LinkItemBuilder::default()
+    let item = LinkItemBuilder::default()
         .owner(user.id())
         .url(payload.url())
         .title(payload.title())
@@ -59,11 +62,11 @@ async fn post(
         .create(
             Box::new(app_state.analysis_service().clone()),
             Box::new(app_state.links_repo().clone()),
-            &link_item,
+            &item,
         )
         .await
     {
-        Ok(link) => (StatusCode::CREATED, Json(link)).into_response(),
+        Ok(item) => (StatusCode::CREATED, Json(item)).into_response(),
         Err(e) => e.into_response(),
     }
 }
@@ -73,13 +76,15 @@ async fn get(
     user: Claims,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
-    let link_query = LinkQueryBuilder::new(&id, user.id()).build();
+    let query = LinkQueryBuilder::new(&id, user.id())
+        .is_from_admin(user.is_admin())
+        .build();
     match app_state
         .links_service()
-        .get(Box::new(app_state.links_repo().clone()), &link_query)
+        .get(Box::new(app_state.links_repo().clone()), &query)
         .await
     {
-        Ok(link) => Json(link).into_response(),
+        Ok(item) => Json(item).into_response(),
         Err(e) => e.into_response(),
     }
 }
@@ -97,9 +102,11 @@ async fn put(
         }
     }
 
-    let link_item = LinkItemBuilder::new(payload.url())
+    let query = LinkQueryBuilder::new(&id, user.id())
+        .is_from_admin(user.is_admin())
+        .build();
+    let item = LinkItemBuilder::new(payload.url())
         .id(&id)
-        .owner(user.id())
         .title(payload.title())
         .description(payload.description())
         .word_count(payload.word_count())
@@ -112,12 +119,12 @@ async fn put(
         .update(
             Box::new(app_state.analysis_service().clone()),
             Box::new(app_state.links_repo().clone()),
-            &id,
-            &link_item,
+            &query,
+            &item,
         )
         .await
     {
-        Ok(link) => Json(link).into_response(),
+        Ok(item) => Json(item).into_response(),
         Err(e) => e.into_response(),
     }
 }
@@ -127,10 +134,12 @@ async fn delete(
     user: Claims,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
-    let link_item = LinkItemBuilder::default().id(&id).owner(user.id()).build();
+    let query = LinkQueryBuilder::new(&id, user.id())
+        .is_from_admin(user.is_admin())
+        .build();
     match app_state
         .links_service()
-        .delete(Box::new(app_state.links_repo().clone()), &link_item)
+        .delete(Box::new(app_state.links_repo().clone()), &query)
         .await
     {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
@@ -160,19 +169,24 @@ mod tests {
     use super::*;
 
     #[rstest]
+    #[case(true, "admin")]
+    #[case(false, "user")]
     #[tokio::test]
-    async fn test_get_links_empty(#[values(true, false)] is_admin: bool) {
-        let repo_query = LinkQueryBuilder::default().owner("user-id").build();
+    async fn test_get_links_empty(#[case] is_admin: bool, #[case] user: &str) {
+        let search_query = LinkQueryBuilder::default()
+            .user(user)
+            .is_from_admin(is_admin)
+            .build();
 
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_search()
-            .withf(move |_, query| query == &repo_query)
+            .withf(move |_, query| query == &search_query)
             .times(1)
             .returning(|_, _| Ok(vec![]));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
-        let response = list(State(app_state), Claims::new("user-id", is_admin, 0, 0)).await;
+        let response = list(State(app_state), Claims::new(user, is_admin, 0, 0)).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::OK, parts.status);
@@ -182,23 +196,28 @@ mod tests {
     }
 
     #[rstest]
+    #[case(true, "admin")]
+    #[case(false, "user")]
     #[tokio::test]
-    async fn test_get_links_non_empty(#[values(true, false)] is_admin: bool) {
-        let repo_query = LinkQueryBuilder::default().owner("user-id").build();
+    async fn test_get_links_non_empty(#[case] is_admin: bool, #[case] user: &str) {
+        let search_query = LinkQueryBuilder::default()
+            .user(user)
+            .is_from_admin(is_admin)
+            .build();
         let item = LinkItemBuilder::new("http://link")
             .id("1")
-            .owner("user-id")
+            .owner("user")
             .build();
 
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_search()
-            .withf(move |_, query| query == &repo_query)
+            .withf(move |_, query| query == &search_query)
             .times(1)
             .returning(move |_, _| Ok(vec![item.clone()]));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
-        let response = list(State(app_state), Claims::new("user-id", is_admin, 0, 0)).await;
+        let response = list(State(app_state), Claims::new(user, is_admin, 0, 0)).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::OK, parts.status);
@@ -207,24 +226,29 @@ mod tests {
         let body = std::str::from_utf8(&body).unwrap();
         let body: Vec<LinkItem> = serde_json::from_str(body).unwrap();
         assert!(body[0].id() == "1");
-        assert!(body[0].owner() == "user-id");
+        assert!(body[0].owner() == "user");
         assert!(body[0].url() == "http://link");
     }
 
     #[rstest]
+    #[case(true, "admin")]
+    #[case(false, "user")]
     #[tokio::test]
-    async fn test_get_links_service_error(#[values(true, false)] is_admin: bool) {
-        let repo_query = LinkQueryBuilder::default().owner("user-id").build();
+    async fn test_get_links_service_error(#[case] is_admin: bool, #[case] user: &str) {
+        let search_query = LinkQueryBuilder::default()
+            .user(user)
+            .is_from_admin(is_admin)
+            .build();
 
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_search()
-            .withf(move |_, query| query == &repo_query)
+            .withf(move |_, query| query == &search_query)
             .times(1)
             .returning(|_, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
-        let response = list(State(app_state), Claims::new("user-id", is_admin, 0, 0)).await;
+        let response = list(State(app_state), Claims::new(user, is_admin, 0, 0)).await;
 
         let (parts, body) = response.into_response().into_parts();
         assert_eq!(StatusCode::INTERNAL_SERVER_ERROR, parts.status);
@@ -238,10 +262,10 @@ mod tests {
     #[tokio::test]
     async fn test_post_link(#[values(true, false)] is_admin: bool) {
         let request = LinkItemRequest::new("http://link");
-        let item_to_create = LinkItemBuilder::new("http://link").owner("user-id").build();
+        let item_to_create = LinkItemBuilder::new("http://link").owner("user").build();
         let created_item = LinkItemBuilder::new("http://link")
             .id("1")
-            .owner("user-id")
+            .owner("user")
             .build();
 
         let mut mock_links_service = MockLinksService::new();
@@ -254,7 +278,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = post(
             State(app_state),
-            Claims::new("user-id", is_admin, 0, 0),
+            Claims::new("user", is_admin, 0, 0),
             Json(request),
         )
         .await;
@@ -266,7 +290,7 @@ mod tests {
         let body = std::str::from_utf8(&body).unwrap();
         let body: LinkItem = serde_json::from_str(body).unwrap();
         assert!(body.id() == "1");
-        assert!(body.owner() == "user-id");
+        assert!(body.owner() == "user");
         assert!(body.url() == "http://link");
     }
 
@@ -281,7 +305,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = post(
             State(app_state),
-            Claims::new("user-id", is_admin, 0, 0),
+            Claims::new("user", is_admin, 0, 0),
             Json(request),
         )
         .await;
@@ -298,7 +322,7 @@ mod tests {
     #[tokio::test]
     async fn test_post_link_service_error(#[values(true, false)] is_admin: bool) {
         let request = LinkItemRequest::new("http://link");
-        let item_to_create = LinkItemBuilder::new("http://link").owner("user-id").build();
+        let item_to_create = LinkItemBuilder::new("http://link").owner("user").build();
 
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
@@ -310,7 +334,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = post(
             State(app_state),
-            Claims::new("user-id", is_admin, 0, 0),
+            Claims::new("user", is_admin, 0, 0),
             Json(request),
         )
         .await;
@@ -324,25 +348,29 @@ mod tests {
     }
 
     #[rstest]
+    #[case(true, "admin")]
+    #[case(false, "user")]
     #[tokio::test]
-    async fn test_get_link(#[values(true, false)] is_admin: bool) {
-        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
-        let retrieved_item = LinkItemBuilder::new("http://link")
+    async fn test_get_link(#[case] is_admin: bool, #[case] user: &str) {
+        let get_query = LinkQueryBuilder::new("1", user)
+            .is_from_admin(is_admin)
+            .build();
+        let item = LinkItemBuilder::new("http://link")
             .id("1")
-            .owner("user-id")
+            .owner("user")
             .build();
 
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_get()
-            .withf(move |_, query| query == &repo_query)
+            .withf(move |_, query| query == &get_query)
             .times(1)
-            .returning(move |_, _| Ok(retrieved_item.clone()));
+            .returning(move |_, _| Ok(item.clone()));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = get(
             State(app_state),
-            Claims::new("user-id", is_admin, 0, 0),
+            Claims::new(user, is_admin, 0, 0),
             Path(String::from("1")),
         )
         .await;
@@ -354,26 +382,30 @@ mod tests {
         let body = std::str::from_utf8(&body).unwrap();
         let body: LinkItem = serde_json::from_str(body).unwrap();
         assert!(body.id() == "1");
-        assert!(body.owner() == "user-id");
+        assert!(body.owner() == "user");
         assert!(body.url() == "http://link");
     }
 
     #[rstest]
+    #[case(true, "admin")]
+    #[case(false, "user")]
     #[tokio::test]
-    async fn test_get_link_service_error(#[values(true, false)] is_admin: bool) {
-        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
+    async fn test_get_link_service_error(#[case] is_admin: bool, #[case] user: &str) {
+        let get_query = LinkQueryBuilder::new("1", user)
+            .is_from_admin(is_admin)
+            .build();
 
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_get()
-            .withf(move |_, query| query == &repo_query)
+            .withf(move |_, query| query == &get_query)
             .times(1)
             .returning(|_, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = get(
             State(app_state),
-            Claims::new("user-id", is_admin, 0, 0),
+            Claims::new(user, is_admin, 0, 0),
             Path(String::from("1")),
         )
         .await;
@@ -387,29 +419,28 @@ mod tests {
     }
 
     #[rstest]
+    #[case(true, "admin")]
+    #[case(false, "user")]
     #[tokio::test]
-    async fn test_put_link(#[values(true, false)] is_admin: bool) {
+    async fn test_put_link(#[case] is_admin: bool, #[case] user: &str) {
         let request = LinkItemRequest::new("http://link");
-        let item_to_update = LinkItemBuilder::new("http://link")
-            .id("1")
-            .owner("user-id")
+        let update_query = LinkQueryBuilder::new("1", user)
+            .is_from_admin(is_admin)
             .build();
-        let updated_item = LinkItemBuilder::new("http://link")
-            .id("1")
-            .owner("user-id")
-            .build();
+        let item_to_update = LinkItemBuilder::new("http://link").id("1").build();
+        let updated_item = LinkItemBuilder::new("http://link").id("1").build();
 
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_update()
-            .withf(move |_, _, id, item| id == "1" && item == &item_to_update)
+            .withf(move |_, _, query, item| query == &update_query && item == &item_to_update)
             .times(1)
             .returning(move |_, _, _, _| Ok(updated_item.clone()));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = put(
             State(app_state),
-            Claims::new("user-id", is_admin, 0, 0),
+            Claims::new(user, is_admin, 0, 0),
             Path(String::from("1")),
             Json(request),
         )
@@ -422,7 +453,6 @@ mod tests {
         let body = std::str::from_utf8(&body).unwrap();
         let body: LinkItem = serde_json::from_str(body).unwrap();
         assert!(body.id() == "1");
-        assert!(body.owner() == "user-id");
         assert!(body.url() == "http://link");
     }
 
@@ -437,7 +467,7 @@ mod tests {
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = put(
             State(app_state),
-            Claims::new("user-id", is_admin, 0, 0),
+            Claims::new("user", is_admin, 0, 0),
             Path(String::from("1")),
             Json(request),
         )
@@ -452,25 +482,27 @@ mod tests {
     }
 
     #[rstest]
+    #[case(true, "admin")]
+    #[case(false, "user")]
     #[tokio::test]
-    async fn test_put_link_service_error(#[values(true, false)] is_admin: bool) {
+    async fn test_put_link_service_error(#[case] is_admin: bool, #[case] user: &str) {
         let request = LinkItemRequest::new("http://link");
-        let item_to_update = LinkItemBuilder::new("http://link")
-            .id("1")
-            .owner("user-id")
+        let update_query = LinkQueryBuilder::new("1", user)
+            .is_from_admin(is_admin)
             .build();
+        let item_to_update = LinkItemBuilder::new("http://link").id("1").build();
 
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_update()
-            .withf(move |_, _, id, item| id == "1" && item == &item_to_update)
+            .withf(move |_, _, query, item| query == &update_query && item == &item_to_update)
             .times(1)
             .returning(|_, _, _, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = put(
             State(app_state),
-            Claims::new("user-id", is_admin, 0, 0),
+            Claims::new(user, is_admin, 0, 0),
             Path(String::from("1")),
             Json(request),
         )
@@ -485,21 +517,25 @@ mod tests {
     }
 
     #[rstest]
+    #[case(true, "admin")]
+    #[case(false, "user")]
     #[tokio::test]
-    async fn test_delete_link(#[values(true, false)] is_admin: bool) {
-        let item_to_delete = LinkItemBuilder::default().id("1").owner("user-id").build();
+    async fn test_delete_link(#[case] is_admin: bool, #[case] user: &str) {
+        let delete_query = LinkQueryBuilder::new("1", user)
+            .is_from_admin(is_admin)
+            .build();
 
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_delete()
-            .withf(move |_, item| item == &item_to_delete)
+            .withf(move |_, query| query == &delete_query)
             .times(1)
             .returning(move |_, _| Ok(()));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = delete(
             State(app_state),
-            Claims::new("user-id", is_admin, 0, 0),
+            Claims::new(user, is_admin, 0, 0),
             Path(String::from("1")),
         )
         .await;
@@ -509,21 +545,25 @@ mod tests {
     }
 
     #[rstest]
+    #[case(true, "admin")]
+    #[case(false, "user")]
     #[tokio::test]
-    async fn test_delete_link_service_error(#[values(true, false)] is_admin: bool) {
-        let item_to_delete = LinkItemBuilder::default().id("1").owner("user-id").build();
+    async fn test_delete_link_service_error(#[case] is_admin: bool, #[case] user: &str) {
+        let delete_query = LinkQueryBuilder::new("1", user)
+            .is_from_admin(is_admin)
+            .build();
 
         let mut mock_links_service = MockLinksService::new();
         mock_links_service
             .expect_delete()
-            .withf(move |_, item| item == &item_to_delete)
+            .withf(move |_, query| query == &delete_query)
             .times(1)
             .returning(|_, _| Err(AppError::Test));
 
         let app_state = AppStateBuilder::new(Arc::new(mock_links_service)).build();
         let response = delete(
             State(app_state),
-            Claims::new("user-id", is_admin, 0, 0),
+            Claims::new(user, is_admin, 0, 0),
             Path(String::from("1")),
         )
         .await;

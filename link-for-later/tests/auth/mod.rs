@@ -6,15 +6,17 @@ const JWT_SECRET_KEY: &str = "JWT_SECRET";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
-    sub: String,
-    iat: usize,
-    exp: usize,
+    sub: String, // email
+    admin: bool, // admin role
+    iat: usize,  // creation time
+    exp: usize,  // expiration time
 }
 
-pub fn generate_token(email: &str) -> String {
+pub fn generate_token(email: &str, is_admin: bool) -> String {
     let now = Utc::now();
     let claims = Claims {
         sub: email.to_string(),
+        admin: is_admin,
         iat: now.timestamp() as usize,
         exp: 10000000000,
     };

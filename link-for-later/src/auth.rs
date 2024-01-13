@@ -22,7 +22,7 @@ impl Claims {
         &self.sub
     }
 
-    pub fn is_admin(&self) -> bool {
+    pub const fn is_admin(&self) -> bool {
         self.admin
     }
 }
