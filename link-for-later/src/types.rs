@@ -1,8 +1,8 @@
 pub type Result<T> = std::result::Result<T, AppError>;
 
 pub use link_for_later_types::dto::{
-    LinkItemRequest, LinkQuery, LinkQueryBuilder, LoginResponse, UserInfoRequest, UserQuery,
-    UserQueryBuilder,
+    LinkItemRequest, LinkQuery, LinkQueryBuilder, UserLoginRequest, UserLoginResponse, UserQuery,
+    UserQueryBuilder, UserRegisterRequest,
 };
 pub use link_for_later_types::entity::{LinkItem, LinkItemBuilder, UserInfo, UserInfoBuilder};
 

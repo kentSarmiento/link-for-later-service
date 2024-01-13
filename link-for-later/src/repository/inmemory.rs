@@ -3,8 +3,7 @@ use std::sync::Mutex;
 use axum::async_trait;
 
 use crate::types::{
-    AppError, LinkItem, LinkItemBuilder, LinkQuery, LinkQueryBuilder, Result, UserInfo,
-    UserInfoBuilder, UserQuery,
+    AppError, LinkItem, LinkItemBuilder, LinkQuery, Result, UserInfo, UserInfoBuilder, UserQuery,
 };
 
 use super::{Links as LinksRepository, Users as UsersRepository};
@@ -47,7 +46,7 @@ impl LinksRepository for LinksRepositoryProvider {
             .iter()
             .filter(|link| {
                 (link.id() == query.id() || query.id().is_empty())
-                    && (link.owner() == query.owner() || query.owner().is_empty())
+                    && (link.owner() == query.user() || query.user().is_empty())
             })
             .cloned()
             .collect();
@@ -59,7 +58,9 @@ impl LinksRepository for LinksRepositoryProvider {
             .lock()
             .map_err(|e| AppError::Database(format!("get() {e:?}")))?
             .iter()
-            .find(|link| link.id() == query.id() && link.owner() == query.owner())
+            .find(|link| {
+                link.id() == query.id() && (link.owner() == query.user() || query.user().is_empty())
+            })
             .cloned()
             .ok_or_else(|| AppError::LinkNotFound(query.id().to_owned()))
     }
@@ -85,15 +86,15 @@ impl LinksRepository for LinksRepositoryProvider {
         Ok(link)
     }
 
-    async fn update(&self, id: &str, item: &LinkItem) -> Result<LinkItem> {
+    async fn update(&self, query: &LinkQuery, item: &LinkItem) -> Result<LinkItem> {
         self.links_data
             .lock()
             .map_err(|e| AppError::Database(format!("update() {e:?}")))?
             .iter()
-            .find(|link| link.id() == id && link.owner() == item.owner())
+            .find(|link| link.id() == query.id() && link.owner() == item.owner())
             .cloned()
-            .ok_or_else(|| AppError::LinkNotFound(id.to_owned()))?;
-        self.delete(item).await?;
+            .ok_or_else(|| AppError::LinkNotFound(query.id().to_owned()))?;
+        self.delete(query).await?;
         self.links_data
             .lock()
             .map_err(|e| AppError::Database(format!("update() {e:?}")))?
@@ -101,9 +102,8 @@ impl LinksRepository for LinksRepositoryProvider {
         Ok(item.clone())
     }
 
-    async fn delete(&self, item: &LinkItem) -> Result<()> {
-        let query = LinkQueryBuilder::new(item.id(), item.owner()).build();
-        self.get(&query).await?;
+    async fn delete(&self, query: &LinkQuery) -> Result<()> {
+        self.get(query).await?;
         self.links_data
             .lock()
             .map_err(|e| AppError::Database(format!("delete() {e:?}")))?
@@ -149,13 +149,13 @@ impl UsersRepository for UsersRepositoryProvider {
 #[cfg(test)]
 mod tests {
 
-    use crate::types::UserQueryBuilder;
+    use crate::types::{LinkQueryBuilder, UserQueryBuilder};
 
     use super::*;
 
     #[tokio::test]
     async fn test_search_links_empty() {
-        let repo_query = LinkQueryBuilder::default().owner("user-id").build();
+        let repo_query = LinkQueryBuilder::default().user("user-id").build();
         let links_repository = LinksRepositoryProvider::default();
 
         let retrieved_items = links_repository.find(&repo_query).await.unwrap();
@@ -170,7 +170,7 @@ mod tests {
         let created_item = links_repository.create(&item).await.unwrap();
         let expected_items = vec![created_item.clone()];
 
-        let repo_query = LinkQueryBuilder::default().owner("user-id").build();
+        let repo_query = LinkQueryBuilder::default().user("user-id").build();
         let retrieved_items = links_repository.find(&repo_query).await.unwrap();
         assert!(!retrieved_items.is_empty());
         assert!(retrieved_items
@@ -203,10 +203,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_link_not_found() {
+        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
         let item = LinkItemBuilder::new("http://link").owner("user-id").build();
 
         let links_repository = LinksRepositoryProvider::default();
-        let response = links_repository.update("1", &item).await;
+        let response = links_repository.update(&repo_query, &item).await;
 
         assert_eq!(response, Err(AppError::LinkNotFound("1".into())));
     }
@@ -218,13 +219,11 @@ mod tests {
         let links_repository = LinksRepositoryProvider::default();
         let created_item = links_repository.create(&item).await.unwrap();
 
+        let repo_query = LinkQueryBuilder::new(created_item.id(), "user-id").build();
         let item = LinkItemBuilder::from(created_item.clone())
             .title("title")
             .build();
-        let updated_item = links_repository
-            .update(created_item.id(), &item)
-            .await
-            .unwrap();
+        let updated_item = links_repository.update(&repo_query, &item).await.unwrap();
 
         let repo_query = LinkQueryBuilder::new(updated_item.id(), "user-id").build();
         let retrieved_item = links_repository.get(&repo_query).await.unwrap();
@@ -234,13 +233,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_delete_link_not_found() {
-        let item = LinkItemBuilder::new("http://link")
-            .id("1")
-            .owner("user-id")
-            .build();
+        let repo_query = LinkQueryBuilder::new("1", "user-id").build();
 
         let links_repository = LinksRepositoryProvider::default();
-        let response = links_repository.delete(&item).await;
+        let response = links_repository.delete(&repo_query).await;
 
         assert_eq!(response, Err(AppError::LinkNotFound("1".into())));
     }
@@ -252,7 +248,8 @@ mod tests {
         let links_repository = LinksRepositoryProvider::default();
         let created_item = links_repository.create(&item).await.unwrap();
 
-        links_repository.delete(&created_item).await.unwrap();
+        let repo_query = LinkQueryBuilder::new(created_item.id(), "user-id").build();
+        links_repository.delete(&repo_query).await.unwrap();
 
         let repo_query = LinkQueryBuilder::new(created_item.id(), "user-id").build();
         let response = links_repository.get(&repo_query).await;

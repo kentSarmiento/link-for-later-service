@@ -15,8 +15,8 @@ pub trait Links {
     async fn find(&self, query: &LinkQuery) -> Result<Vec<LinkItem>>;
     async fn get(&self, query: &LinkQuery) -> Result<LinkItem>;
     async fn create(&self, item: &LinkItem) -> Result<LinkItem>;
-    async fn update(&self, id: &str, item: &LinkItem) -> Result<LinkItem>;
-    async fn delete(&self, item: &LinkItem) -> Result<()>;
+    async fn update(&self, query: &LinkQuery, item: &LinkItem) -> Result<LinkItem>;
+    async fn delete(&self, query: &LinkQuery) -> Result<()>;
 }
 
 #[cfg_attr(test, automock)]

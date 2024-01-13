@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::collections::HashMap;
+
 use axum::{
     body::Body,
     http::{Request, StatusCode},
@@ -18,13 +20,17 @@ mod auth;
 mod repository;
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
 async fn test_get_links_empty(
     #[values(DatabaseType::InMemory, DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
 ) {
     repository::new(&db_type);
 
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token(user, is_admin);
 
     let response = app::new(&db_type)
         .await
@@ -46,12 +52,18 @@ async fn test_get_links_empty(
 }
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
-async fn test_get_links_non_empty(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_get_links_non_empty(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
+) {
     let repository = repository::new(&db_type);
 
     let id = repository.add_link("user@test.com", "http://test").await;
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token(user, is_admin);
 
     let response = app::new(&db_type)
         .await
@@ -70,7 +82,7 @@ async fn test_get_links_non_empty(#[values(DatabaseType::MongoDb)] db_type: Data
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let body = std::str::from_utf8(&body).unwrap();
-    let body: Vec<link_for_later_types::entity::LinkItem> = serde_json::from_str(body).unwrap();
+    let body: Vec<LinkItem> = serde_json::from_str(body).unwrap();
     assert!(body.len() == 1);
     assert!(body[0].id() == id);
     assert!(body[0].owner() == "user@test.com");
@@ -78,12 +90,73 @@ async fn test_get_links_non_empty(#[values(DatabaseType::MongoDb)] db_type: Data
 }
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
-async fn test_get_link_item_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_get_links_multiple_entries(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
+) {
+    let repository = repository::new(&db_type);
+
+    let mut ids: HashMap<String, (String, String)> = HashMap::new();
+
+    let id = repository.add_link("user@test.com", "http://test1").await;
+    ids.insert(id, ("user@test.com".into(), "http://test1".into()));
+
+    let second_entry_owner = if is_admin {
+        "another-user@test.com"
+    } else {
+        user
+    };
+    let id = repository
+        .add_link(second_entry_owner, "http://test2")
+        .await;
+    ids.insert(id, (second_entry_owner.into(), "http://test2".into()));
+
+    let token = auth::generate_token(user, is_admin);
+
+    let response = app::new(&db_type)
+        .await
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/v1/links")
+                .header("Authorization", format!("Bearer {}", token))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body = std::str::from_utf8(&body).unwrap();
+    let body: Vec<LinkItem> = serde_json::from_str(body).unwrap();
+
+    assert!(body.len() == ids.len());
+    for item in body {
+        assert!(ids.contains_key(item.id()));
+        assert!(ids.get(item.id()).unwrap().0 == item.owner());
+        assert!(ids.get(item.id()).unwrap().1 == item.url());
+    }
+}
+
+#[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
+#[tokio::test]
+async fn test_get_link_item_found(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
+) {
     let repository = repository::new(&db_type);
 
     let id = repository.add_link("user@test.com", "http://test").await;
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token(user, is_admin);
 
     let response = app::new(&db_type)
         .await
@@ -109,12 +182,18 @@ async fn test_get_link_item_found(#[values(DatabaseType::MongoDb)] db_type: Data
 }
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
-async fn test_get_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_get_link_item_not_found(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
+) {
     let repository = repository::new(&db_type);
 
     repository.add_link("user@test.com", "http://test").await;
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token(user, is_admin);
 
     let response = app::new(&db_type)
         .await
@@ -138,10 +217,13 @@ async fn test_get_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: 
 
 #[rstest]
 #[tokio::test]
-async fn test_post_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_post_link(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[values(true, false)] is_admin: bool,
+) {
     let repository = repository::new(&db_type);
 
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token("user@test.com", is_admin);
     let request = r#"{
         "url": "http://test"
     }"#;
@@ -179,10 +261,13 @@ async fn test_post_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) 
 
 #[rstest]
 #[tokio::test]
-async fn test_post_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_post_link_invalid_url(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[values(true, false)] is_admin: bool,
+) {
     let repository = repository::new(&db_type);
 
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token("user@test.com", is_admin);
     let request = r#"{
         "url": "invalid"
     }"#;
@@ -212,12 +297,19 @@ async fn test_post_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: Da
 }
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
-async fn test_put_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_put_link(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
+) {
     let repository = repository::new(&db_type);
 
     let id = repository.add_link("user@test.com", "http://test").await;
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token(user, is_admin);
+
     let request = r#"{
         "url": "http://update"
     }"#;
@@ -256,12 +348,19 @@ async fn test_put_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
 }
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
-async fn test_put_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_put_link_invalid_url(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
+) {
     let repository = repository::new(&db_type);
 
     let id = repository.add_link("user@test.com", "http://test").await;
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token(user, is_admin);
+
     let request = r#"{
         "url": "invalid"
     }"#;
@@ -291,12 +390,19 @@ async fn test_put_link_invalid_url(#[values(DatabaseType::MongoDb)] db_type: Dat
 }
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
-async fn test_put_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_put_link_item_not_found(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
+) {
     let repository = repository::new(&db_type);
 
     let id = repository.add_link("user@test.com", "http://test").await;
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token(user, is_admin);
+
     let request = r#"{
         "url": "http://update"
     }"#;
@@ -331,12 +437,18 @@ async fn test_put_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: 
 }
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
-async fn test_delete_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_delete_link(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
+) {
     let repository = repository::new(&db_type);
 
     let id = repository.add_link("user@test.com", "http://test").await;
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token(user, is_admin);
 
     let response = app::new(&db_type)
         .await
@@ -362,12 +474,18 @@ async fn test_delete_link(#[values(DatabaseType::MongoDb)] db_type: DatabaseType
 }
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
-async fn test_delete_link_item_not_found(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_delete_link_item_not_found(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
+) {
     let repository = repository::new(&db_type);
 
     let id = repository.add_link("user@test.com", "http://test").await;
-    let token = auth::generate_token("user@test.com");
+    let token = auth::generate_token(user, is_admin);
 
     let response = app::new(&db_type)
         .await
@@ -395,7 +513,7 @@ async fn test_delete_link_item_not_found(#[values(DatabaseType::MongoDb)] db_typ
     let db_item = repository.get_link(&id).await;
     assert!(db_item.id() == id);
     assert!(db_item.owner() == "user@test.com");
-    assert!(db_item.url() == "http://test"); // not updated
+    assert!(db_item.url() == "http://test");
 }
 
 #[rstest]

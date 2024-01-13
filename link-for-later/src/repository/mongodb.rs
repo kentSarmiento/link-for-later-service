@@ -4,8 +4,7 @@ use futures::TryStreamExt;
 use mongodb::{options::ReplaceOptions, Collection, Database};
 
 use crate::types::{
-    AppError, LinkItem, LinkItemBuilder, LinkQuery, LinkQueryBuilder, Result, UserInfo,
-    UserInfoBuilder, UserQuery,
+    AppError, LinkItem, LinkItemBuilder, LinkQuery, Result, UserInfo, UserInfoBuilder, UserQuery,
 };
 
 use super::{Links as LinksRepository, Users as UsersRepository};
@@ -87,8 +86,7 @@ impl LinksRepository for LinksRepositoryProvider {
         Ok(LinkItemBuilder::from(item.clone()).id(&id).build())
     }
 
-    async fn update(&self, id: &str, item: &LinkItem) -> Result<LinkItem> {
-        let query = LinkQueryBuilder::new(id, item.owner()).build();
+    async fn update(&self, query: &LinkQuery, item: &LinkItem) -> Result<LinkItem> {
         let db_query =
             to_document(&query).map_err(|_| AppError::Database("to_document failed".into()))?;
         let opts = ReplaceOptions::builder().upsert(true).build();
@@ -99,8 +97,7 @@ impl LinksRepository for LinksRepositoryProvider {
         Ok(item.clone())
     }
 
-    async fn delete(&self, item: &LinkItem) -> Result<()> {
-        let query = LinkQueryBuilder::new(item.id(), item.owner()).build();
+    async fn delete(&self, query: &LinkQuery) -> Result<()> {
         let db_query =
             to_document(&query).map_err(|_| AppError::Database("to_document failed".into()))?;
         self.links_collection

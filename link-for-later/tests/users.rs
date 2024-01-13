@@ -20,14 +20,24 @@ mod auth;
 mod repository;
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
-async fn test_register_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_register_user(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
+) {
     let repository = repository::new(&db_type);
 
-    let request = r#"{
-        "email": "user@test.com",
-        "password": "test"
-    }"#;
+    let request = format!(
+        r#"{{
+        "email": "{}",
+        "password": "test",
+        "admin": {}
+    }}"#,
+        user, is_admin
+    );
 
     let response = app::new(&db_type)
         .await
@@ -50,20 +60,27 @@ async fn test_register_user(#[values(DatabaseType::MongoDb)] db_type: DatabaseTy
     let db_count = repository.count_users().await;
     assert!(db_count == 1);
 
-    let db_item = repository.get_user("user@test.com").await;
-    assert!(db_item.email() == "user@test.com");
+    let db_item = repository.get_user(user).await;
+    assert!(db_item.email() == user);
     assert!(db_item.password() != "test"); // verify password is not saved in plaintext
 }
 
 #[rstest]
 #[tokio::test]
-async fn test_register_user_invalid_email(#[values(DatabaseType::MongoDb)] db_type: DatabaseType) {
+async fn test_register_user_invalid_email(
+    #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[values(true, false)] is_admin: bool,
+) {
     let repository = repository::new(&db_type);
 
-    let request = r#"{
+    let request = format!(
+        r#"{{
         "email": "user",
-        "password": "test"
-    }"#;
+        "password": "test",
+        "admin": {}
+    }}"#,
+        is_admin
+    );
 
     let response = app::new(&db_type)
         .await
@@ -89,17 +106,26 @@ async fn test_register_user_invalid_email(#[values(DatabaseType::MongoDb)] db_ty
 }
 
 #[rstest]
+#[case(true, "admin@test.com")]
+#[case(false, "user@test.com")]
 #[tokio::test]
 async fn test_register_user_already_registered(
     #[values(DatabaseType::MongoDb)] db_type: DatabaseType,
+    #[case] is_admin: bool,
+    #[case] user: &str,
 ) {
     let repository = repository::new(&db_type);
 
-    repository.add_user("user@test.com", "test").await;
-    let request = r#"{
-        "email": "user@test.com",
-        "password": "test"
-    }"#;
+    repository.add_user(user, "test").await;
+
+    let request = format!(
+        r#"{{
+        "email": "{}",
+        "password": "test",
+        "admin": {}
+    }}"#,
+        user, is_admin
+    );
 
     let response = app::new(&db_type)
         .await
